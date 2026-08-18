@@ -1,0 +1,2 @@
+import 'server-only'
+export class ShipmondoClient{private readonly baseUrl:string;constructor(){this.baseUrl=process.env.SHIPMONDO_API_BASE_URL??''}isConfigured(){return Boolean(this.baseUrl&&process.env.SHIPMONDO_API_USERNAME&&process.env.SHIPMONDO_API_KEY)}async request<T>(path:string,init?:RequestInit):Promise<T>{if(!this.isConfigured())throw new Error('Shipmondo is not configured');void path;void init;throw new Error('Live Shipmondo requests are intentionally pending verified API v3 endpoint documentation')}}

@@ -1,0 +1,210 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+enum Role {
+  ADMIN
+  STAFF
+}
+
+enum ShipmentStatus {
+  DRAFT
+  QUOTED
+  AWAITING_PAYMENT
+  PAID
+  BOOKING
+  BOOKED
+  LABEL_CREATED
+  COMPLETED
+  CANCELLED
+  ERROR
+}
+
+enum PaymentStatus {
+  NOT_REQUIRED
+  PENDING
+  PAID
+  FAILED
+  REFUNDED
+}
+
+enum MarkupType {
+  PERCENTAGE
+  FIXED
+  PERCENTAGE_FIXED
+}
+
+model User {
+  id        String   @id @default(cuid())
+  email     String   @unique
+  name      String
+  role      Role     @default(STAFF)
+  storeId   String?
+  store     Store?   @relation(fields: [storeId], references: [id])
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model Store {
+  id           String                 @id @default(cuid())
+  name         String
+  address      String
+  postalCode   String
+  city         String
+  country      String                 @default("DK")
+  email        String?
+  phone        String?
+  users        User[]
+  shipments    Shipment[]
+  pricingRules PricingRule[]
+  printers     PrinterConfiguration[]
+  createdAt    DateTime               @default(now())
+  updatedAt    DateTime               @updatedAt
+}
+
+model Customer {
+  id        String     @id @default(cuid())
+  name      String
+  company   String?
+  email     String?
+  phone     String?
+  shipments Shipment[]
+  createdAt DateTime   @default(now())
+  updatedAt DateTime   @updatedAt
+
+  @@index([email])
+}
+
+model Shipment {
+  id                   String          @id @default(cuid())
+  reference            String          @unique
+  status               ShipmentStatus  @default(DRAFT)
+  storeId              String
+  store                Store           @relation(fields: [storeId], references: [id])
+  customerId           String?
+  customer             Customer?       @relation(fields: [customerId], references: [id])
+  originCountry        String
+  destinationCountry   String
+  sender               Json
+  recipient            Json
+  contentsType         String
+  carrier              String?
+  serviceName          String?
+  productCode          String?
+  purchasePrice        Decimal?        @db.Decimal(12, 2)
+  customerPrice        Decimal?        @db.Decimal(12, 2)
+  currency             String          @default("DKK")
+  shipmondoShipmentId  String?         @unique
+  trackingNumber       String?
+  paymentStatus        PaymentStatus   @default(PENDING)
+  paymentProviderRef   String?
+  paidAmount           Decimal?        @db.Decimal(12, 2)
+  paidAt               DateTime?
+  apiMetadata          Json?
+  idempotencyKey       String          @unique
+  parcels              Parcel[]
+  items                ShipmentItem[]
+  quotes               ShippingOption[]
+  createdAt            DateTime        @default(now())
+  updatedAt            DateTime        @updatedAt
+
+  @@index([storeId, status, createdAt])
+  @@index([trackingNumber])
+}
+
+model Parcel {
+  id               String   @id @default(cuid())
+  shipmentId       String
+  shipment         Shipment @relation(fields: [shipmentId], references: [id], onDelete: Cascade)
+  weight           Decimal  @db.Decimal(10, 3)
+  length           Decimal  @db.Decimal(10, 2)
+  width            Decimal  @db.Decimal(10, 2)
+  height           Decimal  @db.Decimal(10, 2)
+  chargeableWeight Decimal  @db.Decimal(10, 3)
+}
+
+model ShipmentItem {
+  id              String   @id @default(cuid())
+  shipmentId      String
+  shipment        Shipment @relation(fields: [shipmentId], references: [id], onDelete: Cascade)
+  description     String
+  quantity        Int
+  unitValue       Decimal  @db.Decimal(12, 2)
+  currency        String
+  weight          Decimal  @db.Decimal(10, 3)
+  countryOfOrigin String
+  hsCode          String?
+}
+
+model ShippingOption {
+  id            String    @id @default(cuid())
+  shipmentId    String
+  shipment      Shipment  @relation(fields: [shipmentId], references: [id], onDelete: Cascade)
+  carrier       String
+  serviceName   String
+  productCode   String
+  purchasePrice Decimal   @db.Decimal(12, 2)
+  customerPrice Decimal   @db.Decimal(12, 2)
+  currency      String
+  expiresAt     DateTime?
+  metadata      Json?
+  createdAt     DateTime  @default(now())
+
+  @@index([shipmentId])
+}
+
+model PricingRule {
+  id             String     @id @default(cuid())
+  storeId        String?
+  store          Store?     @relation(fields: [storeId], references: [id])
+  carrier        String?
+  service        String?
+  type           MarkupType
+  percentage     Decimal?   @db.Decimal(7, 3)
+  fixedAmount    Decimal?   @db.Decimal(12, 2)
+  minimumMargin  Decimal?   @db.Decimal(12, 2)
+  minimumPrice   Decimal?   @db.Decimal(12, 2)
+  active         Boolean    @default(true)
+  priority       Int        @default(0)
+  createdAt      DateTime   @default(now())
+  updatedAt      DateTime   @updatedAt
+
+  @@index([carrier, service, active, priority])
+}
+
+model Carrier {
+  id                String   @id @default(cuid())
+  code              String   @unique
+  displayName       String
+  enabled           Boolean  @default(true)
+  displayOrder      Int      @default(0)
+  description       String?
+  logoUrl           String?
+  defaultEstimate   String?
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+}
+
+model PrinterConfiguration {
+  id                 String   @id @default(cuid())
+  storeId            String
+  store              Store    @relation(fields: [storeId], references: [id])
+  shipmondoPrinterId String?
+  host               String?
+  printerName        String?
+  labelFormat        String   @default("ZPL")
+  active             Boolean  @default(true)
+  createdAt          DateTime @default(now())
+  updatedAt          DateTime @updatedAt
+}
+
+model AppSetting {
+  id        String   @id @default(cuid())
+  key       String   @unique
+  value     Json
+  updatedAt DateTime @updatedAt
+}

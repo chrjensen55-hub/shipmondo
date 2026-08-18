@@ -1,0 +1,2 @@
+import { ShipmondoClient } from '@/lib/shipmondo/client'
+export async function POST(){const client=new ShipmondoClient();if(!client.isConfigured())return Response.json({error:{code:'NOT_CONFIGURED',message:'Add Shipmondo credentials to the server environment.'}},{status:503});return Response.json({data:{configured:true,message:'Credentials are configured. Live verification is pending endpoint setup.'}})}

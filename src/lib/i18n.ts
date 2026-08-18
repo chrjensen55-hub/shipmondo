@@ -1,0 +1,1 @@
+export const t={brand:'Pak & Send',sendParcel:'Send a parcel',tagline:'Ship your parcel easily with Pak & Send.',continue:'Continue',back:'Back',from:'From',to:'To',country:'Country',postalCode:'Postal code'} as const

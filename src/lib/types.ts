@@ -1,0 +1,5 @@
+export type Address = { fullName: string; company?: string; address1: string; address2?: string; postalCode: string; city: string; country: string; state?: string; email: string; phone: string; instructions?: string }
+export type Parcel = { id: string; weight: number; length: number; width: number; height: number }
+export type ShipmentItem = { id: string; description: string; quantity: number; unitValue: number; currency: string; weight: number; originCountry: string; hsCode?: string }
+export type ShippingQuote = { id: string; carrier: string; serviceName: string; productCode: string; serviceCodes: string[]; purchasePrice: number; customerPrice: number; currency: string; estimatedDelivery: string; metadata: { source: 'mock' | 'shipmondo'; chargeableWeight: number } }
+export type ShipmentDraft = { originCountry: string; originPostalCode: string; destinationCountry: string; destinationPostalCode: string; sender: Address; recipient: Address; parcels: Parcel[]; contentsType: 'DOCUMENTS' | 'GOODS'; items: ShipmentItem[]; exportReason?: string; selectedQuoteId?: string }

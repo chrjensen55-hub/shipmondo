@@ -1,0 +1,4 @@
+import { shipmentSchema } from '@/lib/validation'
+import { mockQuotes } from '@/lib/shipping'
+const completed=new Map<string,{reference:string;tracking:string}>()
+export async function POST(request:Request){try{const input=shipmentSchema.parse(await request.json());const previous=completed.get(input.idempotencyKey);if(previous)return Response.json({data:previous});const quote=mockQuotes(input).find(q=>q.id===input.selectedQuoteId);if(!quote)return Response.json({error:{code:'QUOTE_EXPIRED',message:'The selected shipping option is no longer available.'}},{status:409});const stamp=Date.now().toString().slice(-7);const result={reference:`PS-${stamp}`,tracking:`${quote.carrier.slice(0,2).toUpperCase()}${stamp}DK`};completed.set(input.idempotencyKey,result);return Response.json({data:result},{status:201})}catch{return Response.json({error:{code:'INVALID_REQUEST',message:'Please check the shipment details.'}},{status:400})}}

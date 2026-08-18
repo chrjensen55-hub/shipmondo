@@ -1,36 +1,86 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Pak & Send shipping application
 
-## Getting Started
+A tablet-first customer shipping flow and staff operations dashboard for Pak & Send / Courier Copenhagen. The app is deliberately independent of the existing WordPress site and is ready to deploy to Vercel under `app.pakogsend.dk`.
 
-First, run the development server:
+## What is included
+
+- Seven-step guest shipment wizard with refresh-safe non-sensitive progress, multi-parcel calculations, customs-aware contents, mock quotes, review, booking, and confirmation.
+- Server-authoritative mock quote and shipment APIs with Zod validation and idempotency protection.
+- Configurable pricing engine with percentage/fixed markup, minimum margin, minimum price, and rounding.
+- Staff dashboard, shipment list/detail, pricing calculator, carriers, customers, settings, and printer setup screens.
+- PostgreSQL/Prisma schema covering stores, users, customers, shipments, parcels, items, quotes, pricing, carriers, printers, payments, and settings.
+- Server-only Shipmondo client boundary and explicit placeholders for API-v3 mapping. No guessed Shipmondo payload fields.
+- Automated tests for critical weight, pricing, rounding, and customs logic.
+
+## Local development
 
 ```bash
+npm install
+copy .env.example .env
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Open `http://localhost:3000` for the customer app or `/admin` for the development dashboard.
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+## Environment variables
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+| Variable | Purpose |
+| --- | --- |
+| `DATABASE_URL` | PostgreSQL connection string |
+| `SHIPMONDO_API_USERNAME` | Server-side Shipmondo username |
+| `SHIPMONDO_API_KEY` | Server-side Shipmondo API key |
+| `SHIPMONDO_API_BASE_URL` | Verified API v3 base URL |
+| `SHIPMONDO_MOCK_MODE` | Set `true` until live integration is configured |
+| `APP_URL` | Public application URL |
+| `AUTH_SECRET` | Future server-side Auth.js secret |
 
-## Learn More
+Never prefix credentials with `NEXT_PUBLIC_`. `.env` files are ignored; `.env.example` is intentionally tracked.
 
-To learn more about Next.js, take a look at the following resources:
+## Database
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+Create a PostgreSQL database, set `DATABASE_URL`, then run:
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+```bash
+npm run db:generate
+npm run db:push
+```
 
-## Deploy on Vercel
+The intended defaults are documented in `prisma/seed.ts`. Wire this blueprint into an executable seed once a database/provider has been selected.
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+## Quality checks
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+```bash
+npm run lint
+npm test
+npm run build
+```
+
+## Architecture
+
+```text
+src/app/                 App Router pages and validated route handlers
+src/components/customer Customer-only wizard UI (never renders internal cost)
+src/components/admin    Staff-only operational views
+src/lib/shipping.ts     Weight, pricing, customs, and mock quote domain logic
+src/lib/shipmondo/      Server-only integration boundary
+prisma/schema.prisma    PostgreSQL production data model
+```
+
+The browser submits only a quote ID. The shipment endpoint recreates available quotes on the server and chooses the authoritative price. Purchase prices remain in the server/admin domain.
+
+## Mock mode
+
+Keep `SHIPMONDO_MOCK_MODE=true` while credentials are unavailable. Customer pages never announce mock data; admins see a development-mode badge. Mock shipment references and tracking numbers are non-production data.
+
+## Vercel deployment
+
+Import the GitHub repository into Vercel, set the environment variables in each target environment, attach a PostgreSQL-compatible database, run the Prisma deployment step, and add `app.pakogsend.dk` as the project domain. Do not point or modify the WordPress deployment.
+
+## Production checklist
+
+- Configure PostgreSQL and migrations; replace the seed blueprint with an executable seed.
+- Add Auth.js (or equivalent) and protect `/admin` plus every admin API on the server.
+- Verify official Shipmondo API v3 documentation and implement shipment/printer endpoints without guessing fields.
+- Replace in-memory idempotency with the unique database key in a transaction.
+- Add durable rate limiting, structured log transport, payment, email, and privacy/retention policies.
+- Perform live printer testing through Shipmondo Print Client with the Zebra/ZPL setup.
