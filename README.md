@@ -6,7 +6,7 @@ A tablet-first customer shipping flow and staff operations dashboard for Pak & S
 
 - Seven-step guest shipment wizard with refresh-safe non-sensitive progress, multi-parcel calculations, customs-aware contents, live carrier quotes, review, booking, and confirmation.
 - Server-authoritative quote and shipment APIs with Zod validation and idempotency protection. Quotes and bookings call the real Shipmondo API v3 whenever credentials are configured and `SHIPMONDO_MOCK_MODE` is not `true`; otherwise both fall back to the built-in mock rates.
-- Configurable pricing engine with percentage/fixed markup, minimum margin, minimum price, and rounding. Live quotes currently price parcels with an interim internal formula (`src/lib/shipmondo/quotes.ts`) rather than Shipmondo rate cards — Shipmondo has no rate-shopping endpoint, so the customer-facing estimate is ours; the actual carrier cost is only known once a shipment is booked, and is recorded as the authoritative purchase price at that point.
+- Configurable pricing engine with percentage/fixed markup, minimum margin, minimum price, and rounding, applied on top of Shipmondo's real `/quotes/list` price where available. Some carrier/route combinations Shipmondo can't estimate (flagged `estimated: true` in quote metadata) fall back to an interim internal formula until real rate cards are configured. The actual carrier cost is always re-confirmed as the authoritative purchase price once a shipment is booked.
 - Staff dashboard, shipment list/detail, pricing calculator, carriers, customers, settings, and printer setup screens. The printer settings page live-tests the Shipmondo connection and lists registered Print Client printers.
 - PostgreSQL/Prisma schema covering stores, users, customers, shipments, parcels, items, quotes, pricing, carriers, printers, payments, and settings.
 - Server-only Shipmondo client boundary (`src/lib/shipmondo/`) implementing HTTP Basic auth and the verified API v3 shapes for account, products, shipments, labels, and printers.
@@ -78,11 +78,11 @@ Keep `SHIPMONDO_MOCK_MODE=true` while credentials are unavailable. Customer page
 
 - `client.ts` — the authenticated HTTP wrapper.
 - `account.ts`, `products.ts` — read the store profile and the carrier/product/service catalogue available on the account for a given destination.
-- `quotes.ts` — picks one bookable product per carrier for a route and prices it with the interim internal formula, tagging each quote with the real `product_code`/`service_codes` needed to book it.
-- `shipments.ts` — builds a real `parties`/`parcels`/`customs` request from a `ShipmentDraft` and books it. Customs is only sent when every goods item has a valid 6/8/10/12-digit commodity code; otherwise booking fails with a clear message rather than sending fabricated customs data.
+- `quotes.ts` — picks one bookable product per carrier for a route, prices it via the real, non-committing `POST /quotes/list` endpoint where Shipmondo can estimate it, and falls back to an interim internal formula (clearly flagged `estimated: true`) for the carrier/route combinations it can't (e.g. DHL Express and UPS on several routes in this sandbox account — a real, documented API limitation, not a bug). Tags each quote with the real `product_code`/`service_codes` needed to book it.
+- `shipments.ts` — builds a real `parties`/`parcels`/`customs` request from a `ShipmentDraft` and books it via `POST /shipments`. Customs is only sent when every goods item has a valid 6/8/10/12-digit commodity code; otherwise booking fails with a clear message rather than sending fabricated customs data. Shipments can be cancelled with `PUT /shipments/{id}/cancel`.
 - `printers.ts` — lists printers registered through the Shipmondo Print Client.
 
-Shipmondo has no rate-shopping endpoint — price is only returned once a shipment is actually booked, so there is no way to "quote" several carriers without committing. The wizard therefore shows an internal price estimate at the quote step and books exactly once, at confirmation, recording Shipmondo's real price as the authoritative cost.
+The wizard's quote step shows Shipmondo's real estimated price wherever available and books exactly once, at confirmation, recording Shipmondo's real booked price as the authoritative cost.
 
 ## Vercel deployment
 
@@ -92,7 +92,7 @@ Import the GitHub repository into Vercel, set the environment variables in each 
 
 - Configure PostgreSQL and migrations; replace the seed blueprint with an executable seed.
 - Add Auth.js (or equivalent) and protect `/admin` plus every admin API on the server.
-- Replace the interim internal pricing formula in `quotes.ts` with real per-carrier rate cards (the `PricingRule` model already supports this) once negotiated rates are known.
+- Replace the remaining `estimated: true` fallback prices in `quotes.ts` with real per-carrier rate cards (the `PricingRule` model already supports this) for the routes Shipmondo's `/quotes/list` can't estimate.
 - Add an HS/commodity code field to the wizard's Contents step — customs-required international goods shipments currently fail booking (correctly) rather than guess a code.
 - Replace in-memory idempotency with the unique database key in a transaction.
 - Add durable rate limiting, structured log transport, payment, email, and privacy/retention policies.
