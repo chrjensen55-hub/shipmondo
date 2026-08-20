@@ -6,8 +6,8 @@ import type { CreateShipmentRequest, ShipmondoCustoms, ShipmondoLabel, Shipmondo
 function toParty(type: 'sender' | 'receiver', address: ShipmentDraft['sender']): ShipmondoParty {
   return {
     type,
-    name: address.fullName,
-    attention: address.company || undefined,
+    name: address.company || address.fullName,
+    attention: address.fullName,
     address1: address.address1,
     address2: address.address2 || undefined,
     postal_code: address.postalCode,

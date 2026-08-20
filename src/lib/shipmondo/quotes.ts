@@ -57,7 +57,14 @@ function requiredServiceCodes(product: ShipmondoProduct, draft: Pick<ShipmentDra
   return required.map((s) => s.code)
 }
 
-export async function getLiveQuotes(draft: Pick<ShipmentDraft, 'originCountry' | 'originPostalCode' | 'destinationCountry' | 'destinationPostalCode' | 'parcels' | 'sender' | 'recipient'>): Promise<ShippingQuote[]> {
+function matchesCarrierName(productCarrierName: string, wanted?: string): boolean {
+  if (!wanted) return true
+  const a = productCarrierName.toLowerCase()
+  const b = wanted.toLowerCase()
+  return a.includes(b) || b.includes(a)
+}
+
+export async function getLiveQuotes(draft: Pick<ShipmentDraft, 'originCountry' | 'originPostalCode' | 'destinationCountry' | 'destinationPostalCode' | 'parcels' | 'sender' | 'recipient' | 'carrierName'>): Promise<ShippingQuote[]> {
   const [products, rawQuotes] = await Promise.all([
     listProducts(draft.destinationCountry),
     fetchRealQuotes(draft).catch(() => [] as RawQuote[]),
@@ -71,6 +78,7 @@ export async function getLiveQuotes(draft: Pick<ShipmentDraft, 'originCountry' |
   for (const carrierCode of carrierCodes) {
     const product = pickProductForCarrier(products, carrierCode, quotedCodes)
     if (!product) continue
+    if (!matchesCarrierName(product.carrier.name, draft.carrierName)) continue
     const realQuote = rawQuotes.find((q) => q.product_code === product.code)
     const estimated = !realQuote
     const purchasePrice = realQuote?.price ?? BASE_FEE + weight * (intl ? PER_KG_INTERNATIONAL : PER_KG_DOMESTIC)
