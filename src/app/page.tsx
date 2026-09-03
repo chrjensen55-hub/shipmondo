@@ -1,4 +1,2 @@
-import Link from 'next/link'
-import { ArrowRight, Box, ShieldCheck, Truck } from 'lucide-react'
-import { t } from '@/lib/i18n'
-export default function Home(){return <main className="landing"><header className="site-header"><Link className="brand" href="/"><span className="brand-mark">P</span>{t.brand}</Link><Link className="staff-link" href="/admin">Staff login</Link></header><section className="hero"><div className="eyebrow">Simple, secure shipping</div><h1>Send your parcel<br/><em>with confidence.</em></h1><p>From Copenhagen to anywhere. Compare trusted carriers, book your shipment, and let us handle the rest.</p><Link href="/send" className="button button-primary button-large">Start shipping <ArrowRight size={20}/></Link><div className="trust-row"><span><ShieldCheck/>Secure handling</span><span><Truck/>Leading carriers</span><span><Box/>Expert support</span></div></section><section className="carrier-strip"><span>UPS</span><span>DHL</span><span>FedEx</span><span>GLS</span><span>PostNord</span><span>Bring</span></section></main>}
+import { SendWizard } from '@/components/customer/send-wizard'
+export default function Home(){return <SendWizard/>}
