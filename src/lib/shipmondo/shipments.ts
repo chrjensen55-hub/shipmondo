@@ -19,13 +19,18 @@ function toParty(type: 'sender' | 'receiver', address: ShipmentDraft['sender']):
   }
 }
 
-function buildCustoms(draft: ShipmentDraft, currency = 'DKK'): ShipmondoCustoms | undefined {
-  if (draft.contentsType !== 'GOODS' || draft.items.length === 0) return undefined
+// Whether a customs object is required comes from Shipmondo's own `/products` response
+// (`customs_declaration_required` on the chosen product), not from our own EU/non-EU guess or
+// from contentsType — Shipmondo requires customs declarations for document shipments too
+// (export_reason: 'documents'), so DOCUMENTS is not exempt.
+function buildCustoms(draft: ShipmentDraft, requiresCustoms: boolean, currency = 'DKK'): ShipmondoCustoms | undefined {
+  if (!requiresCustoms) return undefined
+  if (draft.items.length === 0) throw new Error('Customs details (contents description, value, and commodity code) are required for this destination.')
   const missingHsCode = draft.items.find((item) => !item.hsCode || !/^\d{6}(\d{2}){0,3}$/.test(item.hsCode))
   if (missingHsCode) throw new Error(`Item "${missingHsCode.description}" is missing a valid 6/8/10/12-digit commodity (HS) code, required for customs.`)
   return {
     currency_code: currency,
-    export_reason: 'sale_of_goods',
+    export_reason: draft.contentsType === 'DOCUMENTS' ? 'documents' : 'sale_of_goods',
     goods: draft.items.map((item) => ({
       quantity: item.quantity,
       country_code: item.originCountry,
@@ -37,7 +42,7 @@ function buildCustoms(draft: ShipmentDraft, currency = 'DKK'): ShipmondoCustoms 
   }
 }
 
-export function mapShipmentToShipmondo(draft: ShipmentDraft, options: { productCode: string; serviceCodes: string[]; reference: string; ownAgreement?: boolean }): CreateShipmentRequest {
+export function mapShipmentToShipmondo(draft: ShipmentDraft, options: { productCode: string; serviceCodes: string[]; reference: string; requiresCustoms: boolean; ownAgreement?: boolean }): CreateShipmentRequest {
   const contents = draft.contentsType === 'GOODS' ? draft.items.map((i) => i.description).filter(Boolean).join(', ') || 'Goods' : 'Documents'
   return {
     product_code: options.productCode,
@@ -47,11 +52,12 @@ export function mapShipmentToShipmondo(draft: ShipmentDraft, options: { productC
     contents,
     parties: [toParty('sender', draft.sender), toParty('receiver', draft.recipient)],
     parcels: draft.parcels.map((p) => ({ weight: Math.round(p.weight * 1000), quantity: 1, length: p.length, width: p.width, height: p.height })),
-    customs: buildCustoms(draft),
+    customs: buildCustoms(draft, options.requiresCustoms),
+    ...(draft.deliveryLocation === 'service_point' ? { automatic_select_service_point: true } : {}),
   }
 }
 
-export async function createShipment(draft: ShipmentDraft, options: { productCode: string; serviceCodes: string[]; reference: string }): Promise<ShipmondoShipment> {
+export async function createShipment(draft: ShipmentDraft, options: { productCode: string; serviceCodes: string[]; reference: string; requiresCustoms: boolean }): Promise<ShipmondoShipment> {
   const client = new ShipmondoClient()
   if (!client.isConfigured()) throw new Error('Shipmondo is not configured')
   const body = mapShipmentToShipmondo(draft, options)

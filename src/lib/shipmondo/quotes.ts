@@ -2,7 +2,8 @@ import 'server-only'
 import { ShipmondoClient } from './client'
 import { listProducts } from './products'
 import { calculateCustomerPrice, totalChargeableWeight, type PricingRule } from '@/lib/shipping'
-import type { ShipmentDraft, ShippingQuote } from '@/lib/types'
+import { rateForWeight } from '@/lib/carrierRates'
+import type { DeliveryLocation, ShipmentDraft, ShippingQuote } from '@/lib/types'
 import type { ShipmondoProduct } from './types'
 
 // Markup applied on top of Shipmondo's real quoted price (or, when a carrier can't be quoted for a
@@ -31,8 +32,9 @@ async function fetchRealQuotes(draft: Pick<ShipmentDraft, 'originCountry' | 'ori
   })
 }
 
-function pickProductForCarrier(products: ShipmondoProduct[], carrierCode: string, quotedCodes: Set<string>): ShipmondoProduct | undefined {
-  const candidates = products.filter((p) => p.carrier.code === carrierCode && p.available && !p.service_point_required)
+function pickProductForCarrier(products: ShipmondoProduct[], carrierCode: string, quotedCodes: Set<string>, location: DeliveryLocation): ShipmondoProduct | undefined {
+  const eligible = products.filter((p) => p.carrier.code === carrierCode && p.available)
+  const candidates = location === 'service_point' ? eligible.filter((p) => p.service_point_available) : eligible.filter((p) => !p.service_point_required)
   if (!candidates.length) return undefined
   const quoted = candidates.find((c) => quotedCodes.has(c.code))
   if (quoted) return quoted
@@ -64,7 +66,7 @@ function matchesCarrierName(productCarrierName: string, wanted?: string): boolea
   return a.includes(b) || b.includes(a)
 }
 
-export async function getLiveQuotes(draft: Pick<ShipmentDraft, 'originCountry' | 'originPostalCode' | 'destinationCountry' | 'destinationPostalCode' | 'parcels' | 'sender' | 'recipient' | 'carrierName'>): Promise<ShippingQuote[]> {
+export async function getLiveQuotes(draft: Pick<ShipmentDraft, 'originCountry' | 'originPostalCode' | 'destinationCountry' | 'destinationPostalCode' | 'parcels' | 'sender' | 'recipient' | 'carrierName' | 'deliveryLocation'>): Promise<ShippingQuote[]> {
   const [products, rawQuotes] = await Promise.all([
     listProducts(draft.destinationCountry),
     fetchRealQuotes(draft).catch(() => [] as RawQuote[]),
@@ -76,12 +78,16 @@ export async function getLiveQuotes(draft: Pick<ShipmentDraft, 'originCountry' |
 
   const quotes: ShippingQuote[] = []
   for (const carrierCode of carrierCodes) {
-    const product = pickProductForCarrier(products, carrierCode, quotedCodes)
+    const product = pickProductForCarrier(products, carrierCode, quotedCodes, draft.deliveryLocation)
     if (!product) continue
     if (!matchesCarrierName(product.carrier.name, draft.carrierName)) continue
     const realQuote = rawQuotes.find((q) => q.product_code === product.code)
     const estimated = !realQuote
-    const purchasePrice = realQuote?.price ?? BASE_FEE + weight * (intl ? PER_KG_INTERNATIONAL : PER_KG_DOMESTIC)
+    // When Shipmondo can't price this route via /quotes/list, use our own real rate card for this
+    // carrier + delivery location (sourced from the carrier's own published weight-class pricing)
+    // rather than a generic per-kg guess.
+    const rateCardPrice = draft.carrierName ? rateForWeight(draft.carrierName, draft.deliveryLocation, weight) : undefined
+    const purchasePrice = realQuote?.price ?? rateCardPrice ?? BASE_FEE + weight * (intl ? PER_KG_INTERNATIONAL : PER_KG_DOMESTIC)
     quotes.push({
       id: `${product.carrier.code}-${product.code}`,
       carrier: product.carrier.name,
