@@ -1,105 +1,80 @@
 export type DeliveryLocation = 'home' | 'service_point'
-export type RateBracket = { maxWeight: number; price: number }
 export type BoxSize = { length: number; width: number; height: number }
 
-// Real carrier cost rates (DKK, excl. VAT), keyed by carrier name and delivery location.
-// `maxWeight` is the upper bound (kg) of that weight class; brackets are ascending and
-// non-overlapping, matching each carrier's own published weight classes.
-export const CARRIER_RATE_CARDS: Record<string, Partial<Record<DeliveryLocation, RateBracket[]>>> = {
-  DAO: {
-    service_point: [
-      { maxWeight: 0.25, price: 34.8 },
-      { maxWeight: 0.5, price: 36.6 },
-      { maxWeight: 1, price: 38.43 },
-      { maxWeight: 2, price: 42.51 },
-      { maxWeight: 3, price: 44.55 },
-      { maxWeight: 5, price: 46.59 },
-      { maxWeight: 10, price: 54.96 },
-      { maxWeight: 15, price: 64.55 },
-    ],
-    home: [
-      { maxWeight: 0.25, price: 39.66 },
-      { maxWeight: 0.5, price: 41.29 },
-      { maxWeight: 1, price: 42.51 },
-      { maxWeight: 2, price: 46.59 },
-      { maxWeight: 3, price: 49.45 },
-      { maxWeight: 5, price: 52.51 },
-    ],
-  },
-  GLS: {
-    service_point: [
-      { maxWeight: 1, price: 34.8 },
-      { maxWeight: 5, price: 39.8 },
-      { maxWeight: 10, price: 58.4 },
-      { maxWeight: 15, price: 74.0 },
-      { maxWeight: 20, price: 96.0 },
-    ],
-    home: [
-      { maxWeight: 1, price: 59.8 },
-      { maxWeight: 5, price: 67.8 },
-      { maxWeight: 10, price: 76.4 },
-      { maxWeight: 15, price: 95.8 },
-      { maxWeight: 20, price: 119.8 },
-    ],
-  },
-  PostNord: {
-    service_point: [
-      { maxWeight: 1, price: 37.8 },
-      { maxWeight: 2, price: 48.2 },
-      { maxWeight: 5, price: 58.4 },
-      { maxWeight: 10, price: 62.8 },
-      { maxWeight: 15, price: 73.8 },
-      { maxWeight: 20, price: 94.4 },
-    ],
-    home: [
-      { maxWeight: 1, price: 57.8 },
-      { maxWeight: 2, price: 66.4 },
-      { maxWeight: 5, price: 69.8 },
-      { maxWeight: 10, price: 76.4 },
-      { maxWeight: 15, price: 86.8 },
-      { maxWeight: 20, price: 103.0 },
-    ],
-  },
-  Bring: {
-    service_point: [
-      { maxWeight: 1, price: 40.0 },
-      { maxWeight: 5, price: 49.0 },
-      { maxWeight: 10, price: 61.0 },
-      { maxWeight: 15, price: 67.0 },
-      { maxWeight: 20, price: 78.0 },
-      { maxWeight: 25, price: 81.0 },
-      { maxWeight: 30, price: 89.0 },
-    ],
-    home: [
-      { maxWeight: 1, price: 115.0 },
-      { maxWeight: 5, price: 119.0 },
-      { maxWeight: 10, price: 122.0 },
-      { maxWeight: 15, price: 126.0 },
-      { maxWeight: 20, price: 130.0 },
-      { maxWeight: 25, price: 134.0 },
-      { maxWeight: 30, price: 138.0 },
-    ],
-  },
+// Pak & Send's own published price list (DKK, incl. VAT) — applied the same regardless of which
+// carrier is booked. `maxWeight` is the upper bound (kg) of that weight class.
+
+// "POSTPAKKER DANMARK 2026": Collect (service point) vs Home. Collect has no 35 kg tier ("Ikke muligt").
+type DomesticBracket = { maxWeight: number; service_point: number | null; home: number }
+const DOMESTIC_BRACKETS: DomesticBracket[] = [
+  { maxWeight: 1, service_point: 89, home: 119 },
+  { maxWeight: 5, service_point: 98, home: 149 },
+  { maxWeight: 10, service_point: 149, home: 189 },
+  { maxWeight: 20, service_point: 198, home: 239 },
+  { maxWeight: 35, service_point: null, home: 379 },
+]
+
+// "POSTPAKKER UDLAND 2026 - FRB": one price per weight class per zone (no Home/Collect split).
+export type IntlZone = 'europe1' | 'europe2' | 'norway_switzerland_liechtenstein' | 'rest_of_world' | 'faroe_islands' | 'greenland'
+type IntlBracket = { maxWeight: number; prices: Record<IntlZone, number> }
+const INTERNATIONAL_BRACKETS: IntlBracket[] = [
+  { maxWeight: 1, prices: { europe1: 214, europe2: 267, norway_switzerland_liechtenstein: 467, rest_of_world: 511, faroe_islands: 484, greenland: 487 } },
+  { maxWeight: 2, prices: { europe1: 259, europe2: 298, norway_switzerland_liechtenstein: 510, rest_of_world: 625, faroe_islands: 512, greenland: 590 } },
+  { maxWeight: 5, prices: { europe1: 311, europe2: 356, norway_switzerland_liechtenstein: 556, rest_of_world: 783, faroe_islands: 553, greenland: 736 } },
+  { maxWeight: 10, prices: { europe1: 503, europe2: 558, norway_switzerland_liechtenstein: 758, rest_of_world: 1149, faroe_islands: 752, greenland: 1154 } },
+  { maxWeight: 15, prices: { europe1: 598, europe2: 720, norway_switzerland_liechtenstein: 920, rest_of_world: 1605, faroe_islands: 1000, greenland: 1628 } },
+  { maxWeight: 20, prices: { europe1: 773, europe2: 892, norway_switzerland_liechtenstein: 1092, rest_of_world: 2060, faroe_islands: 1147, greenland: 2134 } },
+]
+
+// Country groupings from the price list's own footnote. Norway/Switzerland/Liechtenstein get their
+// own dedicated column on the sheet, so they're matched before the general Europe 2 list.
+const EUROPE_1 = new Set(['BE', 'BG', 'CY', 'EE', 'FI', 'FR', 'IE', 'IT', 'HR', 'LV', 'LT', 'LU', 'MT', 'NL', 'PL', 'PT', 'RO', 'SK', 'SI', 'ES', 'GB', 'SE', 'CZ', 'DE', 'HU', 'AT'])
+const EUROPE_2 = new Set(['AL', 'AD', 'AM', 'AZ', 'BA', 'GE', 'GI', 'GG', 'GR', 'BY', 'IS', 'JE', 'KZ', 'KG', 'MK', 'MD', 'ME', 'RU', 'SM', 'RS', 'TJ', 'TR', 'UA', 'UZ', 'VA'])
+const NORWAY_SWITZERLAND_LIECHTENSTEIN = new Set(['NO', 'CH', 'LI'])
+
+function intlZoneFor(countryCode: string): IntlZone {
+  if (countryCode === 'FO') return 'faroe_islands'
+  if (countryCode === 'GL') return 'greenland'
+  if (NORWAY_SWITZERLAND_LIECHTENSTEIN.has(countryCode)) return 'norway_switzerland_liechtenstein'
+  if (EUROPE_1.has(countryCode)) return 'europe1'
+  if (EUROPE_2.has(countryCode)) return 'europe2'
+  return 'rest_of_world'
 }
 
-export function ratesFor(carrierName: string, location: DeliveryLocation): RateBracket[] {
-  return CARRIER_RATE_CARDS[carrierName]?.[location] ?? []
+export function isDomestic(originCountry: string, destinationCountry: string): boolean {
+  return originCountry === destinationCountry
 }
 
-export function availableLocations(carrierName: string): DeliveryLocation[] {
-  const card = CARRIER_RATE_CARDS[carrierName]
-  if (!card) return ['home', 'service_point']
-  return (['service_point', 'home'] as const).filter((loc) => card[loc])
+/** Pak & Send's real price (DKK) for this route/location/weight, or undefined once it exceeds the max weight. */
+export function rateForWeight(originCountry: string, destinationCountry: string, location: DeliveryLocation, weightKg: number): number | undefined {
+  if (isDomestic(originCountry, destinationCountry)) {
+    const bracket = DOMESTIC_BRACKETS.find((b) => weightKg <= b.maxWeight)
+    if (!bracket) return undefined
+    return location === 'service_point' ? (bracket.service_point ?? undefined) : bracket.home
+  }
+  const zone = intlZoneFor(destinationCountry)
+  return INTERNATIONAL_BRACKETS.find((b) => weightKg <= b.maxWeight)?.prices[zone]
 }
 
-export function maxWeightFor(carrierName: string, location: DeliveryLocation): number | undefined {
-  const brackets = ratesFor(carrierName, location)
-  return brackets.length ? brackets[brackets.length - 1].maxWeight : undefined
+function uniqueSorted(values: number[]): number[] {
+  return [...new Set(values)].sort((a, b) => a - b)
 }
 
-/** Real carrier price (DKK excl. VAT) for a given actual weight, or undefined if it exceeds the carrier's max. */
-export function rateForWeight(carrierName: string, location: DeliveryLocation, weightKg: number): number | undefined {
-  return ratesFor(carrierName, location).find((b) => weightKg <= b.maxWeight)?.price
+/**
+ * Weight-class options for the wizard's Parcel step. The Parcel step runs before the recipient's
+ * address is known, so this shows the merged set of both the domestic and international weight
+ * classes for the chosen delivery location — `rateForWeight` resolves the real price for the
+ * actual route once the destination is known, regardless of which of these was picked.
+ */
+export function weightBrackets(location: DeliveryLocation): number[] {
+  const domestic = DOMESTIC_BRACKETS.filter((b) => location !== 'service_point' || b.service_point !== null).map((b) => b.maxWeight)
+  const intl = INTERNATIONAL_BRACKETS.map((b) => b.maxWeight)
+  return uniqueSorted([...domestic, ...intl])
+}
+
+export function maxWeightFor(location: DeliveryLocation): number | undefined {
+  const brackets = weightBrackets(location)
+  return brackets[brackets.length - 1]
 }
 
 const BOX_SIZES: (BoxSize & { upTo: number })[] = [
@@ -108,10 +83,10 @@ const BOX_SIZES: (BoxSize & { upTo: number })[] = [
   { upTo: 5, length: 40, width: 30, height: 20 },
   { upTo: 10, length: 45, width: 35, height: 25 },
   { upTo: 20, length: 50, width: 40, height: 30 },
-  { upTo: 30, length: 60, width: 45, height: 35 },
+  { upTo: 35, length: 60, width: 45, height: 35 },
 ]
 
-/** Reasonable default parcel dimensions for a weight bracket — carriers price by weight class, not exact size. */
+/** Reasonable default parcel dimensions for a weight bracket — the price list prices by weight class, not exact size. */
 export function boxSizeFor(maxWeight: number): BoxSize {
   const match = BOX_SIZES.find((b) => maxWeight <= b.upTo) ?? BOX_SIZES[BOX_SIZES.length - 1]
   return { length: match.length, width: match.width, height: match.height }
