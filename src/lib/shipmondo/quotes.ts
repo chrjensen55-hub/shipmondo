@@ -83,10 +83,12 @@ export async function getLiveQuotes(draft: Pick<ShipmentDraft, 'originCountry' |
     if (!matchesCarrierName(product.carrier.name, draft.carrierName)) continue
     const realQuote = rawQuotes.find((q) => q.product_code === product.code)
     const estimated = !realQuote
-    // When Shipmondo can't price this route via /quotes/list, use Pak & Send's own published price
-    // list (same for every carrier) rather than a generic per-kg guess.
+    // Pak & Send's own published price list is authoritative for what the customer is quoted —
+    // the same price applies no matter which carrier is booked, so it takes priority over
+    // Shipmondo's live /quotes/list price. Shipmondo's price (or, failing that, a generic per-kg
+    // guess) only fills in for weights the published list doesn't cover (e.g. over 35 kg).
     const rateCardPrice = rateForWeight(draft.originCountry, draft.destinationCountry, draft.deliveryLocation, weight)
-    const purchasePrice = realQuote?.price ?? rateCardPrice ?? BASE_FEE + weight * (intl ? PER_KG_INTERNATIONAL : PER_KG_DOMESTIC)
+    const purchasePrice = rateCardPrice ?? realQuote?.price ?? BASE_FEE + weight * (intl ? PER_KG_INTERNATIONAL : PER_KG_DOMESTIC)
     quotes.push({
       id: `${product.carrier.code}-${product.code}`,
       carrier: product.carrier.name,
