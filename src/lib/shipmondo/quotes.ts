@@ -2,7 +2,7 @@ import 'server-only'
 import { ShipmondoClient } from './client'
 import { listProducts } from './products'
 import { calculateCustomerPrice, totalChargeableWeight, type PricingRule } from '@/lib/shipping'
-import { rateForWeight } from '@/lib/carrierRates'
+import { isDomestic, rateForWeight } from '@/lib/carrierRates'
 import type { DeliveryLocation, ShipmentDraft, ShippingQuote } from '@/lib/types'
 import type { ShipmondoProduct } from './types'
 
@@ -89,6 +89,9 @@ export async function getLiveQuotes(draft: Pick<ShipmentDraft, 'originCountry' |
     // guess) only fills in for weights the published list doesn't cover (e.g. over 35 kg).
     const rateCardPrice = rateForWeight(draft.originCountry, draft.destinationCountry, draft.deliveryLocation, weight)
     const purchasePrice = rateCardPrice ?? realQuote?.price ?? BASE_FEE + weight * (intl ? PER_KG_INTERNATIONAL : PER_KG_DOMESTIC)
+    // Domestic price-list rates are charged to the customer exactly as published, with no markup.
+    const domestic = isDomestic(draft.originCountry, draft.destinationCountry)
+    const customerPrice = domestic && rateCardPrice !== undefined ? rateCardPrice : calculateCustomerPrice(purchasePrice, DEFAULT_PRICING_RULE)
     quotes.push({
       id: `${product.carrier.code}-${product.code}`,
       carrier: product.carrier.name,
@@ -96,7 +99,7 @@ export async function getLiveQuotes(draft: Pick<ShipmentDraft, 'originCountry' |
       productCode: product.code,
       serviceCodes: requiredServiceCodes(product, draft),
       purchasePrice: Math.round(purchasePrice * 100) / 100,
-      customerPrice: calculateCustomerPrice(purchasePrice, DEFAULT_PRICING_RULE),
+      customerPrice,
       currency: realQuote?.currency_code ?? 'DKK',
       estimatedDelivery: product.expected_transit_time ?? 'Contact us for delivery time',
       metadata: { source: 'shipmondo', chargeableWeight: weight, requiresCustoms: product.customs_declaration_required, estimated },
