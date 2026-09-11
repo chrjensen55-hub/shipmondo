@@ -2,6 +2,7 @@
 import { useEffect, useState } from 'react'
 import { Printer } from 'lucide-react'
 import { AdminShell } from '@/components/admin/admin-shell'
+export const dynamic = 'force-dynamic'
 
 type ConnectionState = { status: 'idle' | 'checking' | 'ok' | 'error'; message?: string; accountName?: string }
 type PrinterOption = { name: string; hostName: string; printerName: string; labelFormat: string }
