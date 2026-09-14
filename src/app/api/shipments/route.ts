@@ -31,7 +31,7 @@ export async function POST(request: Request) {
     let result: { reference: string; tracking: string; shipmentId?: number }
     if (live && quote.metadata.source === 'shipmondo') {
       try {
-        const booked = await createShipment(input, { productCode: quote.productCode, serviceCodes: quote.serviceCodes, reference, requiresCustoms: quote.metadata.requiresCustoms ?? false })
+        const booked = await createShipment(input, { productCode: quote.productCode, serviceCodes: quote.serviceCodes, reference, requiresCustoms: quote.metadata.requiresCustoms ?? false, ownAgreement: quote.metadata.ownAgreement ?? false })
         result = { reference, tracking: booked.external_pkg_no ?? booked.pkg_no, shipmentId: booked.id }
       } catch (err) {
         console.error('Shipmondo booking failed', err)

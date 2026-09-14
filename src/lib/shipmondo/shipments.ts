@@ -57,7 +57,7 @@ export function mapShipmentToShipmondo(draft: ShipmentDraft, options: { productC
   }
 }
 
-export async function createShipment(draft: ShipmentDraft, options: { productCode: string; serviceCodes: string[]; reference: string; requiresCustoms: boolean }): Promise<ShipmondoShipment> {
+export async function createShipment(draft: ShipmentDraft, options: { productCode: string; serviceCodes: string[]; reference: string; requiresCustoms: boolean; ownAgreement?: boolean }): Promise<ShipmondoShipment> {
   const client = new ShipmondoClient()
   if (!client.isConfigured()) throw new Error('Shipmondo is not configured')
   const body = mapShipmentToShipmondo(draft, options)

@@ -50,6 +50,18 @@ describe('customs mapping matches Shipmondo: driven by the product, not by conte
   })
 })
 
+describe('own agreement flag', () => {
+  it('defaults to false when the product does not require an own agreement', () => {
+    const req = mapShipmentToShipmondo(draft({}), { ...options, requiresCustoms: false })
+    expect(req.own_agreement).toBe(false)
+  })
+
+  it('passes own_agreement through when the account has one for this product (e.g. daoSHOP pickup)', () => {
+    const req = mapShipmentToShipmondo(draft({}), { ...options, requiresCustoms: false, ownAgreement: true })
+    expect(req.own_agreement).toBe(true)
+  })
+})
+
 describe('service point selection', () => {
   it('requests automatic service point selection when the customer chose a pickup point', () => {
     const req = mapShipmentToShipmondo(draft({ deliveryLocation: 'service_point' }), { ...options, requiresCustoms: false })

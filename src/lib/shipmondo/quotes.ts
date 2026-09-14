@@ -102,7 +102,7 @@ export async function getLiveQuotes(draft: Pick<ShipmentDraft, 'originCountry' |
       customerPrice,
       currency: realQuote?.currency_code ?? 'DKK',
       estimatedDelivery: product.expected_transit_time ?? 'Contact us for delivery time',
-      metadata: { source: 'shipmondo', chargeableWeight: weight, requiresCustoms: product.customs_declaration_required, estimated },
+      metadata: { source: 'shipmondo', chargeableWeight: weight, requiresCustoms: product.customs_declaration_required, estimated, ownAgreement: product.own_agreement_available },
     })
   }
   return quotes.sort((a, b) => a.customerPrice - b.customerPrice)
