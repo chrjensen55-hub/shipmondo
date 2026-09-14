@@ -4,7 +4,7 @@ import { getLiveQuotes } from '@/lib/shipmondo/quotes'
 import { createShipment } from '@/lib/shipmondo/shipments'
 import { ShipmondoClient } from '@/lib/shipmondo/client'
 
-const completed = new Map<string, { reference: string; tracking: string }>()
+const completed = new Map<string, { reference: string; tracking: string; shipmentId?: number }>()
 
 export async function POST(request: Request) {
   try {
@@ -28,11 +28,11 @@ export async function POST(request: Request) {
     const stamp = Date.now().toString().slice(-7)
     const reference = `PS-${stamp}`
 
-    let result: { reference: string; tracking: string }
+    let result: { reference: string; tracking: string; shipmentId?: number }
     if (live && quote.metadata.source === 'shipmondo') {
       try {
         const booked = await createShipment(input, { productCode: quote.productCode, serviceCodes: quote.serviceCodes, reference, requiresCustoms: quote.metadata.requiresCustoms ?? false })
-        result = { reference, tracking: booked.external_pkg_no ?? booked.pkg_no }
+        result = { reference, tracking: booked.external_pkg_no ?? booked.pkg_no, shipmentId: booked.id }
       } catch (err) {
         console.error('Shipmondo booking failed', err)
         const message = err instanceof Error ? err.message : 'The carrier rejected this shipment.'
