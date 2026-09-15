@@ -16,6 +16,14 @@ export function isWebBluetoothSupported(): boolean {
   return typeof navigator !== 'undefined' && Boolean(navigator.bluetooth)
 }
 
+// Chrome's getDevices()/persistent-permissions API — the only way to silently reuse a pairing
+// after a full page reload — is gated behind experimental chrome://flags on most Android builds,
+// so it can't be relied on by default. As a much more reliable fallback, keep the live device in
+// memory for as long as this browser tab stays open: on a shop tablet the booking page realistically
+// stays open all day, so pairing once at the start of the day is enough, page navigations included
+// (a client-side route change keeps this module's state; only a full reload/tab close clears it).
+let cachedDevice: BluetoothDevice | null = null
+
 function rememberDevice(id: string) {
   try {
     localStorage.setItem(STORAGE_KEY, id)
@@ -37,6 +45,7 @@ export function getSelectedDeviceId(): string | null {
 // used by the admin device list so switching printers doesn't need a fresh pairing prompt.
 export function selectDevice(device: BluetoothDevice) {
   rememberDevice(device.id)
+  cachedDevice = device
 }
 
 // Every Bluetooth device this browser has ever been granted permission to access on this site —
@@ -68,10 +77,20 @@ export async function pairZebraPrinter(): Promise<BluetoothDevice> {
   if (!navigator.bluetooth) throw new Error('This browser does not support Web Bluetooth.')
   const device = await navigator.bluetooth.requestDevice({ acceptAllDevices: true, optionalServices: [SERVICE_UUID] })
   rememberDevice(device.id)
+  cachedDevice = device
   return device
 }
 
+export function hasCachedZebraPrinter(): boolean {
+  return cachedDevice !== null
+}
+
+export function getCachedDeviceName(): string | null {
+  return cachedDevice?.name ?? null
+}
+
 export async function hasPairedZebraPrinter(): Promise<boolean> {
+  if (cachedDevice) return true
   return (await getRememberedDevice()) !== null
 }
 
@@ -85,7 +104,10 @@ function sleep(ms: number) {
 // call this as early as possible in a click handler, before any other awaited work.
 export async function ensureZebraDevice(): Promise<BluetoothDevice> {
   if (!navigator.bluetooth) throw new Error('This browser does not support Web Bluetooth.')
-  return (await getRememberedDevice()) ?? (await pairZebraPrinter())
+  if (cachedDevice) return cachedDevice
+  const device = (await getRememberedDevice()) ?? (await pairZebraPrinter())
+  cachedDevice = device
+  return device
 }
 
 export async function writeZplToDevice(device: BluetoothDevice, zpl: string): Promise<void> {

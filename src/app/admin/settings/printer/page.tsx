@@ -3,7 +3,7 @@ import { useEffect, useState } from 'react'
 import { Printer, Bluetooth, BluetoothConnected } from 'lucide-react'
 import { AdminShell } from '@/components/admin/admin-shell'
 import { getDefaultPrinter, type BrowserPrintDevice } from '@/lib/browserPrint'
-import { isWebBluetoothSupported, getGrantedDevices, getSelectedDeviceId, selectDevice, pairZebraPrinter } from '@/lib/zebraBle'
+import { isWebBluetoothSupported, getGrantedDevices, getSelectedDeviceId, selectDevice, pairZebraPrinter, hasCachedZebraPrinter, getCachedDeviceName } from '@/lib/zebraBle'
 export const dynamic = 'force-dynamic'
 
 type ConnectionState = { status: 'idle' | 'checking' | 'ok' | 'error'; message?: string; accountName?: string }
@@ -107,22 +107,29 @@ export default function PrinterSettings() {
           <h2>Zebra printer over Bluetooth LE (this tablet)</h2>
           <p>
             For printers like the ZD421 in its Bluetooth-LE-only configuration (no Wi-Fi, no Bluetooth Classic), the app prints directly to the printer&apos;s Bluetooth radio &mdash; no extra app needed.
-            The browser needs you to pick the printer once; pair it here ahead of time so customers never see that prompt during checkout. This setting only applies to this tablet &mdash; each tablet pairs its own printer independently.
+            Pairing lasts for as long as this browser tab stays open &mdash; which on a shop tablet is normally all day &mdash; so pair once here each morning (or after the tablet restarts) and customers won&apos;t see this prompt.
           </p>
           {!isWebBluetoothSupported() && <div className="form-error">This browser does not support Web Bluetooth. Use Chrome on this tablet.</div>}
           {ble.status === 'error' && <div className="form-error">{ble.message}</div>}
-          {ble.devices.length > 0 && (
-            <ul className="device-list">
-              {ble.devices.map((d) => (
-                <li key={d.id} className={d.id === ble.selectedId ? 'selected' : ''}>
-                  <span>{d.name || 'Unnamed device'}</span>
-                  {d.id === ble.selectedId ? <b>In use for printing</b> : <button className="button button-secondary" onClick={() => chooseBleDevice(d.id)}>Use this printer</button>}
-                </li>
-              ))}
-            </ul>
+          {hasCachedZebraPrinter() ? (
+            <div className="form-success">Ready to print to {getCachedDeviceName() || 'the paired printer'} for the rest of this session.</div>
+          ) : (
+            ble.status === 'ready' && <p>Not paired yet in this browser session &mdash; tap the button below.</p>
           )}
-          {ble.status === 'ready' && ble.devices.length === 0 && <p>No Bluetooth devices paired with this tablet yet.</p>}
-          <button className="button button-primary" onClick={pairBle} disabled={ble.status === 'checking' || !isWebBluetoothSupported()}>{ble.status === 'checking' ? 'Waiting for you to pick a device…' : 'Pair a new Bluetooth printer'}</button>
+          {ble.devices.length > 0 && (
+            <>
+              <p>Devices this tablet has been granted access to before (survives closing this page, but not always a full browser restart):</p>
+              <ul className="device-list">
+                {ble.devices.map((d) => (
+                  <li key={d.id} className={d.id === ble.selectedId ? 'selected' : ''}>
+                    <span>{d.name || 'Unnamed device'}</span>
+                    {d.id === ble.selectedId ? <b>In use for printing</b> : <button className="button button-secondary" onClick={() => chooseBleDevice(d.id)}>Use this printer</button>}
+                  </li>
+                ))}
+              </ul>
+            </>
+          )}
+          <button className="button button-primary" onClick={pairBle} disabled={ble.status === 'checking' || !isWebBluetoothSupported()}>{ble.status === 'checking' ? 'Waiting for you to pick a device…' : 'Pair Zebra printer'}</button>
         </section>
         <section className="setup-card">
           <Bluetooth />
