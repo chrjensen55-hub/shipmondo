@@ -75,8 +75,6 @@ export type ShipmondoShipment = {
 
 export type ShipmondoLabel = { base64: string; file_format: string }
 
-export type ShipmondoPrinter = { name: string; hostName: string; printerName: string; labelFormat: string }
-
 export type ShipmondoProductService = {
   code: string
   id: number
