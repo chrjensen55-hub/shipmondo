@@ -9,7 +9,12 @@
 // interface instead of the standard printer class specifically so raw ZPL can be streamed to them
 // directly — confirmed against real Zebra hardware by existing open-source tools, e.g.
 // https://github.com/mkxml/zpl-webusb
-const ZEBRA_VENDOR_ID = 0x0a5f // 2655 — Zebra Technologies' registered USB vendor ID
+//
+// Deliberately does NOT filter requestDevice() by Zebra's usual USB vendor ID (0x0A5F): if that ID
+// guess were even slightly off for a given unit, the picker would show zero devices, which looks
+// identical to "USB isn't working" — same trap the Bluetooth service-UUID filter fell into. An
+// empty filters array shows every connected USB device instead, so the printer is guaranteed to be
+// selectable by name.
 
 export function isWebUsbSupported(): boolean {
   return typeof navigator !== 'undefined' && Boolean(navigator.usb)
@@ -37,7 +42,7 @@ async function openAndClaim(device: USBDevice): Promise<number> {
 // the browser requires that for its USB device picker to be allowed to open.
 export async function pairZebraPrinterUsb(): Promise<USBDevice> {
   if (!navigator.usb) throw new Error('This browser does not support WebUSB.')
-  const device = await navigator.usb.requestDevice({ filters: [{ vendorId: ZEBRA_VENDOR_ID }] })
+  const device = await navigator.usb.requestDevice({ filters: [] })
   cachedEndpoint = await openAndClaim(device)
   cachedDevice = device
   return device
@@ -62,7 +67,7 @@ export async function ensureZebraUsbDevice(): Promise<USBDevice> {
   if (!navigator.usb) throw new Error('This browser does not support WebUSB.')
   if (cachedDevice) return cachedDevice
   const known = await navigator.usb.getDevices()
-  const existing = known.find((d) => d.vendorId === ZEBRA_VENDOR_ID)
+  const existing = known[0]
   if (existing) {
     cachedEndpoint = await openAndClaim(existing)
     cachedDevice = existing
