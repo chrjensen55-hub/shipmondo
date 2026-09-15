@@ -3,20 +3,25 @@ import { useEffect, useState } from 'react'
 import { Printer, Bluetooth, BluetoothConnected } from 'lucide-react'
 import { AdminShell } from '@/components/admin/admin-shell'
 import { getDefaultPrinter, type BrowserPrintDevice } from '@/lib/browserPrint'
-import { isWebBluetoothSupported, hasPairedZebraPrinter, pairZebraPrinter } from '@/lib/zebraBle'
+import { isWebBluetoothSupported, getGrantedDevices, getSelectedDeviceId, selectDevice, pairZebraPrinter } from '@/lib/zebraBle'
 export const dynamic = 'force-dynamic'
 
 type ConnectionState = { status: 'idle' | 'checking' | 'ok' | 'error'; message?: string; accountName?: string }
 type PrinterOption = { name: string; hostName: string; printerName: string; labelFormat: string }
 type BrowserPrintState = { status: 'idle' | 'checking' | 'ok' | 'error'; device?: BrowserPrintDevice; message?: string }
-type BleState = { status: 'idle' | 'checking' | 'paired' | 'error'; deviceName?: string; message?: string }
+type BleState = { status: 'idle' | 'checking' | 'ready' | 'error'; devices: BluetoothDevice[]; selectedId: string | null; message?: string }
 
 export default function PrinterSettings() {
   const [connection, setConnection] = useState<ConnectionState>({ status: 'checking' })
   const [printers, setPrinters] = useState<PrinterOption[]>([])
   const [labelFormat, setLabelFormat] = useState('ZPL')
   const [browserPrint, setBrowserPrint] = useState<BrowserPrintState>({ status: 'idle' })
-  const [ble, setBle] = useState<BleState>({ status: 'idle' })
+  const [ble, setBle] = useState<BleState>({ status: 'idle', devices: [], selectedId: null })
+
+  async function refreshBleDevices() {
+    const granted = await getGrantedDevices()
+    setBle((s) => ({ ...s, status: 'ready', devices: granted, selectedId: getSelectedDeviceId() }))
+  }
 
   async function testBrowserPrint() {
     setBrowserPrint({ status: 'checking' })
@@ -30,13 +35,20 @@ export default function PrinterSettings() {
   }
 
   async function pairBle() {
-    setBle({ status: 'checking' })
+    setBle((s) => ({ ...s, status: 'checking', message: undefined }))
     try {
-      const device = await pairZebraPrinter()
-      setBle({ status: 'paired', deviceName: device.name ?? 'Zebra printer' })
+      await pairZebraPrinter()
+      await refreshBleDevices()
     } catch (err) {
-      setBle({ status: 'error', message: err instanceof Error && err.message ? err.message : 'Could not pair. Make sure Bluetooth is on and the printer is nearby.' })
+      setBle((s) => ({ ...s, status: 'error', message: err instanceof Error && err.message ? err.message : 'Could not pair. Make sure Bluetooth is on and the printer is nearby.' }))
     }
+  }
+
+  function chooseBleDevice(id: string) {
+    const device = ble.devices.find((d) => d.id === id)
+    if (!device) return
+    selectDevice(device)
+    setBle((s) => ({ ...s, selectedId: id }))
   }
 
   async function checkConnection() {
@@ -59,7 +71,7 @@ export default function PrinterSettings() {
     const timer = setTimeout(() => {
       checkConnection()
       fetch('/api/shipmondo/printers').then((r) => r.json()).then((body) => setPrinters(body.data ?? [])).catch(() => {})
-      if (isWebBluetoothSupported()) hasPairedZebraPrinter().then((paired) => setBle((s) => (paired && s.status === 'idle' ? { status: 'paired', deviceName: 'a previously paired printer' } : s)))
+      if (isWebBluetoothSupported()) refreshBleDevices()
     }, 0)
     return () => clearTimeout(timer)
   }, [])
@@ -95,12 +107,22 @@ export default function PrinterSettings() {
           <h2>Zebra printer over Bluetooth LE (this tablet)</h2>
           <p>
             For printers like the ZD421 in its Bluetooth-LE-only configuration (no Wi-Fi, no Bluetooth Classic), the app prints directly to the printer&apos;s Bluetooth radio &mdash; no extra app needed.
-            The browser needs you to pick the printer once; pair it here ahead of time so customers never see that prompt during checkout.
+            The browser needs you to pick the printer once; pair it here ahead of time so customers never see that prompt during checkout. This setting only applies to this tablet &mdash; each tablet pairs its own printer independently.
           </p>
           {!isWebBluetoothSupported() && <div className="form-error">This browser does not support Web Bluetooth. Use Chrome on this tablet.</div>}
-          {ble.status === 'paired' && <div className="form-success">Paired with {ble.deviceName}.</div>}
           {ble.status === 'error' && <div className="form-error">{ble.message}</div>}
-          <button className="button button-primary" onClick={pairBle} disabled={ble.status === 'checking' || !isWebBluetoothSupported()}>{ble.status === 'checking' ? 'Waiting for you to pick a device…' : 'Pair Zebra printer'}</button>
+          {ble.devices.length > 0 && (
+            <ul className="device-list">
+              {ble.devices.map((d) => (
+                <li key={d.id} className={d.id === ble.selectedId ? 'selected' : ''}>
+                  <span>{d.name || 'Unnamed device'}</span>
+                  {d.id === ble.selectedId ? <b>In use for printing</b> : <button className="button button-secondary" onClick={() => chooseBleDevice(d.id)}>Use this printer</button>}
+                </li>
+              ))}
+            </ul>
+          )}
+          {ble.status === 'ready' && ble.devices.length === 0 && <p>No Bluetooth devices paired with this tablet yet.</p>}
+          <button className="button button-primary" onClick={pairBle} disabled={ble.status === 'checking' || !isWebBluetoothSupported()}>{ble.status === 'checking' ? 'Waiting for you to pick a device…' : 'Pair a new Bluetooth printer'}</button>
         </section>
         <section className="setup-card">
           <Bluetooth />

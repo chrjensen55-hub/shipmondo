@@ -25,14 +25,31 @@ function rememberDevice(id: string) {
   }
 }
 
-async function getRememberedDevice(): Promise<BluetoothDevice | null> {
-  if (!navigator.bluetooth?.getDevices) return null
-  let savedId: string | null = null
+export function getSelectedDeviceId(): string | null {
   try {
-    savedId = localStorage.getItem(STORAGE_KEY)
+    return localStorage.getItem(STORAGE_KEY)
   } catch {
     return null
   }
+}
+
+// Explicitly choose which already-granted device is "the" printer, without opening the picker —
+// used by the admin device list so switching printers doesn't need a fresh pairing prompt.
+export function selectDevice(device: BluetoothDevice) {
+  rememberDevice(device.id)
+}
+
+// Every Bluetooth device this browser has ever been granted permission to access on this site —
+// not just the currently selected one. Lets admin settings show what's available to pick from,
+// and lets a re-pair add a device without losing the ones already granted.
+export async function getGrantedDevices(): Promise<BluetoothDevice[]> {
+  if (!navigator.bluetooth?.getDevices) return []
+  return navigator.bluetooth.getDevices()
+}
+
+async function getRememberedDevice(): Promise<BluetoothDevice | null> {
+  if (!navigator.bluetooth?.getDevices) return null
+  const savedId = getSelectedDeviceId()
   if (!savedId) return null
   const devices = await navigator.bluetooth.getDevices()
   return devices.find((d) => d.id === savedId) ?? null
