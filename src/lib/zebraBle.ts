@@ -40,9 +40,16 @@ async function getRememberedDevice(): Promise<BluetoothDevice | null> {
 
 // Must be called from a user gesture (e.g. directly inside a button's onClick) — the browser
 // requires that for its Bluetooth device picker to be allowed to open.
+//
+// Deliberately does NOT filter requestDevice() by the parser service UUID: many BLE peripherals,
+// printers included, only expose their GATT services after a connection is made, not in the
+// broadcast/advertisement packet itself (128-bit custom UUIDs are expensive to fit in the ~31-byte
+// legacy advertisement). A `filters: [{ services: [...] }]` scan silently excludes such devices
+// from the picker, which looks identical to "the printer isn't there" — acceptAllDevices shows
+// every nearby Bluetooth device instead, so the printer is guaranteed to be selectable by name.
 export async function pairZebraPrinter(): Promise<BluetoothDevice> {
   if (!navigator.bluetooth) throw new Error('This browser does not support Web Bluetooth.')
-  const device = await navigator.bluetooth.requestDevice({ filters: [{ services: [SERVICE_UUID] }], optionalServices: [SERVICE_UUID] })
+  const device = await navigator.bluetooth.requestDevice({ acceptAllDevices: true, optionalServices: [SERVICE_UUID] })
   rememberDevice(device.id)
   return device
 }
