@@ -1,19 +1,22 @@
 'use client'
 import { useEffect, useState } from 'react'
-import { Printer, Bluetooth } from 'lucide-react'
+import { Printer, Bluetooth, BluetoothConnected } from 'lucide-react'
 import { AdminShell } from '@/components/admin/admin-shell'
 import { getDefaultPrinter, type BrowserPrintDevice } from '@/lib/browserPrint'
+import { isWebBluetoothSupported, hasPairedZebraPrinter, pairZebraPrinter } from '@/lib/zebraBle'
 export const dynamic = 'force-dynamic'
 
 type ConnectionState = { status: 'idle' | 'checking' | 'ok' | 'error'; message?: string; accountName?: string }
 type PrinterOption = { name: string; hostName: string; printerName: string; labelFormat: string }
 type BrowserPrintState = { status: 'idle' | 'checking' | 'ok' | 'error'; device?: BrowserPrintDevice; message?: string }
+type BleState = { status: 'idle' | 'checking' | 'paired' | 'error'; deviceName?: string; message?: string }
 
 export default function PrinterSettings() {
   const [connection, setConnection] = useState<ConnectionState>({ status: 'checking' })
   const [printers, setPrinters] = useState<PrinterOption[]>([])
   const [labelFormat, setLabelFormat] = useState('ZPL')
   const [browserPrint, setBrowserPrint] = useState<BrowserPrintState>({ status: 'idle' })
+  const [ble, setBle] = useState<BleState>({ status: 'idle' })
 
   async function testBrowserPrint() {
     setBrowserPrint({ status: 'checking' })
@@ -23,6 +26,16 @@ export default function PrinterSettings() {
       setBrowserPrint({ status: 'ok', device })
     } catch {
       setBrowserPrint({ status: 'error', message: 'Could not reach Zebra Browser Print on this device. Make sure the Browser Print app is installed and running, and the Zebra printer is paired.' })
+    }
+  }
+
+  async function pairBle() {
+    setBle({ status: 'checking' })
+    try {
+      const device = await pairZebraPrinter()
+      setBle({ status: 'paired', deviceName: device.name ?? 'Zebra printer' })
+    } catch (err) {
+      setBle({ status: 'error', message: err instanceof Error && err.message ? err.message : 'Could not pair. Make sure Bluetooth is on and the printer is nearby.' })
     }
   }
 
@@ -46,6 +59,7 @@ export default function PrinterSettings() {
     const timer = setTimeout(() => {
       checkConnection()
       fetch('/api/shipmondo/printers').then((r) => r.json()).then((body) => setPrinters(body.data ?? [])).catch(() => {})
+      if (isWebBluetoothSupported()) hasPairedZebraPrinter().then((paired) => setBle((s) => (paired && s.status === 'idle' ? { status: 'paired', deviceName: 'a previously paired printer' } : s)))
     }, 0)
     return () => clearTimeout(timer)
   }, [])
@@ -75,6 +89,18 @@ export default function PrinterSettings() {
             </label>
           </div>
           <button className="button button-primary" onClick={retryConnection} disabled={connection.status === 'checking'}>{connection.status === 'checking' ? 'Testing…' : 'Test connection'}</button>
+        </section>
+        <section className="setup-card">
+          <BluetoothConnected />
+          <h2>Zebra printer over Bluetooth LE (this tablet)</h2>
+          <p>
+            For printers like the ZD421 in its Bluetooth-LE-only configuration (no Wi-Fi, no Bluetooth Classic), the app prints directly to the printer&apos;s Bluetooth radio &mdash; no extra app needed.
+            The browser needs you to pick the printer once; pair it here ahead of time so customers never see that prompt during checkout.
+          </p>
+          {!isWebBluetoothSupported() && <div className="form-error">This browser does not support Web Bluetooth. Use Chrome on this tablet.</div>}
+          {ble.status === 'paired' && <div className="form-success">Paired with {ble.deviceName}.</div>}
+          {ble.status === 'error' && <div className="form-error">{ble.message}</div>}
+          <button className="button button-primary" onClick={pairBle} disabled={ble.status === 'checking' || !isWebBluetoothSupported()}>{ble.status === 'checking' ? 'Waiting for you to pick a device…' : 'Pair Zebra printer'}</button>
         </section>
         <section className="setup-card">
           <Bluetooth />
