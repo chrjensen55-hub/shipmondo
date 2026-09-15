@@ -1,15 +1,17 @@
 'use client'
 import { useEffect, useState } from 'react'
-import { Printer, Bluetooth, BluetoothConnected } from 'lucide-react'
+import { Printer, Bluetooth, BluetoothConnected, Usb } from 'lucide-react'
 import { AdminShell } from '@/components/admin/admin-shell'
 import { getDefaultPrinter, type BrowserPrintDevice } from '@/lib/browserPrint'
 import { isWebBluetoothSupported, getGrantedDevices, getSelectedDeviceId, selectDevice, pairZebraPrinter, hasCachedZebraPrinter, getCachedDeviceName } from '@/lib/zebraBle'
+import { isWebUsbSupported, getGrantedUsbDevices, pairZebraPrinterUsb, hasCachedUsbPrinter, getCachedUsbDeviceName } from '@/lib/zebraUsb'
 export const dynamic = 'force-dynamic'
 
 type ConnectionState = { status: 'idle' | 'checking' | 'ok' | 'error'; message?: string; accountName?: string }
 type PrinterOption = { name: string; hostName: string; printerName: string; labelFormat: string }
 type BrowserPrintState = { status: 'idle' | 'checking' | 'ok' | 'error'; device?: BrowserPrintDevice; message?: string }
 type BleState = { status: 'idle' | 'checking' | 'ready' | 'error'; devices: BluetoothDevice[]; selectedId: string | null; message?: string }
+type UsbState = { status: 'idle' | 'checking' | 'ready' | 'error'; devices: USBDevice[]; message?: string }
 
 export default function PrinterSettings() {
   const [connection, setConnection] = useState<ConnectionState>({ status: 'checking' })
@@ -17,10 +19,26 @@ export default function PrinterSettings() {
   const [labelFormat, setLabelFormat] = useState('ZPL')
   const [browserPrint, setBrowserPrint] = useState<BrowserPrintState>({ status: 'idle' })
   const [ble, setBle] = useState<BleState>({ status: 'idle', devices: [], selectedId: null })
+  const [usb, setUsb] = useState<UsbState>({ status: 'idle', devices: [] })
 
   async function refreshBleDevices() {
     const granted = await getGrantedDevices()
     setBle((s) => ({ ...s, status: 'ready', devices: granted, selectedId: getSelectedDeviceId() }))
+  }
+
+  async function refreshUsbDevices() {
+    const granted = await getGrantedUsbDevices()
+    setUsb((s) => ({ ...s, status: 'ready', devices: granted }))
+  }
+
+  async function pairUsb() {
+    setUsb((s) => ({ ...s, status: 'checking', message: undefined }))
+    try {
+      await pairZebraPrinterUsb()
+      await refreshUsbDevices()
+    } catch (err) {
+      setUsb((s) => ({ ...s, status: 'error', message: err instanceof Error && err.message ? err.message : 'Could not pair. Plug the printer into the tablet with a USB-C cable and make sure it is powered on.' }))
+    }
   }
 
   async function testBrowserPrint() {
@@ -72,6 +90,7 @@ export default function PrinterSettings() {
       checkConnection()
       fetch('/api/shipmondo/printers').then((r) => r.json()).then((body) => setPrinters(body.data ?? [])).catch(() => {})
       if (isWebBluetoothSupported()) refreshBleDevices()
+      if (isWebUsbSupported()) refreshUsbDevices()
     }, 0)
     return () => clearTimeout(timer)
   }, [])
@@ -101,6 +120,24 @@ export default function PrinterSettings() {
             </label>
           </div>
           <button className="button button-primary" onClick={retryConnection} disabled={connection.status === 'checking'}>{connection.status === 'checking' ? 'Testing…' : 'Test connection'}</button>
+        </section>
+        <section className="setup-card">
+          <Usb />
+          <h2>Zebra printer over USB (this tablet, recommended)</h2>
+          <p>
+            Plug the printer into this tablet with a USB-C cable and print directly over the wire &mdash; the most reliable option, since it doesn&apos;t depend on Bluetooth at all.
+            Pairing lasts for as long as this browser tab stays open, plus it&apos;s remembered across page reloads and app restarts, unlike Bluetooth.
+          </p>
+          {!isWebUsbSupported() && <div className="form-error">This browser does not support WebUSB. Use Chrome on this tablet.</div>}
+          {usb.status === 'error' && <div className="form-error">{usb.message}</div>}
+          {hasCachedUsbPrinter() ? (
+            <div className="form-success">Ready to print to {getCachedUsbDeviceName() || 'the paired printer'} over USB.</div>
+          ) : usb.devices.length > 0 ? (
+            <div className="form-success">Previously granted: {usb.devices.map((d) => d.productName || 'Zebra printer').join(', ')}. It will connect automatically next time you print.</div>
+          ) : (
+            usb.status === 'ready' && <p>Not paired yet &mdash; plug in the printer and tap the button below.</p>
+          )}
+          <button className="button button-primary" onClick={pairUsb} disabled={usb.status === 'checking' || !isWebUsbSupported()}>{usb.status === 'checking' ? 'Waiting for you to pick a device…' : 'Pair Zebra printer over USB'}</button>
         </section>
         <section className="setup-card">
           <BluetoothConnected />
