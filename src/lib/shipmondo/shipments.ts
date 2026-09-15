@@ -70,8 +70,9 @@ export async function getShipment(id: number): Promise<ShipmondoShipment> {
   return client.get<ShipmondoShipment>(`/shipments/${id}`)
 }
 
-export async function getShipmentLabels(id: number): Promise<ShipmondoLabel[]> {
+export async function getShipmentLabels(id: number, labelFormat?: string): Promise<ShipmondoLabel[]> {
   const client = new ShipmondoClient()
   if (!client.isConfigured()) throw new Error('Shipmondo is not configured')
-  return client.get<ShipmondoLabel[]>(`/shipments/${id}/labels`)
+  const query = labelFormat ? `?label_format=${encodeURIComponent(labelFormat)}` : ''
+  return client.get<ShipmondoLabel[]>(`/shipments/${id}/labels${query}`)
 }

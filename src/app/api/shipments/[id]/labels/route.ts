@@ -6,8 +6,9 @@ export async function GET(request: Request, { params }: { params: Promise<{ id: 
   if (!Number.isFinite(shipmentId)) {
     return Response.json({ error: { code: 'INVALID_REQUEST', message: 'Invalid shipment id.' } }, { status: 400 })
   }
+  const format = new URL(request.url).searchParams.get('format') || undefined
   try {
-    const labels = await getShipmentLabels(shipmentId)
+    const labels = await getShipmentLabels(shipmentId, format)
     return Response.json({ data: labels })
   } catch (err) {
     const message = err instanceof Error ? err.message : 'Could not fetch the shipping label.'
