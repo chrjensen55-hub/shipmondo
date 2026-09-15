@@ -122,11 +122,24 @@ export default function PrinterSettings() {
           <button className="button button-primary" onClick={retryConnection} disabled={connection.status === 'checking'}>{connection.status === 'checking' ? 'Testing…' : 'Test connection'}</button>
         </section>
         <section className="setup-card">
-          <Usb />
-          <h2>Zebra printer over USB (this tablet, recommended)</h2>
+          <Bluetooth />
+          <h2>Zebra Browser Print (this tablet, recommended)</h2>
           <p>
-            Plug the printer into this tablet with a USB-C cable and print directly over the wire &mdash; the most reliable option, since it doesn&apos;t depend on Bluetooth at all.
-            Pairing lasts for as long as this browser tab stays open, plus it&apos;s remembered across page reloads and app restarts, unlike Bluetooth.
+            The primary way this tablet prints: install the &quot;Zebra Browser Print&quot; app from the Play Store, pair the printer with the tablet over Bluetooth, then open Browser Print and set it as the default printer.
+            Once that&apos;s done, tapping &quot;Print label&quot; in the booking wizard sends the label straight to the printer automatically &mdash; nothing else to configure here.
+          </p>
+          {browserPrint.status === 'ok' && browserPrint.device && (
+            <div className="form-success">Connected to {browserPrint.device.name} ({browserPrint.device.connection || 'unknown connection'})</div>
+          )}
+          {browserPrint.status === 'error' && <div className="form-error">{browserPrint.message}</div>}
+          <button className="button button-primary" onClick={testBrowserPrint} disabled={browserPrint.status === 'checking'}>{browserPrint.status === 'checking' ? 'Testing…' : 'Test Zebra Browser Print'}</button>
+        </section>
+        <section className="setup-card">
+          <Usb />
+          <h2>Zebra printer over USB (fallback)</h2>
+          <p>
+            Only used automatically if Browser Print above isn&apos;t available. Plug the printer into this tablet with a USB-C cable and print directly over the wire.
+            Pairing lasts for as long as this browser tab stays open, plus it&apos;s remembered across page reloads and app restarts.
           </p>
           {!isWebUsbSupported() && <div className="form-error">This browser does not support WebUSB. Use Chrome on this tablet.</div>}
           {usb.status === 'error' && <div className="form-error">{usb.message}</div>}
@@ -141,9 +154,9 @@ export default function PrinterSettings() {
         </section>
         <section className="setup-card">
           <BluetoothConnected />
-          <h2>Zebra printer over Bluetooth LE (this tablet)</h2>
+          <h2>Zebra printer over Bluetooth LE (fallback)</h2>
           <p>
-            For printers like the ZD421 in its Bluetooth-LE-only configuration (no Wi-Fi, no Bluetooth Classic), the app prints directly to the printer&apos;s Bluetooth radio &mdash; no extra app needed.
+            Only used automatically if both Browser Print and USB above aren&apos;t available. Talks directly to the printer&apos;s Bluetooth radio with no extra app, for printers without Bluetooth Classic or Wi-Fi.
             Pairing lasts for as long as this browser tab stays open &mdash; which on a shop tablet is normally all day &mdash; so pair once here each morning (or after the tablet restarts) and customers won&apos;t see this prompt.
           </p>
           {!isWebBluetoothSupported() && <div className="form-error">This browser does not support Web Bluetooth. Use Chrome on this tablet.</div>}
@@ -167,19 +180,6 @@ export default function PrinterSettings() {
             </>
           )}
           <button className="button button-primary" onClick={pairBle} disabled={ble.status === 'checking' || !isWebBluetoothSupported()}>{ble.status === 'checking' ? 'Waiting for you to pick a device…' : 'Pair Zebra printer'}</button>
-        </section>
-        <section className="setup-card">
-          <Bluetooth />
-          <h2>Zebra Browser Print (this tablet)</h2>
-          <p>
-            For direct Bluetooth printing on this tablet, install the &quot;Zebra Browser Print&quot; app from the Play Store, pair the ZD421 printer with the tablet over Bluetooth, then open Browser Print and set it as the default printer.
-            Once that&apos;s done, tapping &quot;Print label&quot; in the booking wizard sends the label straight to the printer &mdash; no extra setup needed here.
-          </p>
-          {browserPrint.status === 'ok' && browserPrint.device && (
-            <div className="form-success">Connected to {browserPrint.device.name} ({browserPrint.device.connection || 'unknown connection'})</div>
-          )}
-          {browserPrint.status === 'error' && <div className="form-error">{browserPrint.message}</div>}
-          <button className="button button-primary" onClick={testBrowserPrint} disabled={browserPrint.status === 'checking'}>{browserPrint.status === 'checking' ? 'Testing…' : 'Test Zebra Browser Print'}</button>
         </section>
       </div>
     </AdminShell>
