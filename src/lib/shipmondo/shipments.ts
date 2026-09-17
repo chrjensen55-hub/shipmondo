@@ -81,9 +81,15 @@ export async function listShipments(options: { page?: number; perPage?: number }
   return client.get<ShipmondoShipment[]>(`/shipments?${params.toString()}`)
 }
 
-export async function getShipmentLabels(id: number, labelFormat?: string): Promise<ShipmondoLabel[]> {
+export async function getShipmentLabels(id: number, labelFormat?: string, labelDpi?: 200 | 300): Promise<ShipmondoLabel[]> {
   const client = new ShipmondoClient()
   if (!client.isConfigured()) throw new Error('Shipmondo is not configured')
-  const query = labelFormat ? `?label_format=${encodeURIComponent(labelFormat)}` : ''
+  const params = new URLSearchParams()
+  if (labelFormat) params.set('label_format', labelFormat)
+  // The ZD421 prints at 203 dpi; Shipmondo only offers 200 or 300 as label_dpi values, so 200 is
+  // the closer match. Without this, ZPL labels default to 300 dpi content on a 203 dpi printhead,
+  // which prints everything oversized and runs part of it off the edge of the label.
+  if (labelDpi) params.set('label_dpi', String(labelDpi))
+  const query = params.size ? `?${params.toString()}` : ''
   return client.get<ShipmondoLabel[]>(`/shipments/${id}/labels${query}`)
 }
