@@ -70,6 +70,15 @@ export async function getShipment(id: number): Promise<ShipmondoShipment> {
   return client.get<ShipmondoShipment>(`/shipments/${id}`)
 }
 
+export async function listShipments(options: { page?: number; perPage?: number } = {}): Promise<ShipmondoShipment[]> {
+  const client = new ShipmondoClient()
+  if (!client.isConfigured()) throw new Error('Shipmondo is not configured')
+  const params = new URLSearchParams()
+  params.set('page', String(options.page ?? 1))
+  params.set('per_page', String(options.perPage ?? 25))
+  return client.get<ShipmondoShipment[]>(`/shipments?${params.toString()}`)
+}
+
 export async function getShipmentLabels(id: number, labelFormat?: string): Promise<ShipmondoLabel[]> {
   const client = new ShipmondoClient()
   if (!client.isConfigured()) throw new Error('Shipmondo is not configured')
