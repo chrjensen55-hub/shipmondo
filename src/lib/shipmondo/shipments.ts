@@ -28,9 +28,11 @@ function buildCustoms(draft: ShipmentDraft, requiresCustoms: boolean, currency =
   if (draft.items.length === 0) throw new Error('Customs details (contents description, value, and commodity code) are required for this destination.')
   const missingHsCode = draft.items.find((item) => !item.hsCode || !/^\d{6}(\d{2}){0,3}$/.test(item.hsCode))
   if (missingHsCode) throw new Error(`Item "${missingHsCode.description}" is missing a valid 6/8/10/12-digit commodity (HS) code, required for customs.`)
+  const validReasons: ShipmondoCustoms['export_reason'][] = ['gift', 'documents', 'commercial_samples', 'returned_goods', 'other', 'sale_of_goods']
+  const chosenReason = validReasons.find((r) => r === draft.exportReason)
   return {
     currency_code: currency,
-    export_reason: draft.contentsType === 'DOCUMENTS' ? 'documents' : 'sale_of_goods',
+    export_reason: draft.contentsType === 'DOCUMENTS' ? 'documents' : (chosenReason ?? 'sale_of_goods'),
     goods: draft.items.map((item) => ({
       quantity: item.quantity,
       country_code: item.originCountry,

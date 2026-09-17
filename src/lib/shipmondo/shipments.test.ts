@@ -48,6 +48,48 @@ describe('customs mapping matches Shipmondo: driven by the product, not by conte
     })
     expect(() => mapShipmentToShipmondo(d, { ...options, requiresCustoms: true })).toThrow(/commodity/i)
   })
+
+  it('maps every item, not just the first one', () => {
+    const d = draft({
+      contentsType: 'GOODS',
+      items: [
+        { id: 'i1', description: 'T-shirt', quantity: 1, unitValue: 100, currency: 'DKK', weight: 0.2, originCountry: 'DK', hsCode: '610910' },
+        { id: 'i2', description: 'Hat', quantity: 2, unitValue: 50, currency: 'DKK', weight: 0.1, originCountry: 'DK', hsCode: '650610' },
+      ],
+    })
+    const req = mapShipmentToShipmondo(d, { ...options, requiresCustoms: true })
+    expect(req.customs?.goods).toHaveLength(2)
+    expect(req.customs?.goods.map((g) => g.commodity_code)).toEqual(['610910', '650610'])
+  })
+
+  it('uses the customer-chosen export reason for a goods shipment', () => {
+    const d = draft({
+      contentsType: 'GOODS',
+      exportReason: 'gift',
+      items: [{ id: 'i1', description: 'Present', quantity: 1, unitValue: 100, currency: 'DKK', weight: 0.2, originCountry: 'DK', hsCode: '610910' }],
+    })
+    const req = mapShipmentToShipmondo(d, { ...options, requiresCustoms: true })
+    expect(req.customs?.export_reason).toBe('gift')
+  })
+
+  it('falls back to sale_of_goods when no export reason was chosen', () => {
+    const d = draft({
+      contentsType: 'GOODS',
+      items: [{ id: 'i1', description: 'T-shirt', quantity: 1, unitValue: 100, currency: 'DKK', weight: 0.2, originCountry: 'DK', hsCode: '610910' }],
+    })
+    const req = mapShipmentToShipmondo(d, { ...options, requiresCustoms: true })
+    expect(req.customs?.export_reason).toBe('sale_of_goods')
+  })
+
+  it('documents always wins over a chosen export reason', () => {
+    const d = draft({
+      contentsType: 'DOCUMENTS',
+      exportReason: 'gift',
+      items: [{ id: 'i1', description: 'Signed contract', quantity: 1, unitValue: 0, currency: 'DKK', weight: 0.1, originCountry: 'DK', hsCode: '490700' }],
+    })
+    const req = mapShipmentToShipmondo(d, { ...options, requiresCustoms: true })
+    expect(req.customs?.export_reason).toBe('documents')
+  })
 })
 
 describe('own agreement flag', () => {
