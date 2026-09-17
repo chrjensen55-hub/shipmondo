@@ -12,7 +12,10 @@
 const BASE_URL = 'http://localhost:9100/'
 const STORAGE_KEY = 'pak-send-browserprint-device'
 
-export type BrowserPrintDevice = { name: string; uid: string; connection: string; deviceType: string; manufacturer: string; provider: string }
+// version is required by Browser Print's own /write endpoint (a "no value for version" error
+// otherwise) but isn't part of the plain-text device block it returns from /default or /available,
+// so it's always sent as 0 — Browser Print itself only ever seems to populate it that way too.
+export type BrowserPrintDevice = { name: string; uid: string; connection: string; deviceType: string; manufacturer: string; provider: string; version: number }
 
 // The /default endpoint returns a plain-text block like:
 // "...\n\tName: ZTC ZD421-203dpi ZPL\n\tDevice Type: printer\n\tConnection: bluetooth\n\tUid: ...\n\tProvider: ...\n\tManufacturer: ..."
@@ -21,7 +24,7 @@ function parseDeviceText(text: string): BrowserPrintDevice | null {
   const name = field('Name')
   const uid = field('Uid')
   if (!name || !uid) return null
-  return { name, uid, connection: field('Connection') ?? '', deviceType: field('Device Type') ?? '', manufacturer: field('Manufacturer') ?? '', provider: field('Provider') ?? '' }
+  return { name, uid, connection: field('Connection') ?? '', deviceType: field('Device Type') ?? '', manufacturer: field('Manufacturer') ?? '', provider: field('Provider') ?? '', version: 0 }
 }
 
 export async function getDefaultPrinter(): Promise<BrowserPrintDevice | null> {
@@ -38,7 +41,8 @@ function parseDeviceEntry(entry: unknown): BrowserPrintDevice | null {
     const uid = o.uid ?? o.Uid
     if (typeof name === 'string' && typeof uid === 'string') {
       const str = (v: unknown) => (typeof v === 'string' ? v : '')
-      return { name, uid, connection: str(o.connection ?? o.Connection), deviceType: str(o.deviceType ?? o['Device Type']), manufacturer: str(o.manufacturer ?? o.Manufacturer), provider: str(o.provider ?? o.Provider) }
+      const version = o.version ?? o.Version
+      return { name, uid, connection: str(o.connection ?? o.Connection), deviceType: str(o.deviceType ?? o['Device Type']), manufacturer: str(o.manufacturer ?? o.Manufacturer), provider: str(o.provider ?? o.Provider), version: typeof version === 'number' ? version : 0 }
     }
   }
   return null
@@ -67,7 +71,9 @@ export async function isBrowserPrintAvailable(): Promise<boolean> {
 export function getSelectedPrinter(): BrowserPrintDevice | null {
   try {
     const raw = localStorage.getItem(STORAGE_KEY)
-    return raw ? (JSON.parse(raw) as BrowserPrintDevice) : null
+    if (!raw) return null
+    const parsed = JSON.parse(raw) as BrowserPrintDevice
+    return { ...parsed, version: typeof parsed.version === 'number' ? parsed.version : 0 }
   } catch {
     return null
   }
