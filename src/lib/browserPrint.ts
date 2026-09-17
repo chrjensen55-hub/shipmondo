@@ -103,5 +103,8 @@ export async function printZpl(device: BrowserPrintDevice, zpl: string): Promise
     headers: { 'Content-Type': 'text/plain;charset=UTF-8' },
     body: JSON.stringify({ device, data: zpl }),
   })
-  if (!res.ok) throw new Error(`Browser Print write failed (${res.status})`)
+  if (!res.ok) {
+    const body = await res.text().catch(() => '')
+    throw new Error(`Browser Print write failed (${res.status})${body ? `: ${body}` : ''}`)
+  }
 }
