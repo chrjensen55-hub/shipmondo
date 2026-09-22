@@ -2,7 +2,7 @@
 import { useEffect, useState } from 'react'
 import { Bluetooth } from 'lucide-react'
 import { AdminShell } from '@/components/admin/admin-shell'
-import { getAvailablePrinters, getSelectedPrinter, selectPrinter, isBrowserPrintAvailable, type BrowserPrintDevice } from '@/lib/browserPrint'
+import { getAvailablePrinters, getSelectedPrinter, selectPrinter, type BrowserPrintDevice } from '@/lib/browserPrint'
 export const dynamic = 'force-dynamic'
 
 type ListState = { status: 'idle' | 'checking' | 'ready' | 'error'; devices: BrowserPrintDevice[]; message?: string }
@@ -15,12 +15,10 @@ export default function PrinterSettings() {
     setList((s) => ({ ...s, status: 'checking', message: undefined }))
     setSelected(getSelectedPrinter())
     try {
-      const reachable = await isBrowserPrintAvailable()
-      if (!reachable) throw new Error('Could not reach Zebra Browser Print on this device. Make sure the Browser Print app is installed and running.')
       const devices = await getAvailablePrinters()
       setList({ status: 'ready', devices })
-    } catch (err) {
-      setList({ status: 'error', devices: [], message: err instanceof Error && err.message ? err.message : 'Could not reach Zebra Browser Print on this device.' })
+    } catch {
+      setList({ status: 'error', devices: [], message: 'Could not reach Zebra Browser Print on this device (retried a few times). Make sure the Browser Print app is installed and running.' })
     }
   }
 

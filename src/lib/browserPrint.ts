@@ -12,6 +12,22 @@
 const BASE_URL = 'http://localhost:9100/'
 const STORAGE_KEY = 'pak-send-browserprint-device'
 
+// Retries only a connection failure (fetch() itself throwing — Browser Print not reachable at
+// all, e.g. mid-restart), never a response Browser Print actually sent back, even an error one —
+// retrying after a real response risks re-sending a print that may have already gone through.
+async function fetchWithRetry(url: string, init?: RequestInit, attempts = 3): Promise<Response> {
+  let lastErr: unknown
+  for (let i = 0; i < attempts; i++) {
+    if (i > 0) await new Promise((r) => setTimeout(r, i * 600))
+    try {
+      return await fetch(url, init)
+    } catch (err) {
+      lastErr = err
+    }
+  }
+  throw lastErr
+}
+
 // version is required by Browser Print's own /write endpoint (a "no value for version" error
 // otherwise) but isn't part of the plain-text device block it returns from /default or /available,
 // so it's always sent as 0 — Browser Print itself only ever seems to populate it that way too.
@@ -28,7 +44,7 @@ function parseDeviceText(text: string): BrowserPrintDevice | null {
 }
 
 export async function getDefaultPrinter(): Promise<BrowserPrintDevice | null> {
-  const res = await fetch(`${BASE_URL}default`)
+  const res = await fetchWithRetry(`${BASE_URL}default`)
   const text = await res.text()
   return parseDeviceText(text)
 }
@@ -51,12 +67,15 @@ function parseDeviceEntry(entry: unknown): BrowserPrintDevice | null {
 // The exact shape of this endpoint's response is less consistently documented than /default, so
 // parsing is deliberately defensive about both plain-text and JSON-object entries.
 export async function getAvailablePrinters(): Promise<BrowserPrintDevice[]> {
-  const res = await fetch(`${BASE_URL}available`)
+  const res = await fetchWithRetry(`${BASE_URL}available`)
   const body = (await res.json()) as { printer?: unknown[] }
   const entries = body.printer ?? []
   return entries.map(parseDeviceEntry).filter((d): d is BrowserPrintDevice => d !== null)
 }
 
+// Used for a one-off up-front check (e.g. before printing); the periodic health banner polls
+// this same endpoint independently rather than calling this, so it stays simple and unretried —
+// polling on an interval already behaves like a retry loop.
 export async function isBrowserPrintAvailable(): Promise<boolean> {
   try {
     await fetch(`${BASE_URL}available`)
@@ -95,16 +114,33 @@ export function clearSelectedPrinter() {
   }
 }
 
-// Prefers the printer explicitly chosen in admin settings; falls back to Browser Print's own
-// default device (e.g. on first run, before anyone has picked one from our admin page yet).
+// Prefers the printer explicitly chosen in admin settings, but cross-checks it against Browser
+// Print's own live device list first rather than trusting the saved copy blindly — a re-pair or
+// app reinstall can change the device's uid (which is what "no value for version" and similar
+// write failures on a previously-working printer usually turn out to be), so a saved device
+// whose uid has gone stale is recovered by matching its name in the live list instead of just
+// failing. Falls back to Browser Print's own default device if nothing was ever selected.
 export async function getPrinterToUse(): Promise<BrowserPrintDevice | null> {
   const selected = getSelectedPrinter()
-  if (selected) return selected
-  return getDefaultPrinter()
+  let available: BrowserPrintDevice[] = []
+  try {
+    available = await getAvailablePrinters()
+  } catch {
+    // Browser Print itself unreachable — nothing to cross-check against, so hand back whatever
+    // was saved (or null) and let the caller's own print attempt surface the real error.
+    return selected
+  }
+  if (selected) {
+    const byUid = available.find((d) => d.uid === selected.uid)
+    if (byUid) return byUid
+    const byName = available.find((d) => d.name === selected.name)
+    if (byName) return byName
+  }
+  return available[0] ?? getDefaultPrinter()
 }
 
 export async function printZpl(device: BrowserPrintDevice, zpl: string): Promise<void> {
-  const res = await fetch(`${BASE_URL}write`, {
+  const res = await fetchWithRetry(`${BASE_URL}write`, {
     method: 'POST',
     headers: { 'Content-Type': 'text/plain;charset=UTF-8' },
     body: JSON.stringify({ device, data: zpl }),
