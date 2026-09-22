@@ -3,6 +3,7 @@ import { useFocusEffect, useRouter } from 'expo-router'
 import { FlatList, Pressable, RefreshControl, StyleSheet, Text, View } from 'react-native'
 import { SafeAreaView } from 'react-native-safe-area-context'
 import { Button } from '@/components/Button'
+import { PrinterStatusBanner } from '@/components/PrinterStatusBanner'
 import { api, ApiError } from '@/lib/api'
 import { useAuth } from '@/lib/auth-context'
 import type { ShipmondoShipment } from '@/lib/types'
@@ -39,6 +40,7 @@ export default function Dashboard() {
         </View>
         <Button label="Sign out" variant="secondary" onPress={logout} />
       </View>
+      <PrinterStatusBanner />
       {state.status === 'error' && <Text style={styles.error}>{state.message}</Text>}
       <FlatList
         contentContainerStyle={styles.list}

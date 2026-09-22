@@ -21,7 +21,14 @@
         "monochromeImage": "./assets/android-icon-monochrome.png"
       },
       "predictiveBackGestureEnabled": false,
-      "permissions": ["BLUETOOTH_SCAN", "BLUETOOTH_CONNECT", "ACCESS_FINE_LOCATION"]
+      "permissions": [
+        "BLUETOOTH_SCAN",
+        "BLUETOOTH_CONNECT",
+        "ACCESS_FINE_LOCATION",
+        "android.permission.BLUETOOTH",
+        "android.permission.BLUETOOTH_ADMIN",
+        "android.permission.BLUETOOTH_CONNECT"
+      ]
     },
     "web": {
       "favicon": "./assets/favicon.png"
@@ -29,8 +36,25 @@
     "plugins": [
       "expo-router",
       "expo-status-bar",
-      ["react-native-ble-plx", { "isBackgroundEnabled": false, "modes": ["peripheral", "central"], "bluetoothAlwaysPermission": "Allow $(PRODUCT_NAME) to connect to the Zebra label printer." }],
+      [
+        "react-native-ble-plx",
+        {
+          "isBackgroundEnabled": false,
+          "modes": [
+            "peripheral",
+            "central"
+          ],
+          "bluetoothAlwaysPermission": "Allow $(PRODUCT_NAME) to connect to the Zebra label printer."
+        }
+      ],
       "expo-secure-store"
-    ]
+    ],
+    "extra": {
+      "router": {},
+      "eas": {
+        "projectId": "de0eeba4-469c-4c9c-86da-90c27ffdb0be"
+      }
+    },
+    "owner": "pakogsend"
   }
 }
