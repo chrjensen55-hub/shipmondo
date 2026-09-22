@@ -26,6 +26,6 @@ export function proxy(request: NextRequest) {
 // install/update checks.
 export const config = {
   matcher: [
-    '/((?!_next/static|_next/image|favicon\\.ico|api/admin/login|api/admin/logout|admin/login|\\.well-known|manifest\\.webmanifest|sw\\.js|icons/).*)',
+    '/((?!_next/static|_next/image|favicon\\.ico|api/admin/login|api/admin/logout|admin/login|\\.well-known|manifest\\.webmanifest|sw\\.js|icons/|downloads/).*)',
   ],
 }
