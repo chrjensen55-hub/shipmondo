@@ -3,8 +3,8 @@
     "relation": ["delegate_permission/common.handle_all_urls"],
     "target": {
       "namespace": "android_app",
-      "package_name": "REPLACE_WITH_ANDROID_PACKAGE_NAME",
-      "sha256_cert_fingerprints": ["REPLACE_WITH_SHA256_FINGERPRINT_FROM_PWABUILDER"]
+      "package_name": "dk.pakogsend.app.twa",
+      "sha256_cert_fingerprints": ["97:4B:B6:7A:08:AA:FF:56:14:58:C7:18:D3:B3:25:25:31:9B:D0:44:6B:8E:EB:33:CD:3A:4A:9D:D9:9C:31:03"]
     }
   }
 ]

@@ -37,6 +37,10 @@ yarn-error.log*
 # vercel
 .vercel
 
+# Android app package (TWA) - contains a real signing keystore and its password
+# (signing-key-info.txt), which must never be committed. Keep this folder local only.
+/apk
+
 # typescript
 *.tsbuildinfo
 next-env.d.ts
