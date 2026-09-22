@@ -1,7 +1,7 @@
 'use client'
 import { useState } from 'react'
 import { Printer } from 'lucide-react'
-import { getPrinterToUse, printZpl } from '@/lib/browserPrint'
+import { printZplViaBluetooth } from '@/lib/zebraBluetooth'
 
 export function ReprintButton({ shipmentId, compact = false }: { shipmentId: number; compact?: boolean }) {
   const [status, setStatus] = useState<'idle' | 'printing' | 'ok' | 'error'>('idle')
@@ -11,14 +11,12 @@ export function ReprintButton({ shipmentId, compact = false }: { shipmentId: num
     setStatus('printing')
     setMessage('')
     try {
-      const printer = await getPrinterToUse()
-      if (!printer) throw new Error('No printer is set up. Go to Admin → Settings → Printer to select one.')
       const res = await fetch(`/api/shipments/${shipmentId}/labels?format=zpl`)
       const body = await res.json()
       if (!res.ok) throw new Error(body.error?.message)
       const label = body.data?.[0]
       if (!label) throw new Error('No label available for this shipment.')
-      await printZpl(printer, atob(label.base64))
+      await printZplViaBluetooth(atob(label.base64))
       setStatus('ok')
     } catch (err) {
       setStatus('error')

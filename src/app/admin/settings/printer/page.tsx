@@ -2,60 +2,59 @@
 import { useEffect, useState } from 'react'
 import { Bluetooth } from 'lucide-react'
 import { AdminShell } from '@/components/admin/admin-shell'
-import { getAvailablePrinters, getSelectedPrinter, selectPrinter, type BrowserPrintDevice } from '@/lib/browserPrint'
+import { clearPairedPrinter, getPairedPrinter, isWebBluetoothSupported, pairPrinter, type PairedPrinter } from '@/lib/zebraBluetooth'
 export const dynamic = 'force-dynamic'
 
-type ListState = { status: 'idle' | 'checking' | 'ready' | 'error'; devices: BrowserPrintDevice[]; message?: string }
+type PairState = { status: 'idle' | 'pairing' | 'error'; message?: string }
 
 export default function PrinterSettings() {
-  const [list, setList] = useState<ListState>({ status: 'checking', devices: [] })
-  const [selected, setSelected] = useState<BrowserPrintDevice | null>(null)
-
-  async function refresh() {
-    setList((s) => ({ ...s, status: 'checking', message: undefined }))
-    setSelected(getSelectedPrinter())
-    try {
-      const devices = await getAvailablePrinters()
-      setList({ status: 'ready', devices })
-    } catch {
-      setList({ status: 'error', devices: [], message: 'Could not reach Zebra Browser Print on this device (retried a few times). Make sure the Browser Print app is installed and running.' })
-    }
-  }
-
-  function choose(device: BrowserPrintDevice) {
-    selectPrinter(device)
-    setSelected(device)
-  }
+  const [paired, setPaired] = useState<PairedPrinter | null>(null)
+  const [supported, setSupported] = useState(true)
+  const [state, setState] = useState<PairState>({ status: 'idle' })
 
   useEffect(() => {
-    const timer = setTimeout(refresh, 0)
+    const timer = setTimeout(() => {
+      setPaired(getPairedPrinter())
+      setSupported(isWebBluetoothSupported())
+    }, 0)
     return () => clearTimeout(timer)
   }, [])
 
+  async function pair() {
+    setState({ status: 'pairing' })
+    try {
+      const device = await pairPrinter()
+      setPaired(device)
+      setState({ status: 'idle' })
+    } catch (err) {
+      setState({ status: 'error', message: err instanceof Error && err.message ? err.message : 'Could not pair with a printer.' })
+    }
+  }
+
+  function unpair() {
+    clearPairedPrinter()
+    setPaired(null)
+  }
+
   return (
-    <AdminShell title="Printer settings" subtitle="Connect this tablet to its Zebra label printer" active="Printers" live={selected !== null}>
+    <AdminShell title="Printer settings" subtitle="Connect this tablet directly to its Zebra label printer over Bluetooth" active="Printers" live={paired !== null}>
       <div className="admin-content">
         <section className="setup-card">
           <Bluetooth />
-          <h2>{selected ? `Printing to ${selected.name}` : 'No printer selected'}</h2>
+          <h2>{paired ? `Paired with ${paired.name}` : 'No printer paired'}</h2>
           <p>
-            Install the &quot;Zebra Browser Print&quot; app from the Play Store on this tablet and pair the printer with it over Bluetooth.
-            Then pick the printer below &mdash; this is the one every &quot;Print label&quot; tap uses, and customers are never asked to choose.
+            Printing talks to the Zebra printer directly over Bluetooth from this page &mdash; no separate app needed on the tablet.
+            Pairing is a one-time step per tablet; every &quot;Print label&quot; tap afterwards reconnects automatically, and customers are never asked to choose a printer.
           </p>
-          {list.status === 'error' && <div className="form-error">{list.message}</div>}
-          {selected && <div className="form-success">Selected: {selected.name} ({selected.connection || 'unknown connection'})</div>}
-          {list.status === 'ready' && list.devices.length === 0 && <p>Browser Print is running but sees no printers yet &mdash; make sure the printer is paired and powered on, then refresh.</p>}
-          {list.devices.length > 0 && (
-            <ul className="device-list">
-              {list.devices.map((d) => (
-                <li key={d.uid} className={selected?.uid === d.uid ? 'selected' : ''}>
-                  <span>{d.name || 'Unnamed device'}</span>
-                  {selected?.uid === d.uid ? <b>In use for printing</b> : <button className="button button-secondary" onClick={() => choose(d)}>Use this printer</button>}
-                </li>
-              ))}
-            </ul>
-          )}
-          <button className="button button-primary" onClick={refresh} disabled={list.status === 'checking'}>{list.status === 'checking' ? 'Checking…' : 'Refresh printer list'}</button>
+          {!supported && <div className="form-error">This browser doesn&apos;t support Web Bluetooth, so direct printing isn&apos;t available here. Use a recent version of Chrome.</div>}
+          {state.status === 'error' && <div className="form-error">{state.message}</div>}
+          {paired && <div className="form-success">Paired: {paired.name}</div>}
+          <div className="printer-pair-actions">
+            <button className="button button-primary" onClick={pair} disabled={!supported || state.status === 'pairing'}>
+              <Bluetooth size={18} /> {state.status === 'pairing' ? 'Waiting for device picker…' : paired ? 'Pair a different printer' : 'Pair printer via Bluetooth'}
+            </button>
+            {paired && <button className="button button-secondary" onClick={unpair}>Forget this printer</button>}
+          </div>
         </section>
       </div>
     </AdminShell>
