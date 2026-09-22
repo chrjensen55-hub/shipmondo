@@ -9,7 +9,9 @@ export async function POST(request: Request) {
   return NextResponse.json({ error: { message: 'Incorrect username/email or password.' } }, { status: 401 })
  }
  const { value, expires } = createSessionToken()
- const response = NextResponse.json({ data: { ok: true } })
+ // token is also returned in the body (not just set as a cookie) for the native app, which
+ // authenticates via an Authorization header instead of a cookie jar — see proxy.ts.
+ const response = NextResponse.json({ data: { ok: true, token: value } })
  response.cookies.set(SESSION_COOKIE, value, { httpOnly: true, secure: process.env.NODE_ENV === 'production', sameSite: 'lax', path: '/', expires })
  return response
 }

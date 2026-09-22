@@ -3,8 +3,11 @@ import type { NextRequest } from 'next/server'
 import { verifySessionToken, SESSION_COOKIE } from '@/lib/auth'
 
 export function proxy(request: NextRequest) {
-  const token = request.cookies.get(SESSION_COOKIE)?.value
-  if (verifySessionToken(token)) return NextResponse.next()
+  const cookieToken = request.cookies.get(SESSION_COOKIE)?.value
+  // The native Android app has no cookie jar to rely on, so it authenticates with the same
+  // signed token via an Authorization header instead — see /api/admin/login and mobile/src/lib/api.ts.
+  const headerToken = request.headers.get('authorization')?.replace(/^Bearer\s+/i, '')
+  if (verifySessionToken(cookieToken) || verifySessionToken(headerToken)) return NextResponse.next()
   if (request.nextUrl.pathname.startsWith('/api/')) {
     return NextResponse.json({ error: { code: 'UNAUTHENTICATED', message: 'Sign in required.' } }, { status: 401 })
   }
