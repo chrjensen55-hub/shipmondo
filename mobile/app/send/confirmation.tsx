@@ -1,6 +1,6 @@
-import { useState } from 'react'
-import { useLocalSearchParams, useRouter } from 'expo-router'
-import { StyleSheet, Text, View } from 'react-native'
+import { useCallback, useState } from 'react'
+import { useFocusEffect, useLocalSearchParams, useRouter } from 'expo-router'
+import { BackHandler, StyleSheet, Text, View } from 'react-native'
 import { SafeAreaView } from 'react-native-safe-area-context'
 import { CircleCheck } from 'lucide-react-native'
 import { Button } from '@/components/Button'
@@ -72,6 +72,21 @@ export default function Confirmation() {
     reset()
     router.replace('/send')
   }
+
+  // Booking already succeeded by the time this screen shows - letting the hardware back button
+  // return into the wizard (review/customs/etc, still holding the same draft) would let someone
+  // press "Confirm and create shipment" again, generating a fresh idempotency key and creating a
+  // genuine duplicate shipment. Treat back the same as Done instead of allowing it to navigate.
+  useFocusEffect(
+    useCallback(() => {
+      const sub = BackHandler.addEventListener('hardwareBackPress', () => {
+        done()
+        return true
+      })
+      return () => sub.remove()
+      // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, []),
+  )
 
   return (
     <SafeAreaView style={styles.screen}>
