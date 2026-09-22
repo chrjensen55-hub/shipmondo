@@ -1,5 +1,5 @@
 import { createContext, useContext, useEffect, useState, type ReactNode } from 'react'
-import { api, ApiError, clearToken, getToken, setToken } from './api'
+import { api, ApiError, clearToken, getToken, registerUnauthorizedHandler, setToken } from './api'
 
 type AuthState = { status: 'loading' | 'signedOut' | 'signedIn' }
 type AuthContextValue = AuthState & {
@@ -14,6 +14,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   useEffect(() => {
     getToken().then((token) => setStatus(token ? 'signedIn' : 'signedOut'))
+    registerUnauthorizedHandler(() => setStatus('signedOut'))
   }, [])
 
   async function login(identifier: string, password: string) {

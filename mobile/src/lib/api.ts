@@ -26,6 +26,14 @@ export class ApiError extends Error {
   }
 }
 
+// AuthProvider registers itself here so a 401 from anywhere in the app (a stale token, the
+// session's 7-day TTL expiring, AUTH_SECRET rotating) can force a clean sign-out and redirect
+// to /login, instead of every screen needing its own "session expired" handling.
+let onUnauthorized: (() => void) | null = null
+export function registerUnauthorizedHandler(handler: () => void) {
+  onUnauthorized = handler
+}
+
 type ApiResult<T> = { data: T } | { error: { code?: string; message: string } }
 
 export async function api<T>(path: string, init?: RequestInit): Promise<T> {
@@ -39,6 +47,10 @@ export async function api<T>(path: string, init?: RequestInit): Promise<T> {
 
   if (!res.ok || !body || 'error' in body) {
     const message = body && 'error' in body ? body.error.message : `Request failed (${res.status})`
+    if (res.status === 401) {
+      await clearToken()
+      onUnauthorized?.()
+    }
     throw new ApiError(message, res.status)
   }
   return body.data

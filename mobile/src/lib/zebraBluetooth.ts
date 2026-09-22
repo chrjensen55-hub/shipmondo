@@ -84,6 +84,47 @@ function bytesToBase64(bytes: number[]): string {
   return toBase64(binary)
 }
 
+const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms))
+
+// A quick scan for a device with the same NAME as the paired printer — used when connecting by
+// the stored id fails outright, since a re-pair or app data reset can change a BLE device's id
+// while the name stays the same. Mirrors the same self-healing the web app's version does via
+// Browser Print's device list; there's no equivalent list here, so this does a short live scan
+// instead.
+async function findByName(name: string, timeoutMs = 4000): Promise<string | null> {
+  return new Promise((resolve) => {
+    let found: string | null = null
+    manager.startDeviceScan(null, { allowDuplicates: false }, (error, device) => {
+      if (!error && device?.name === name) found = device.id
+    })
+    setTimeout(() => {
+      manager.stopDeviceScan()
+      resolve(found)
+    }, timeoutMs)
+  })
+}
+
+// Connecting frequently reports success and then the GATT connection drops again before service
+// discovery completes — the same race the web app's Web Bluetooth version hit, not specific to
+// this API — so a single connect attempt isn't reliable. Retries the whole sequence a few times,
+// reconnecting from scratch each time, with a short settle delay after each connect.
+async function connectAndDiscover(deviceId: string, attempts = 4): Promise<Device> {
+  let lastErr: unknown
+  for (let i = 0; i < attempts; i++) {
+    if (i > 0) await sleep(400 * i)
+    try {
+      const device = await manager.connectToDevice(deviceId, { timeout: 8000 })
+      await sleep(300)
+      await device.discoverAllServicesAndCharacteristics()
+      return device
+    } catch (err) {
+      lastErr = err
+      await manager.cancelDeviceConnection(deviceId).catch(() => {})
+    }
+  }
+  throw lastErr
+}
+
 export async function printZplViaBluetooth(zpl: string): Promise<void> {
   const paired = await getPairedPrinter()
   if (!paired) throw new Error('No printer paired yet. Go to Admin → Printer to pair one.')
@@ -92,12 +133,19 @@ export async function printZplViaBluetooth(zpl: string): Promise<void> {
 
   let device: Device
   try {
-    device = await manager.connectToDevice(paired.id, { timeout: 8000 })
+    device = await connectAndDiscover(paired.id)
   } catch {
-    throw new Error('Could not connect to the printer. Make sure it is powered on and in range.')
+    // Stored id might be stale (re-pair, app data reset) — try to recover by name before giving up.
+    const recoveredId = await findByName(paired.name)
+    if (!recoveredId) throw new Error('Could not connect to the printer. Make sure it is powered on and in range.')
+    try {
+      device = await connectAndDiscover(recoveredId)
+      await pairPrinter({ id: recoveredId, name: paired.name })
+    } catch {
+      throw new Error('Could not connect to the printer. Make sure it is powered on and in range.')
+    }
   }
   try {
-    await device.discoverAllServicesAndCharacteristics()
     const bytes = utf8Bytes(zpl)
     for (let offset = 0; offset < bytes.length; offset += CHUNK_SIZE) {
       const chunk = bytes.slice(offset, offset + CHUNK_SIZE)
