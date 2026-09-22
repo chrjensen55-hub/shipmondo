@@ -80,18 +80,44 @@ export async function isPrinterPaired(): Promise<boolean> {
   return device !== null
 }
 
+const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms))
+
+// The GATT connection frequently reports success and then drops again before service discovery
+// completes — a well-known Web Bluetooth race, not specific to this printer — so connect() alone
+// isn't reliable; the whole connect-then-discover sequence is retried a few times, reconnecting
+// from scratch each time, with a short settle delay after connecting before touching services.
+async function connectAndGetWriteCharacteristic(device: BluetoothDevice, attempts = 4): Promise<{ server: BluetoothRemoteGATTServer; characteristic: BluetoothRemoteGATTCharacteristic }> {
+  if (!device.gatt) throw new Error('This device does not support a GATT connection.')
+  let lastErr: unknown
+  for (let i = 0; i < attempts; i++) {
+    if (i > 0) await sleep(400 * i)
+    try {
+      const server = await device.gatt.connect()
+      await sleep(300)
+      const service = await server.getPrimaryService(SERVICE_UUID)
+      const characteristic = await service.getCharacteristic(WRITE_CHARACTERISTIC_UUID)
+      return { server, characteristic }
+    } catch (err) {
+      lastErr = err
+      try {
+        device.gatt.disconnect()
+      } catch {
+        // already disconnected — nothing to clean up before the next attempt
+      }
+    }
+  }
+  throw lastErr
+}
+
 export async function printZplViaBluetooth(zpl: string): Promise<void> {
   if (!isWebBluetoothSupported()) throw new Error('This browser does not support Web Bluetooth.')
   const paired = getPairedPrinter()
   if (!paired) throw new Error('No printer paired yet. Go to Admin → Printers to pair one.')
   const device = await getAuthorizedDevice(paired.id)
   if (!device) throw new Error('This browser lost permission for the paired printer. Re-pair it in Admin → Printers.')
-  if (!device.gatt) throw new Error('This device does not support a GATT connection.')
 
-  const server = await device.gatt.connect()
+  const { server, characteristic } = await connectAndGetWriteCharacteristic(device)
   try {
-    const service = await server.getPrimaryService(SERVICE_UUID)
-    const characteristic = await service.getCharacteristic(WRITE_CHARACTERISTIC_UUID)
     const bytes = new TextEncoder().encode(zpl)
     for (let offset = 0; offset < bytes.length; offset += CHUNK_SIZE) {
       const chunk = bytes.slice(offset, offset + CHUNK_SIZE)
