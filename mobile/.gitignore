@@ -42,3 +42,8 @@ yarn-error.*
 # generated native folders
 /ios
 /android
+
+# downloaded/built app binaries - distributed via GitHub Releases, never the repo (100MB+ each)
+*.apk
+*.aab
+*.ipa
