@@ -40,9 +40,16 @@ export function clearPairedPrinter() {
 // Must be called directly from a user click (browser requirement for requestDevice) — done once
 // by staff in Admin, never by customers. Grants a persistent permission for this device so later
 // reconnects (see getAuthorizedDevice below) don't need to show the picker again.
+//
+// Uses acceptAllDevices rather than filtering by SERVICE_UUID: Chrome's requestDevice filter only
+// matches services a device actively advertises in its BLE broadcast packet, and many peripherals
+// (this printer included) only expose custom GATT services after a connection is made, not in the
+// advertisement itself — filtering by service found zero devices even though the printer supports
+// it. optionalServices grants access to it once connected, and staff pick the right device by
+// name from the full list instead.
 export async function pairPrinter(): Promise<PairedPrinter> {
   if (!navigator.bluetooth) throw new Error('This browser does not support Web Bluetooth.')
-  const device = await navigator.bluetooth.requestDevice({ filters: [{ services: [SERVICE_UUID] }] })
+  const device = await navigator.bluetooth.requestDevice({ acceptAllDevices: true, optionalServices: [SERVICE_UUID] })
   const paired: PairedPrinter = { id: device.id, name: device.name || 'Zebra printer' }
   try {
     localStorage.setItem(STORAGE_KEY, JSON.stringify(paired))

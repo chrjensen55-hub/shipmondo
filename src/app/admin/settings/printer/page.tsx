@@ -46,6 +46,9 @@ export default function PrinterSettings() {
             Printing talks to the Zebra printer directly over Bluetooth from this page &mdash; no separate app needed on the tablet.
             Pairing is a one-time step per tablet; every &quot;Print label&quot; tap afterwards reconnects automatically, and customers are never asked to choose a printer.
           </p>
+          <p>
+            The picker below shows every nearby Bluetooth device, not just printers &mdash; look for a name starting with &quot;ZTC&quot; or &quot;ZQ&quot;/&quot;ZD&quot; followed by the model number (it&apos;s on a label on the printer itself), and make sure it&apos;s powered on first.
+          </p>
           {!supported && <div className="form-error">This browser doesn&apos;t support Web Bluetooth, so direct printing isn&apos;t available here. Use a recent version of Chrome.</div>}
           {state.status === 'error' && <div className="form-error">{state.message}</div>}
           {paired && <div className="form-success">Paired: {paired.name}</div>}
