@@ -1,6 +1,7 @@
 'use client'
 import { useEffect, useState } from 'react'
-import { ArrowLeft, ArrowRight, Check, CircleCheck, Loader2, Package, Plus, Printer, Trash2, Truck } from 'lucide-react'
+import { useRouter } from 'next/navigation'
+import { ArrowLeft, ArrowRight, Check, CircleCheck, Loader2, Menu, Package, Plus, Printer, Trash2, Truck } from 'lucide-react'
 import { countries, requiresCustoms } from '@/lib/shipping'
 import { boxSizeFor, weightBrackets } from '@/lib/carrierRates'
 import { printZplViaBluetooth } from '@/lib/zebraBluetooth'
@@ -30,6 +31,40 @@ const hasMissingHsCode=(needsCustoms:boolean,draft:ShipmentDraft)=>needsCustoms&
 const blankAddress=(country='DK'):Address=>({fullName:'',company:'',address1:'',address2:'',postalCode:'',city:'',country,email:'',phone:''})
 const initial:ShipmentDraft={originCountry:'DK',originPostalCode:'',destinationCountry:'DK',destinationPostalCode:'',carrierName:undefined,deliveryLocation:'home',sender:blankAddress(),recipient:blankAddress('DK'),parcels:[{id:'parcel-1',...firstParcelSize('home')}],contentsType:'GOODS',items:[]}
 const required=(value:string)=>value.trim().length>1
+// Temporary fixed PIN gating the Admin link from the customer-facing menu — not a real security
+// boundary (the whole app already sits behind the staff login in proxy.ts), just a quick deterrent
+// so a customer using the wizard doesn't wander into Admin. To be replaced with something real.
+const ADMIN_MENU_PIN='0000'
+
+function HamburgerMenu(){
+ const tr=useLang()
+ const [open,setOpen]=useState(false)
+ const [showPin,setShowPin]=useState(false)
+ const [pin,setPin]=useState('')
+ const [pinError,setPinError]=useState(false)
+ const router=useRouter()
+ function close(){setOpen(false);setShowPin(false);setPin('');setPinError(false)}
+ // The hamburger only ever renders inside the wizard at /send, so "Home" means "reset the
+ // current wizard back to the start" — same reasoning as the confirmation screen's Done button:
+ // a soft nav to the page you're already on is a no-op in Next.js and won't reset any state.
+ function goHome(){window.location.reload()}
+ function submitPin(e:React.FormEvent){e.preventDefault();if(pin===ADMIN_MENU_PIN)router.push('/admin');else{setPinError(true);setPin('')}}
+ return <div className="hamburger-menu">
+  <button aria-label={tr.menuLabel} className="hamburger-button" onClick={()=>setOpen(o=>!o)}><Menu/></button>
+  {open&&<><button className="hamburger-backdrop" aria-label="" onClick={close}/><div className="hamburger-panel">
+   {!showPin?<>
+    <button onClick={goHome}>{tr.menuHome}</button>
+    <button onClick={()=>setShowPin(true)}>{tr.menuAdmin}</button>
+   </>:
+    <form className="hamburger-pin" onSubmit={submitPin}>
+     <span>{tr.adminPinPrompt}</span>
+     <input type="password" inputMode="numeric" maxLength={4} value={pin} onChange={e=>{setPin(e.target.value);setPinError(false)}} autoFocus/>
+     {pinError&&<small className="pin-error">{tr.adminPinIncorrect}</small>}
+     <button type="submit" className="button button-primary">{tr.adminPinSubmit}</button>
+    </form>}
+  </div></>}
+ </div>
+}
 
 export function SendWizard(){
  const [lang,setLang]=useState<Lang>(DEFAULT_LANG)
@@ -57,7 +92,7 @@ export function SendWizard(){
  function setExportReason(exportReason:string){setDraft(d=>({...d,exportReason}))}
  async function book(){if(!confirmed||!selected||hasMissingHsCode(needsCustoms,draft))return;setBooking(true);setError('');setBookingProgress(4);const tick=setInterval(()=>setBookingProgress(p=>p>=90?90:p+Math.random()*10+4),350);try{const res=await fetch('/api/shipments',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({...draft,confirmation:true,idempotencyKey:crypto.randomUUID()})});const body=await res.json();if(!res.ok)throw new Error(body.error?.message);clearInterval(tick);setBookingProgress(100);await new Promise(r=>setTimeout(r,350));setResult(body.data);localStorage.removeItem('pak-send-progress')}catch(err){clearInterval(tick);setBookingProgress(0);setError(err instanceof Error&&err.message?err.message:tr.bookingError)}finally{setBooking(false)}}
  const posInVisible=visibleSteps.indexOf(step)
- return <LangContext.Provider value={lang}>{result?<Confirmation result={result} quote={selected!}/>:<div className="wizard-shell">{step!==2&&<header className="wizard-header"><div/><div className="lang-switch"><button aria-label="Dansk" className={lang==='da'?'selected':''} onClick={()=>setLang('da')}><img src="/lang/Flag_of_Denmark.svg.webp" alt="Dansk"/></button><button aria-label="English" className={lang==='en'?'selected':''} onClick={()=>setLang('en')}><img src="/lang/Flag_of_the_United_Kingdom_(3-5).svg" alt="English"/></button></div></header>}<div className="progress"><div className="progress-line"><i style={{width:`${posInVisible/(visibleSteps.length-1)*100}%`}}/></div>{visibleSteps.map(i=><button key={i} className={i===step?'active':i<step?'done':''} onClick={()=>i<step&&setStep(i)}><span>{i<step?<Check size={15}/>:visibleSteps.indexOf(i)+1}</span>{ALL_STEPS[i]}</button>)}</div><main className="wizard-main">{step===0&&<CarrierStep draft={draft} onSelect={selectCarrier}/>} {step===1&&<DeliveryStep carrierName={draft.carrierName} value={deliveryChosen?draft.deliveryLocation:null} onSelect={selectDeliveryLocation}/>} {step===2&&<Parcels draft={draft} setDraft={setDraft} weightChosen={weightChosen} onWeightChosen={markWeightChosen}/>} {step===3&&<AddressStep title={tr.senderTitle} value={draft.sender} onChange={(k,v)=>updateAddress('sender',k,v)} minimal/>} {step===4&&<AddressStep title={tr.recipientTitle} value={draft.recipient} onChange={(k,v)=>updateAddress('recipient',k,v)} instructions/>} {step===5&&<Customs items={draft.items} exportReason={draft.exportReason} onAdd={addCustomsItem} onRemove={removeCustomsItem} onChange={updateCustomsItem} onExportReasonChange={setExportReason}/>} {step===6&&(booking?<Generating progress={bookingProgress}/>:<Review draft={draft} quote={selected} needsCustoms={needsCustoms} confirmed={confirmed} setConfirmed={setConfirmed} edit={setStep}/>)} {error&&<div className="form-error">{error}</div>}{step>0&&!booking&&<div className="wizard-actions"><button className="button button-secondary" onClick={()=>setStep(s=>Math.max(stepBefore(s),0))}><ArrowLeft/> {tr.backAction}</button><div/>{step<6?<button className="button button-primary" disabled={quoting} onClick={next}>{quoting?tr.checkingRate:tr.continueAction} <ArrowRight/></button>:<button className="button button-primary" disabled={!confirmed||booking||hasMissingHsCode(needsCustoms,draft)} onClick={book}>{booking?tr.creatingShipment:tr.confirmCreateShipment} <ArrowRight/></button>}</div>}</main></div>}</LangContext.Provider>
+ return <LangContext.Provider value={lang}>{result?<Confirmation result={result} quote={selected!}/>:<div className="wizard-shell">{step!==2&&<header className="wizard-header"><HamburgerMenu/><div className="lang-switch"><button aria-label="Dansk" className={lang==='da'?'selected':''} onClick={()=>setLang('da')}><img src="/lang/Flag_of_Denmark.svg.webp" alt="Dansk"/></button><button aria-label="English" className={lang==='en'?'selected':''} onClick={()=>setLang('en')}><img src="/lang/Flag_of_the_United_Kingdom_(3-5).svg" alt="English"/></button></div></header>}<div className="progress"><div className="progress-line"><i style={{width:`${posInVisible/(visibleSteps.length-1)*100}%`}}/></div>{visibleSteps.map(i=><button key={i} className={i===step?'active':i<step?'done':''} onClick={()=>i<step&&setStep(i)}><span>{i<step?<Check size={15}/>:visibleSteps.indexOf(i)+1}</span>{ALL_STEPS[i]}</button>)}</div><main className="wizard-main">{step===0&&<CarrierStep draft={draft} onSelect={selectCarrier}/>} {step===1&&<DeliveryStep carrierName={draft.carrierName} value={deliveryChosen?draft.deliveryLocation:null} onSelect={selectDeliveryLocation}/>} {step===2&&<Parcels draft={draft} setDraft={setDraft} weightChosen={weightChosen} onWeightChosen={markWeightChosen}/>} {step===3&&<AddressStep title={tr.senderTitle} value={draft.sender} onChange={(k,v)=>updateAddress('sender',k,v)} minimal/>} {step===4&&<AddressStep title={tr.recipientTitle} value={draft.recipient} onChange={(k,v)=>updateAddress('recipient',k,v)} instructions/>} {step===5&&<Customs items={draft.items} exportReason={draft.exportReason} onAdd={addCustomsItem} onRemove={removeCustomsItem} onChange={updateCustomsItem} onExportReasonChange={setExportReason}/>} {step===6&&(booking?<Generating progress={bookingProgress}/>:<Review draft={draft} quote={selected} needsCustoms={needsCustoms} confirmed={confirmed} setConfirmed={setConfirmed} edit={setStep}/>)} {error&&<div className="form-error">{error}</div>}{step>0&&!booking&&<div className="wizard-actions"><button className="button button-secondary" onClick={()=>setStep(s=>Math.max(stepBefore(s),0))}><ArrowLeft/> {tr.backAction}</button><div/>{step<6?<button className="button button-primary" disabled={quoting} onClick={next}>{quoting?tr.checkingRate:tr.continueAction} <ArrowRight/></button>:<button className="button button-primary" disabled={!confirmed||booking||hasMissingHsCode(needsCustoms,draft)} onClick={book}>{booking?tr.creatingShipment:tr.confirmCreateShipment} <ArrowRight/></button>}</div>}</main></div>}</LangContext.Provider>
 }
 function Field({label,value,onChange,type='text',optional=false,placeholder}: {label:string;value:string|number;onChange:(v:string)=>void;type?:string;optional?:boolean;placeholder?:string}){const tr=useLang();return <label className="field"><span>{label}{optional&&<small>{tr.optional}</small>}</span><input type={type} value={value} placeholder={placeholder} onChange={e=>onChange(e.target.value)}/></label>}
 function Country({label,value,onChange}:{label:string;value:string;onChange:(v:string)=>void}){const lang=useLangCode();return <label className="field"><span>{label}</span><select value={value} onChange={e=>onChange(e.target.value)}>{countries.map(c=><option value={c.code} key={c.code}>{countryName(c.code,c.name,lang)}</option>)}</select></label>}
