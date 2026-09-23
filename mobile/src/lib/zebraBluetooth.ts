@@ -13,7 +13,14 @@ import * as SecureStore from 'expo-secure-store'
 // dramatically faster than the web version, but it is more direct and reliable.
 const SERVICE_UUID = '38eb4a80-c570-11e3-9507-0002a5d5c51b'
 const WRITE_CHARACTERISTIC_UUID = '38eb4a82-c570-11e3-9507-0002a5d5c51b'
-const CHUNK_SIZE = 20
+// 20 bytes is the safe floor (the default, unnegotiated BLE MTU of 23 minus 3 bytes of ATT
+// header) - connectAndDiscover requests the maximum MTU on connect and derives the real chunk
+// size from whatever the printer actually grants, since the write-with-response round-trip
+// latency (not the data itself) is what makes printing slow: fewer, bigger chunks means far
+// fewer round-trips for the same ~50KB label. Zebra's own AppNote caps a single write at 512
+// bytes regardless of a larger negotiated MTU.
+const MIN_CHUNK_SIZE = 20
+const MAX_CHUNK_SIZE = 512
 const DEVICE_ID_KEY = 'pak-send-zebra-ble-device-id'
 const DEVICE_NAME_KEY = 'pak-send-zebra-ble-device-name'
 
@@ -113,7 +120,10 @@ async function connectAndDiscover(deviceId: string, attempts = 4): Promise<Devic
   for (let i = 0; i < attempts; i++) {
     if (i > 0) await sleep(400 * i)
     try {
-      const device = await manager.connectToDevice(deviceId, { timeout: 8000 })
+      // requestMTU is Android-only (iOS negotiates automatically and ignores this) — harmless to
+      // always pass it. The printer may grant less than asked for; printZplViaBluetooth reads the
+      // actual negotiated device.mtu afterward rather than assuming this was honored.
+      const device = await manager.connectToDevice(deviceId, { timeout: 8000, requestMTU: MAX_CHUNK_SIZE + 3 })
       await sleep(300)
       await device.discoverAllServicesAndCharacteristics()
       return device
@@ -123,6 +133,12 @@ async function connectAndDiscover(deviceId: string, attempts = 4): Promise<Devic
     }
   }
   throw lastErr
+}
+
+// device.mtu includes the 3-byte ATT header, and Zebra's own AppNote caps a single write to this
+// characteristic at 512 bytes regardless of how large the negotiated MTU is.
+function chunkSizeFor(device: Device): number {
+  return Math.max(MIN_CHUNK_SIZE, Math.min(device.mtu - 3, MAX_CHUNK_SIZE))
 }
 
 export async function printZplViaBluetooth(zpl: string): Promise<void> {
@@ -146,9 +162,10 @@ export async function printZplViaBluetooth(zpl: string): Promise<void> {
     }
   }
   try {
+    const chunkSize = chunkSizeFor(device)
     const bytes = utf8Bytes(zpl)
-    for (let offset = 0; offset < bytes.length; offset += CHUNK_SIZE) {
-      const chunk = bytes.slice(offset, offset + CHUNK_SIZE)
+    for (let offset = 0; offset < bytes.length; offset += chunkSize) {
+      const chunk = bytes.slice(offset, offset + chunkSize)
       await device.writeCharacteristicWithResponseForService(SERVICE_UUID, WRITE_CHARACTERISTIC_UUID, bytesToBase64(chunk))
     }
   } finally {
