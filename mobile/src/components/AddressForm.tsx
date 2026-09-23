@@ -1,6 +1,7 @@
 import { StyleSheet, Text, View } from 'react-native'
 import { Picker } from '@react-native-picker/picker'
 import { TextField } from './TextField'
+import { PhoneField } from './PhoneField'
 import { countries } from '@/lib/countries'
 import { colors, radius } from '@/lib/theme'
 import type { Address } from '@/lib/types'
@@ -31,13 +32,13 @@ export function AddressForm({ value, onChange, minimal = false }: { value: Addre
         </View>
       </View>
       <TextField label="Email" value={value.email} onChangeText={(v) => onChange('email', v)} keyboardType="email-address" autoCapitalize="none" />
-      <TextField label="Mobile phone" value={value.phone} onChangeText={(v) => onChange('phone', v)} keyboardType="phone-pad" />
+      <PhoneField label="Mobile phone" value={value.phone} onChange={(v) => onChange('phone', v)} />
     </View>
   )
 }
 
 const styles = StyleSheet.create({
-  fields: { gap: 12 },
+  fields: { gap: 14 },
   row: { flexDirection: 'row', gap: 10 },
   label: { fontSize: 13, fontWeight: '600', color: colors.ink, marginBottom: 6 },
   pickerWrap: { borderWidth: 1, borderColor: colors.line, borderRadius: radius.sm, backgroundColor: colors.white },

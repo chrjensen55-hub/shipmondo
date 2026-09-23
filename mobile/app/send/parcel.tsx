@@ -2,7 +2,7 @@ import { useRouter } from 'expo-router'
 import { useState } from 'react'
 import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native'
 import { SafeAreaView } from 'react-native-safe-area-context'
-import { Plus, Trash2 } from 'lucide-react-native'
+import { Package, Plus, Ruler, Trash2, CheckCircle2 } from 'lucide-react-native'
 import { Button } from '@/components/Button'
 import { TextField } from '@/components/TextField'
 import { useWizard, firstParcelSize } from '@/lib/wizard-context'
@@ -12,6 +12,16 @@ import type { Parcel } from '@/lib/types'
 
 function formatWeight(kg: number) {
   return kg < 1 ? `${Math.round(kg * 1000)} g` : `${kg} kg`
+}
+
+// A bigger box icon per bracket gives an at-a-glance sense of scale (letter vs. big box) without
+// making staff read numbers first — the icon size steps in fixed increments across the bracket
+// range rather than scaling linearly with kg, since a 35kg box isn't 35x the visual size of a 1kg one.
+function iconSizeFor(index: number, total: number) {
+  const min = 22
+  const max = 40
+  if (total <= 1) return max
+  return Math.round(min + ((max - min) * index) / (total - 1))
 }
 
 export default function ParcelStep() {
@@ -107,14 +117,24 @@ function ParcelCard({
           </Pressable>
         )}
       </View>
-      <View style={styles.chips}>
+      <View style={styles.tiles}>
         {brackets.map((max, i) => {
           const lower = i === 0 ? 0 : brackets[i - 1]
           const selected = selectedWeight === max
+          const box = boxSizeFor(max)
           return (
-            <Pressable key={max} style={[styles.chip, selected && styles.chipSelected]} onPress={() => onChooseWeight(max)}>
-              <Text style={[styles.chipText, selected && styles.chipTextSelected]}>
+            <Pressable key={max} style={[styles.tile, selected && styles.tileSelected]} onPress={() => onChooseWeight(max)}>
+              {selected && (
+                <View style={styles.tileCheck}>
+                  <CheckCircle2 size={18} color={colors.ocean} fill={colors.white} />
+                </View>
+              )}
+              <Package size={iconSizeFor(i, brackets.length)} color={selected ? colors.ocean : colors.muted} strokeWidth={1.75} />
+              <Text style={[styles.tileWeight, selected && styles.tileWeightSelected]}>
                 {formatWeight(lower)}–{formatWeight(max)}
+              </Text>
+              <Text style={styles.tileDims}>
+                ~{box.length}×{box.width}×{box.height} cm
               </Text>
             </Pressable>
           )
@@ -122,7 +142,10 @@ function ParcelCard({
       </View>
       {selectedWeight !== null && (
         <View style={styles.dims}>
-          <Text style={styles.dimsLabel}>Parcel size (cm)</Text>
+          <View style={styles.dimsHeader}>
+            <Ruler size={15} color={colors.muted} />
+            <Text style={styles.dimsLabel}>Exact size (cm) — adjust if different</Text>
+          </View>
           <View style={styles.dimsRow}>
             <TextField label="Length" keyboardType="number-pad" value={String(parcel.length)} onChangeText={(v) => onUpdateDimension('length', v)} />
             <TextField label="Width" keyboardType="number-pad" value={String(parcel.width)} onChangeText={(v) => onUpdateDimension('width', v)} />
@@ -143,13 +166,28 @@ const styles = StyleSheet.create({
   cardTitle: { fontWeight: '700', color: colors.ink, fontSize: 15 },
   removeButton: { flexDirection: 'row', alignItems: 'center', gap: 4 },
   removeText: { color: colors.error, fontWeight: '600', fontSize: 13 },
-  chips: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
-  chip: { borderWidth: 1, borderColor: colors.line, borderRadius: 99, paddingVertical: 10, paddingHorizontal: 16, backgroundColor: colors.white },
-  chipSelected: { backgroundColor: colors.ocean, borderColor: colors.ocean },
-  chipText: { color: colors.ink, fontWeight: '600' },
-  chipTextSelected: { color: colors.white },
+  tiles: { flexDirection: 'row', flexWrap: 'wrap', gap: 10 },
+  tile: {
+    width: '31%',
+    minHeight: 96,
+    borderWidth: 1.5,
+    borderColor: colors.line,
+    borderRadius: radius.md,
+    backgroundColor: colors.cream,
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 4,
+    paddingVertical: 10,
+    paddingHorizontal: 4,
+  },
+  tileSelected: { borderColor: colors.ocean, backgroundColor: colors.mint },
+  tileCheck: { position: 'absolute', top: 6, right: 6 },
+  tileWeight: { fontWeight: '700', color: colors.ink, fontSize: 13, textAlign: 'center' },
+  tileWeightSelected: { color: colors.ocean },
+  tileDims: { fontSize: 11, color: colors.muted, textAlign: 'center' },
   dims: { gap: 8 },
-  dimsLabel: { fontWeight: '700', color: colors.ink },
+  dimsHeader: { flexDirection: 'row', alignItems: 'center', gap: 6 },
+  dimsLabel: { fontWeight: '700', color: colors.ink, fontSize: 13 },
   dimsRow: { flexDirection: 'row', gap: 10 },
   addButton: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8, minHeight: 48, borderWidth: 1, borderStyle: 'dashed', borderColor: '#aab8b1', borderRadius: radius.md },
   addButtonText: { color: colors.green, fontWeight: '700' },
