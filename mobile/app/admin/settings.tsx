@@ -11,13 +11,20 @@ import { colors, radius } from '@/lib/theme'
 
 type TestState = { status: 'idle' | 'testing' | 'ok' | 'error'; message?: string }
 
+// Every real deployment uses this same production endpoint — pre-filling it (rather than just
+// showing it as a placeholder) removes the most common way staff broke a tablet's setup: leaving
+// this field blank, or mistyping it, while the API username/key are the only part that actually
+// differs between accounts.
+const DEFAULT_BASE_URL = 'https://app.shipmondo.com/api/public/v3'
+
 export default function SettingsScreen() {
-  const [baseUrl, setBaseUrl] = useState('')
+  const [baseUrl, setBaseUrl] = useState(DEFAULT_BASE_URL)
   const [username, setUsername] = useState('')
   const [apiKey, setApiKey] = useState('')
   const [configured, setConfigured] = useState(false)
   const [savingShipmondo, setSavingShipmondo] = useState(false)
   const [shipmondoSaved, setShipmondoSaved] = useState(false)
+  const [saveError, setSaveError] = useState('')
   const [test, setTest] = useState<TestState>({ status: 'idle' })
 
   const [currentPin, setCurrentPin] = useState('')
@@ -39,20 +46,30 @@ export default function SettingsScreen() {
   async function saveShipmondo() {
     setSavingShipmondo(true)
     setShipmondoSaved(false)
-    setTest({ status: 'idle' })
-    await setShipmondoConfig({ baseUrl, username, apiKey })
-    setConfigured(true)
-    setSavingShipmondo(false)
-    setShipmondoSaved(true)
+    setSaveError('')
+    try {
+      await setShipmondoConfig({ baseUrl, username, apiKey })
+      setConfigured(true)
+      setShipmondoSaved(true)
+      // Confirm the newly-saved credentials actually work against Shipmondo right away, instead
+      // of staff only finding out at the print step that a typo'd key or wrong base URL meant
+      // nothing was really booking.
+      await testConnection()
+    } catch (err) {
+      setSaveError(err instanceof Error ? err.message : 'Could not save these settings on this device.')
+    } finally {
+      setSavingShipmondo(false)
+    }
   }
 
   async function removeShipmondo() {
     await clearShipmondoConfig()
-    setBaseUrl('')
+    setBaseUrl(DEFAULT_BASE_URL)
     setUsername('')
     setApiKey('')
     setConfigured(false)
     setShipmondoSaved(false)
+    setSaveError('')
     setTest({ status: 'idle' })
   }
 
@@ -101,13 +118,15 @@ export default function SettingsScreen() {
           <TextField label="API username" autoCapitalize="none" autoCorrect={false} value={username} onChangeText={setUsername} />
           <TextField label="API key" autoCapitalize="none" autoCorrect={false} secureTextEntry value={apiKey} onChangeText={setApiKey} />
           {shipmondoSaved && <Text style={styles.success}>Saved.</Text>}
+          {saveError ? <Text style={styles.error}>{saveError}</Text> : null}
           <View style={styles.row}>
             <Button label="Save" onPress={saveShipmondo} loading={savingShipmondo} disabled={!shipmondoValid} />
             {configured && <Button label="Test connection" variant="secondary" onPress={testConnection} loading={test.status === 'testing'} />}
             {configured && <Button label="Remove" variant="secondary" onPress={removeShipmondo} />}
           </View>
+          {test.status === 'testing' && <Text style={styles.cardSub}>Checking the connection to Shipmondo…</Text>}
           {test.status === 'ok' && <Text style={styles.success}>{test.message}</Text>}
-          {test.status === 'error' && <Text style={styles.error}>{test.message}</Text>}
+          {test.status === 'error' && <Text style={styles.error}>Could not connect: {test.message}</Text>}
         </View>
 
         <View style={styles.card}>
