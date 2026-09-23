@@ -3,6 +3,7 @@ import { useRouter } from 'expo-router'
 import { Pressable, StyleSheet, Text, View } from 'react-native'
 import * as Crypto from 'expo-crypto'
 import { WizardScreen } from '@/components/WizardScreen'
+import { CarrierLogo } from '@/components/CarrierLogo'
 import { useWizard, HS_CODE_RE } from '@/lib/wizard-context'
 import { countries } from '@/lib/countries'
 import { api, ApiError } from '@/lib/api'
@@ -48,9 +49,12 @@ export default function ReviewStep() {
         <Row label="Recipient" value={`${draft.recipient.fullName}\n${draft.recipient.address1}, ${draft.recipient.postalCode} ${draft.recipient.city}`} />
       </View>
       <View style={styles.serviceCard}>
-        <Text style={styles.serviceName}>
-          {quote?.carrier} {quote?.serviceName}
-        </Text>
+        <View style={styles.serviceInfo}>
+          <CarrierLogo name={quote?.carrier ?? ''} size={36} />
+          <Text style={styles.serviceName}>
+            {quote?.carrier} {quote?.serviceName}
+          </Text>
+        </View>
         <Text style={styles.servicePrice}>{quote?.customerPrice} DKK</Text>
       </View>
       {missingHsCode && (
@@ -81,6 +85,7 @@ const styles = StyleSheet.create({
   rowLabel: { color: colors.muted, fontSize: 12, textTransform: 'uppercase', fontWeight: '700' },
   rowValue: { color: colors.ink, fontSize: 15 },
   serviceCard: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', backgroundColor: colors.mint, borderRadius: radius.md, padding: 16 },
+  serviceInfo: { flexDirection: 'row', alignItems: 'center', gap: 10, flexShrink: 1 },
   serviceName: { fontWeight: '700', color: colors.ink },
   servicePrice: { fontWeight: '800', fontSize: 18, color: colors.greenDark },
   notice: { backgroundColor: colors.errorBg, borderRadius: radius.sm, padding: 14 },

@@ -2,6 +2,7 @@ import { useRouter } from 'expo-router'
 import { Pressable, StyleSheet, Text, View } from 'react-native'
 import { SafeAreaView } from 'react-native-safe-area-context'
 import { useWizard, CARRIERS } from '@/lib/wizard-context'
+import { CarrierLogo } from '@/components/CarrierLogo'
 import { colors, radius } from '@/lib/theme'
 
 export default function CarrierStep() {
@@ -19,8 +20,7 @@ export default function CarrierStep() {
       <View style={styles.grid}>
         {CARRIERS.map((c) => (
           <Pressable key={c.name} style={[styles.card, draft.carrierName === c.name && styles.cardSelected]} onPress={() => select(c.name)}>
-            <Text style={styles.cardName}>{c.name}</Text>
-            <Text style={styles.cardTagline}>{c.tagline}</Text>
+            <CarrierLogo name={c.name} size={64} />
           </Pressable>
         ))}
       </View>
@@ -31,9 +31,7 @@ export default function CarrierStep() {
 const styles = StyleSheet.create({
   screen: { flex: 1, backgroundColor: colors.cream, padding: 20 },
   title: { fontSize: 22, fontWeight: '800', color: colors.ink, marginBottom: 20 },
-  grid: { gap: 12 },
-  card: { backgroundColor: colors.white, borderWidth: 2, borderColor: colors.line, borderRadius: radius.lg, padding: 20 },
+  grid: { flexDirection: 'row', flexWrap: 'wrap', gap: 12 },
+  card: { flexBasis: '47%', flexGrow: 1, alignItems: 'center', justifyContent: 'center', backgroundColor: colors.white, borderWidth: 2, borderColor: colors.line, borderRadius: radius.lg, paddingVertical: 28 },
   cardSelected: { borderColor: colors.ocean },
-  cardName: { fontSize: 18, fontWeight: '800', color: colors.ink },
-  cardTagline: { color: colors.muted, marginTop: 4 },
 })
