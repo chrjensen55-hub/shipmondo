@@ -22,7 +22,7 @@ export default function CarrierStep() {
       <View style={styles.grid}>
         {CARRIERS.map((c) => (
           <Pressable key={c.name} style={[styles.card, draft.carrierName === c.name && styles.cardSelected]} onPress={() => select(c.name)}>
-            <CarrierLogo name={c.name} size={64} />
+            <CarrierLogo name={c.name} size={84} />
           </Pressable>
         ))}
       </View>

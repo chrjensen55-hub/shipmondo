@@ -3,6 +3,7 @@ import { useLocalSearchParams } from 'expo-router'
 import { ScrollView, StyleSheet, Text, View } from 'react-native'
 import { SafeAreaView } from 'react-native-safe-area-context'
 import { Button } from '@/components/Button'
+import { PrintProgressBar } from '@/components/PrintProgressBar'
 import { api, ApiError } from '@/lib/api'
 import { printZplViaBluetooth } from '@/lib/zebraBluetooth'
 import type { ShipmondoShipment } from '@/lib/types'
@@ -42,6 +43,7 @@ export default function ShipmentDetail() {
   const [shipment, setShipment] = useState<ShipmondoShipment | null>(null)
   const [loadError, setLoadError] = useState('')
   const [printStatus, setPrintStatus] = useState<'idle' | 'printing' | 'ok' | 'error'>('idle')
+  const [printProgress, setPrintProgress] = useState(0)
   const [printMessage, setPrintMessage] = useState('')
 
   useEffect(() => {
@@ -51,13 +53,15 @@ export default function ShipmentDetail() {
   }, [id])
 
   async function reprint() {
+    if (printStatus === 'printing') return
     setPrintStatus('printing')
+    setPrintProgress(0)
     setPrintMessage('')
     try {
       const labels = await api<{ base64: string; file_format: string }[]>(`/api/shipments/${id}/labels?format=zpl`)
       const label = labels[0]
       if (!label) throw new Error('No label available for this shipment.')
-      await printZplViaBluetooth(base64ToUtf8(label.base64))
+      await printZplViaBluetooth(base64ToUtf8(label.base64), setPrintProgress)
       setPrintStatus('ok')
     } catch (err) {
       setPrintStatus('error')
@@ -91,7 +95,7 @@ export default function ShipmentDetail() {
           <Row label="Sender" value={`${sender?.name ?? ''}\n${sender?.address1 ?? ''}, ${sender?.postal_code ?? ''} ${sender?.city ?? ''}`} />
         </View>
 
-        <Button label={printStatus === 'printing' ? 'Printing…' : 'Reprint label'} onPress={reprint} loading={printStatus === 'printing'} />
+        {printStatus === 'printing' ? <PrintProgressBar progress={printProgress} /> : <Button label="Reprint label" onPress={reprint} />}
         {printStatus === 'ok' && <Text style={styles.success}>Sent to the printer.</Text>}
         {printStatus === 'error' && <Text style={styles.error}>{printMessage}</Text>}
       </ScrollView>

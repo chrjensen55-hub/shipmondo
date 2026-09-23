@@ -4,6 +4,7 @@ import { BackHandler, StyleSheet, Text, View } from 'react-native'
 import { SafeAreaView } from 'react-native-safe-area-context'
 import { CircleCheck } from 'lucide-react-native'
 import { Button } from '@/components/Button'
+import { PrintProgressBar } from '@/components/PrintProgressBar'
 import { useWizard } from '@/lib/wizard-context'
 import { api, ApiError } from '@/lib/api'
 import { printZplViaBluetooth } from '@/lib/zebraBluetooth'
@@ -42,24 +43,27 @@ export default function Confirmation() {
   const { reset } = useWizard()
   const { reference, tracking, shipmentId, customerPrice } = useLocalSearchParams<{ reference: string; tracking: string; shipmentId: string; customerPrice: string }>()
   const [printing, setPrinting] = useState(false)
+  const [printProgress, setPrintProgress] = useState(0)
   const [printed, setPrinted] = useState(false)
   const [error, setError] = useState('')
   const [hasClickedPrint, setHasClickedPrint] = useState(false)
 
   async function printLabel() {
+    if (printing) return
     if (!shipmentId) {
       setError('The label is not available for this shipment.')
       return
     }
     setHasClickedPrint(true)
     setPrinting(true)
+    setPrintProgress(0)
     setError('')
     setPrinted(false)
     try {
       const labels = await api<{ base64: string; file_format: string }[]>(`/api/shipments/${shipmentId}/labels?format=zpl`)
       const label = labels[0]
       if (!label) throw new Error('No label available for this shipment.')
-      await printZplViaBluetooth(base64ToUtf8(label.base64))
+      await printZplViaBluetooth(base64ToUtf8(label.base64), setPrintProgress)
       setPrinted(true)
     } catch (err) {
       setError(err instanceof ApiError || err instanceof Error ? err.message : 'Could not print this label.')
@@ -100,7 +104,7 @@ export default function Confirmation() {
           <Row label="Total" value={`${customerPrice} DKK`} />
         </View>
         <View style={styles.printHero}>
-          <Button label={printing ? 'Printing…' : 'Print label'} onPress={printLabel} loading={printing} />
+          {printing ? <PrintProgressBar progress={printProgress} /> : <Button label="Print label" onPress={printLabel} />}
           {printed && <Text style={styles.success}>The label was sent to the printer.</Text>}
           {error ? <Text style={styles.error}>{error}</Text> : null}
         </View>

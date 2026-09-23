@@ -141,7 +141,10 @@ function chunkSizeFor(device: Device): number {
   return Math.max(MIN_CHUNK_SIZE, Math.min(device.mtu - 3, MAX_CHUNK_SIZE))
 }
 
-export async function printZplViaBluetooth(zpl: string): Promise<void> {
+// onProgress reports 0..1 based on bytes written so far — real progress from the actual BLE
+// transfer, not a fake timed animation, since a real ZPL label is tens of KB over a
+// write-with-response link and can visibly take a few seconds chunk by chunk.
+export async function printZplViaBluetooth(zpl: string, onProgress?: (fraction: number) => void): Promise<void> {
   const paired = await getPairedPrinter()
   if (!paired) throw new Error('No printer paired yet. Go to Admin → Printer to pair one.')
   const granted = await requestBlePermissions()
@@ -164,9 +167,13 @@ export async function printZplViaBluetooth(zpl: string): Promise<void> {
   try {
     const chunkSize = chunkSizeFor(device)
     const bytes = utf8Bytes(zpl)
+    let sent = 0
+    onProgress?.(0)
     for (let offset = 0; offset < bytes.length; offset += chunkSize) {
       const chunk = bytes.slice(offset, offset + chunkSize)
       await device.writeCharacteristicWithResponseForService(SERVICE_UUID, WRITE_CHARACTERISTIC_UUID, bytesToBase64(chunk))
+      sent += chunk.length
+      onProgress?.(sent / bytes.length)
     }
   } finally {
     await device.cancelConnection().catch(() => {})

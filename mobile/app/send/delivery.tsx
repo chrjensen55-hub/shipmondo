@@ -52,7 +52,7 @@ export default function DeliveryStep() {
           )}
           <Image source={homeDeliveryImage} style={styles.cardImage} resizeMode="contain" alt="" />
           <Text style={styles.cardTitle}>Home delivery</Text>
-          <Text style={styles.cardSub}>Delivered directly to the door</Text>
+          <Text style={styles.cardSub}>Delivered directly to the recipient&apos;s home address — or the company address if it&apos;s a business</Text>
         </Pressable>
       </View>
       <View style={styles.actions}>

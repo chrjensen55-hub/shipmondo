@@ -11,8 +11,10 @@ import { boxSizeFor, weightBrackets } from '@/lib/carrierRates'
 import { colors, radius } from '@/lib/theme'
 import type { Parcel } from '@/lib/types'
 
-function formatWeight(kg: number) {
-  return kg < 1 ? `${Math.round(kg * 1000)} g` : `${kg} kg`
+// Plain "0 - 1 kg" rather than switching to grams below 1kg — a customer glancing at the tile
+// should be able to read the range at a single unit without doing a mental conversion.
+function formatWeightRange(lower: number, upper: number) {
+  return `${lower} - ${upper} kg`
 }
 
 // A bigger box icon per bracket gives an at-a-glance sense of scale (letter vs. big box) without
@@ -132,11 +134,9 @@ function ParcelCard({
                 </View>
               )}
               <Package size={iconSizeFor(i, brackets.length)} color={selected ? colors.ocean : colors.muted} strokeWidth={1.75} />
-              <Text style={[styles.tileWeight, selected && styles.tileWeightSelected]}>
-                {formatWeight(lower)}–{formatWeight(max)}
-              </Text>
+              <Text style={[styles.tileWeight, selected && styles.tileWeightSelected]}>{formatWeightRange(lower, max)}</Text>
               <Text style={styles.tileDims}>
-                ~{box.length}×{box.width}×{box.height} cm
+                Max size {box.length}×{box.width}×{box.height} cm
               </Text>
             </Pressable>
           )

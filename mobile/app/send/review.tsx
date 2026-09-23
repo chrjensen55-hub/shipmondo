@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { useRouter } from 'expo-router'
 import { Pressable, StyleSheet, Text, View } from 'react-native'
 import * as Crypto from 'expo-crypto'
+import { Truck, Package, UserRound, MapPin, type LucideIcon } from 'lucide-react-native'
 import { WizardScreen } from '@/components/WizardScreen'
 import { CarrierLogo } from '@/components/CarrierLogo'
 import { useWizard, HS_CODE_RE } from '@/lib/wizard-context'
@@ -43,10 +44,10 @@ export default function ReviewStep() {
   return (
     <WizardScreen title="Review your shipment" step={7} onContinue={book} continueLabel={booking ? 'Creating shipment…' : 'Confirm and create shipment'} continueDisabled={!confirmed || booking || missingHsCode || !quote} continueLoading={booking} error={error}>
       <View style={styles.card}>
-        <Row label="Carrier" value={`${draft.carrierName ?? ''} — ${countryName(draft.originCountry)} → ${countryName(draft.destinationCountry)}`} />
-        <Row label="Parcel" value={`${draft.parcels.length} parcel${draft.parcels.length > 1 ? 's' : ''}, ${draft.parcels.reduce((n, p) => n + p.weight, 0)} kg`} />
-        <Row label="Sender" value={`${draft.sender.fullName}\n${draft.sender.address1}, ${draft.sender.postalCode} ${draft.sender.city}`} />
-        <Row label="Recipient" value={`${draft.recipient.fullName}\n${draft.recipient.address1}, ${draft.recipient.postalCode} ${draft.recipient.city}`} />
+        <Row icon={Truck} label="Carrier" value={`${draft.carrierName ?? ''} — ${countryName(draft.originCountry)} → ${countryName(draft.destinationCountry)}`} />
+        <Row icon={Package} label="Parcel" value={`${draft.parcels.length} parcel${draft.parcels.length > 1 ? 's' : ''}, ${draft.parcels.reduce((n, p) => n + p.weight, 0)} kg`} />
+        <Row icon={UserRound} label="Sender" value={`${draft.sender.fullName}\n${draft.sender.address1}, ${draft.sender.postalCode} ${draft.sender.city}`} />
+        <Row icon={MapPin} label="Recipient" value={`${draft.recipient.fullName}\n${draft.recipient.address1}, ${draft.recipient.postalCode} ${draft.recipient.city}`} last />
       </View>
       <View style={styles.serviceCard}>
         <View style={styles.serviceInfo}>
@@ -70,18 +71,23 @@ export default function ReviewStep() {
   )
 }
 
-function Row({ label, value }: { label: string; value: string }) {
+function Row({ icon: Icon, label, value, last }: { icon: LucideIcon; label: string; value: string; last?: boolean }) {
   return (
-    <View style={styles.row}>
-      <Text style={styles.rowLabel}>{label}</Text>
+    <View style={[styles.row, !last && styles.rowDivider]}>
+      <View style={styles.rowHeader}>
+        <Icon size={15} color={colors.muted} />
+        <Text style={styles.rowLabel}>{label}</Text>
+      </View>
       <Text style={styles.rowValue}>{value}</Text>
     </View>
   )
 }
 
 const styles = StyleSheet.create({
-  card: { backgroundColor: colors.white, borderRadius: radius.md, borderWidth: 1, borderColor: colors.line, padding: 16, gap: 12 },
-  row: { gap: 2 },
+  card: { backgroundColor: colors.white, borderRadius: radius.md, borderWidth: 1, borderColor: colors.line, padding: 16 },
+  row: { gap: 4, paddingVertical: 10 },
+  rowDivider: { borderBottomWidth: 1, borderBottomColor: colors.line },
+  rowHeader: { flexDirection: 'row', alignItems: 'center', gap: 6 },
   rowLabel: { color: colors.muted, fontSize: 12, textTransform: 'uppercase', fontWeight: '700' },
   rowValue: { color: colors.ink, fontSize: 15 },
   serviceCard: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', backgroundColor: colors.mint, borderRadius: radius.md, padding: 16 },
