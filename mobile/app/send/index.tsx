@@ -4,11 +4,13 @@ import { SafeAreaView } from 'react-native-safe-area-context'
 import { useWizard, CARRIERS } from '@/lib/wizard-context'
 import { CarrierLogo } from '@/components/CarrierLogo'
 import { StepProgress } from '@/components/StepProgress'
+import { useLang } from '@/lib/i18n'
 import { colors, radius } from '@/lib/theme'
 
 export default function CarrierStep() {
   const router = useRouter()
   const { draft, setDraft } = useWizard()
+  const tr = useLang()
 
   function select(name: string) {
     setDraft((d) => ({ ...d, carrierName: name }))
@@ -18,7 +20,7 @@ export default function CarrierStep() {
   return (
     <SafeAreaView style={styles.screen} edges={['top', 'bottom']}>
       <StepProgress step={1} />
-      <Text style={styles.title}>Which carrier do you want to use?</Text>
+      <Text style={styles.title}>{tr.carrierHeading}</Text>
       <View style={styles.grid}>
         {CARRIERS.map((c) => (
           <Pressable key={c.name} style={[styles.card, draft.carrierName === c.name && styles.cardSelected]} onPress={() => select(c.name)}>

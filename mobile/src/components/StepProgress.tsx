@@ -1,4 +1,5 @@
 import { StyleSheet, Text, View } from 'react-native'
+import { useLang } from '@/lib/i18n'
 import { colors } from '@/lib/theme'
 
 // A fixed 7-step scale (carrier, delivery, parcel, sender, recipient, customs, review) even
@@ -7,6 +8,7 @@ import { colors } from '@/lib/theme'
 const TOTAL_STEPS = 7
 
 export function StepProgress({ step }: { step: number }) {
+  const tr = useLang()
   return (
     <View style={styles.wrap}>
       <View style={styles.track}>
@@ -15,7 +17,7 @@ export function StepProgress({ step }: { step: number }) {
         ))}
       </View>
       <Text style={styles.label}>
-        Step {step} of {TOTAL_STEPS}
+        {tr.stepLabel} {step} {tr.stepOf} {TOTAL_STEPS}
       </Text>
     </View>
   )

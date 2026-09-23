@@ -8,6 +8,7 @@ import { PrintProgressBar } from '@/components/PrintProgressBar'
 import { useWizard } from '@/lib/wizard-context'
 import { api, ApiError } from '@/lib/api'
 import { printZplViaBluetooth } from '@/lib/zebraBluetooth'
+import { useLang } from '@/lib/i18n'
 import { colors, radius } from '@/lib/theme'
 
 function base64ToUtf8(base64: string): string {
@@ -41,6 +42,7 @@ function base64ToUtf8(base64: string): string {
 export default function Confirmation() {
   const router = useRouter()
   const { reset } = useWizard()
+  const tr = useLang()
   const { reference, tracking, shipmentId, customerPrice } = useLocalSearchParams<{ reference: string; tracking: string; shipmentId: string; customerPrice: string }>()
   const [printing, setPrinting] = useState(false)
   const [printProgress, setPrintProgress] = useState(0)
@@ -51,7 +53,7 @@ export default function Confirmation() {
   async function printLabel() {
     if (printing) return
     if (!shipmentId) {
-      setError('The label is not available for this shipment.')
+      setError(tr.labelNotAvailable)
       return
     }
     setHasClickedPrint(true)
@@ -62,11 +64,11 @@ export default function Confirmation() {
     try {
       const labels = await api<{ base64: string; file_format: string }[]>(`/api/shipments/${shipmentId}/labels?format=zpl`)
       const label = labels[0]
-      if (!label) throw new Error('No label available for this shipment.')
+      if (!label) throw new Error(tr.labelNotAvailable)
       await printZplViaBluetooth(base64ToUtf8(label.base64), setPrintProgress)
       setPrinted(true)
     } catch (err) {
-      setError(err instanceof ApiError || err instanceof Error ? err.message : 'Could not print this label.')
+      setError(err instanceof ApiError || err instanceof Error ? err.message : tr.printError)
     } finally {
       setPrinting(false)
     }
@@ -96,21 +98,21 @@ export default function Confirmation() {
     <SafeAreaView style={styles.screen}>
       <View style={styles.content}>
         <CircleCheck color={colors.success} size={56} />
-        <Text style={styles.title}>You&apos;re all set</Text>
-        <Text style={styles.subtitle}>The shipment is booked and ready.</Text>
+        <Text style={styles.title}>{tr.allSetHeading}</Text>
+        <Text style={styles.subtitle}>{tr.bookedReady}</Text>
         <View style={styles.card}>
-          <Row label="Reference" value={reference} />
-          <Row label="Tracking number" value={tracking} />
-          <Row label="Total" value={`${customerPrice} DKK`} />
+          <Row label={tr.reference} value={reference} />
+          <Row label={tr.trackingNumber} value={tracking} />
+          <Row label={tr.total} value={`${customerPrice} DKK`} />
         </View>
         <View style={styles.printHero}>
-          {printing ? <PrintProgressBar progress={printProgress} /> : <Button label="Print label" onPress={printLabel} />}
-          {printed && <Text style={styles.success}>The label was sent to the printer.</Text>}
+          {printing ? <PrintProgressBar progress={printProgress} /> : <Button label={tr.printLabel} onPress={printLabel} />}
+          {printed && <Text style={styles.success}>{tr.labelSentToPrinter}</Text>}
           {error ? <Text style={styles.error}>{error}</Text> : null}
         </View>
         {hasClickedPrint && (
           <View style={styles.doneWrap}>
-            <Button label="Done" variant="secondary" onPress={done} />
+            <Button label={tr.doneAction} variant="secondary" onPress={done} />
           </View>
         )}
       </View>

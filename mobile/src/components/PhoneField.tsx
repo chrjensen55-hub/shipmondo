@@ -2,9 +2,11 @@ import { useState } from 'react'
 import { FlatList, Modal, Pressable, StyleSheet, Text, TextInput, View } from 'react-native'
 import { ChevronDown } from 'lucide-react-native'
 import { dialCodes, joinPhone, splitPhone, DEFAULT_DIAL_CODE } from '@/lib/dialCodes'
+import { useLang } from '@/lib/i18n'
 import { colors, radius } from '@/lib/theme'
 
 export function PhoneField({ label, value, onChange }: { label: string; value: string; onChange: (v: string) => void }) {
+  const tr = useLang()
   const [pickerOpen, setPickerOpen] = useState(false)
   const { countryCode, local } = splitPhone(value)
   const current = dialCodes.find((d) => d.code === countryCode) ?? dialCodes.find((d) => d.code === DEFAULT_DIAL_CODE)!
@@ -30,7 +32,7 @@ export function PhoneField({ label, value, onChange }: { label: string; value: s
       <Modal visible={pickerOpen} transparent animationType="slide" onRequestClose={() => setPickerOpen(false)}>
         <Pressable style={styles.backdrop} onPress={() => setPickerOpen(false)}>
           <Pressable style={styles.sheet} onPress={(e) => e.stopPropagation()}>
-            <Text style={styles.sheetTitle}>Country code</Text>
+            <Text style={styles.sheetTitle}>{tr.countryCodeSheetTitle}</Text>
             <FlatList
               data={dialCodes}
               keyExtractor={(d) => d.code}

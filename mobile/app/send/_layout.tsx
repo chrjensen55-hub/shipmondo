@@ -1,10 +1,13 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { Stack, useRouter } from 'expo-router'
 import { Modal, Pressable, StyleSheet, Text, TextInput, View } from 'react-native'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
+import * as SecureStore from 'expo-secure-store'
 import { Menu, Home, Settings as SettingsIcon } from 'lucide-react-native'
 import { WizardProvider } from '@/lib/wizard-context'
 import { getSettingsPin } from '@/lib/settingsPin'
+import { LangContext, DEFAULT_LANG, LANG_STORAGE_KEY, useLang, type Lang } from '@/lib/i18n'
+import { LanguageSwitch } from '@/components/LanguageSwitch'
 import { colors, radius } from '@/lib/theme'
 
 // A floating button rather than a native header bar: the wizard screens each already manage
@@ -14,6 +17,7 @@ import { colors, radius } from '@/lib/theme'
 function HamburgerMenu() {
   const router = useRouter()
   const insets = useSafeAreaInsets()
+  const tr = useLang()
   const [menuOpen, setMenuOpen] = useState(false)
   const [pinPromptOpen, setPinPromptOpen] = useState(false)
   const [pin, setPin] = useState('')
@@ -58,11 +62,11 @@ function HamburgerMenu() {
           <View style={[styles.menu, { top: insets.top + 56 }]}>
             <Pressable style={styles.menuItem} onPress={goHome}>
               <Home size={18} color={colors.ink} />
-              <Text style={styles.menuItemText}>Home</Text>
+              <Text style={styles.menuItemText}>{tr.menuHome}</Text>
             </Pressable>
             <Pressable style={styles.menuItem} onPress={openSettings}>
               <SettingsIcon size={18} color={colors.ink} />
-              <Text style={styles.menuItemText}>Settings</Text>
+              <Text style={styles.menuItemText}>{tr.menuSettings}</Text>
             </Pressable>
           </View>
         </Pressable>
@@ -71,7 +75,7 @@ function HamburgerMenu() {
       <Modal visible={pinPromptOpen} transparent animationType="fade" onRequestClose={closeAll}>
         <Pressable style={styles.backdrop} onPress={closeAll}>
           <Pressable style={styles.pinCard} onPress={(e) => e.stopPropagation()}>
-            <Text style={styles.pinTitle}>Enter settings code</Text>
+            <Text style={styles.pinTitle}>{tr.settingsCodePrompt}</Text>
             <TextInput
               style={styles.pinInput}
               value={pin}
@@ -85,9 +89,9 @@ function HamburgerMenu() {
               autoFocus
               onSubmitEditing={submitPin}
             />
-            {pinError && <Text style={styles.pinError}>Incorrect code</Text>}
+            {pinError && <Text style={styles.pinError}>{tr.settingsCodeIncorrect}</Text>}
             <Pressable style={styles.pinButton} onPress={submitPin}>
-              <Text style={styles.pinButtonText}>Continue</Text>
+              <Text style={styles.pinButtonText}>{tr.continueAction}</Text>
             </Pressable>
           </Pressable>
         </Pressable>
@@ -97,11 +101,27 @@ function HamburgerMenu() {
 }
 
 export default function SendLayout() {
+  const [lang, setLang] = useState<Lang>(DEFAULT_LANG)
+
+  useEffect(() => {
+    SecureStore.getItemAsync(LANG_STORAGE_KEY).then((saved) => {
+      if (saved === 'da' || saved === 'en') setLang(saved)
+    })
+  }, [])
+
+  function changeLang(next: Lang) {
+    setLang(next)
+    SecureStore.setItemAsync(LANG_STORAGE_KEY, next).catch(() => {})
+  }
+
   return (
-    <WizardProvider>
-      <Stack screenOptions={{ headerShown: false, animation: 'slide_from_right' }} />
-      <HamburgerMenu />
-    </WizardProvider>
+    <LangContext.Provider value={lang}>
+      <WizardProvider>
+        <Stack screenOptions={{ headerShown: false, animation: 'slide_from_right' }} />
+        <HamburgerMenu />
+        <LanguageSwitch lang={lang} onChange={changeLang} />
+      </WizardProvider>
+    </LangContext.Provider>
   )
 }
 

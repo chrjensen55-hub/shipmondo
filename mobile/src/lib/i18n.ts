@@ -1,0 +1,197 @@
+import { createContext, useContext } from 'react'
+
+// Mirrors the web app's src/lib/i18n.ts (same Lang type, same DEFAULT_LANG, same storage-key
+// convention) so a shared shop tablet running either client behaves the same way for a customer
+// switching languages. Persisted on-device (see LangProvider) rather than reset per booking,
+// matching the web version's own choice to remember the last language picked on that device.
+export type Lang = 'da' | 'en'
+export const DEFAULT_LANG: Lang = 'da'
+export const LANG_STORAGE_KEY = 'pak-send-lang'
+
+const da = {
+  menuLabel: 'Menu',
+  menuHome: 'Forside',
+  menuSettings: 'Indstillinger',
+  settingsCodePrompt: 'Indtast kode',
+  settingsCodeIncorrect: 'Forkert kode',
+  continueAction: 'Fortsæt',
+  backAction: 'Tilbage',
+  stepLabel: 'Trin',
+  stepOf: 'af',
+
+  carrierHeading: 'Hvilket fragtfirma vil du bruge?',
+
+  deliveryHeading: 'Hvordan skal den leveres?',
+  servicePointFallback: 'Afhentningssted',
+  servicePointSubtitle: 'Modtageren henter selv pakken i nærheden',
+  homeDelivery: 'Levering til døren',
+  homeDeliverySubtitle: 'Bliver leveret direkte til modtagerens hjemmeadresse — eller virksomhedens adresse, hvis det er en erhvervskunde',
+
+  weightHeading: 'Hvor meget vejer den?',
+  parcelLabel: 'Pakke',
+  remove: 'Fjern',
+  maxSizeLabel: 'Maks. størrelse',
+  exactSizeLabel: 'Præcis størrelse (cm) — juster hvis den er anderledes',
+  lengthLabel: 'Længde',
+  widthLabel: 'Bredde',
+  heightLabel: 'Højde',
+  addParcel: 'Tilføj en pakke mere',
+  parcelSingular: 'pakke',
+  parcelPlural: 'pakker',
+
+  senderTitle: 'Hvem sender pakken?',
+  recipientTitle: 'Hvem modtager pakken?',
+  fullName: 'Fulde navn',
+  company: 'Virksomhed',
+  optional: 'Valgfrit',
+  addressLine1: 'Adresse linje 1',
+  addressLine2: 'Adresse linje 2',
+  postalCode: 'Postnummer',
+  city: 'By',
+  country: 'Land',
+  email: 'E-mail',
+  mobilePhone: 'Mobilnummer',
+  countryCodeSheetTitle: 'Landekode',
+  checkingRate: 'Henter pris…',
+  doesNotDeliverSuffix: 'leverer ikke på denne rute.',
+  quoteFetchError: 'Vi kunne ikke hente en fragtpris. Prøv igen.',
+
+  customsHeading: 'Hvad er der i pakken?',
+  customsSubtitle: 'Transportøren kræver en toldangivelse til denne destination.',
+  exportReasonLabel: 'Årsag til eksport',
+  exportReasonSale: 'Salg af varer',
+  exportReasonGift: 'Gave',
+  exportReasonSample: 'Vareprøve',
+  exportReasonReturn: 'Returvarer',
+  exportReasonOther: 'Andet',
+  itemLabel: 'Vare',
+  addItem: 'Tilføj endnu en vare',
+  contentsDescription: 'Indholdsbeskrivelse',
+  valueDkk: 'Værdi (DKK)',
+  commodityCode: 'Varekode (HS-kode)',
+  hsCodePlaceholder: 'fx 610910',
+  hsCodeHelp: 'Ikke sikker? Søg på Google efter fx "HS code for [vare]" og skriv koden her.',
+
+  reviewHeading: 'Gennemgå din forsendelse',
+  cardCarrier: 'Fragtfirma',
+  cardParcel: 'Pakke',
+  cardSender: 'Afsender',
+  cardRecipient: 'Modtager',
+  customsNotice: 'Der kræves toldoplysninger til denne destination. Tryk for at tilføje dem.',
+  confirmCorrect: 'Jeg bekræfter, at oplysningerne ovenfor er korrekte, og at kunden accepterer prisen.',
+  confirmCreateShipment: 'Bekræft og opret forsendelse',
+  creatingShipment: 'Opretter forsendelse…',
+  bookingError: 'Vi kunne ikke oprette forsendelsen. Prøv igen.',
+
+  allSetHeading: 'Du er klar.',
+  bookedReady: 'Forsendelsen er booket og klar.',
+  reference: 'Reference',
+  trackingNumber: 'Sporingsnummer',
+  total: 'Total',
+  printLabel: 'Udskriv fragtseddel',
+  printingProgress: 'Udskriver…',
+  printingWaitSuffix: '— vent venligst, tryk ikke på udskriv igen',
+  labelSentToPrinter: 'Fragtsedlen er sendt til printeren.',
+  labelNotAvailable: 'Fragtsedlen er ikke tilgængelig for denne forsendelse.',
+  printError: 'Kunne ikke udskrive denne fragtseddel.',
+  doneAction: 'Færdig',
+}
+
+const en: Record<keyof typeof da, string> = {
+  menuLabel: 'Menu',
+  menuHome: 'Home',
+  menuSettings: 'Settings',
+  settingsCodePrompt: 'Enter settings code',
+  settingsCodeIncorrect: 'Incorrect code',
+  continueAction: 'Continue',
+  backAction: 'Back',
+  stepLabel: 'Step',
+  stepOf: 'of',
+
+  carrierHeading: 'Which carrier do you want to use?',
+
+  deliveryHeading: 'How should it be delivered?',
+  servicePointFallback: 'Service point',
+  servicePointSubtitle: 'The recipient picks it up nearby',
+  homeDelivery: 'Home delivery',
+  homeDeliverySubtitle: "Delivered directly to the recipient's home address — or the company address if it's a business",
+
+  weightHeading: 'How much does it weigh?',
+  parcelLabel: 'Parcel',
+  remove: 'Remove',
+  maxSizeLabel: 'Max size',
+  exactSizeLabel: 'Exact size (cm) — adjust if different',
+  lengthLabel: 'Length',
+  widthLabel: 'Width',
+  heightLabel: 'Height',
+  addParcel: 'Add another parcel',
+  parcelSingular: 'parcel',
+  parcelPlural: 'parcels',
+
+  senderTitle: 'Who is sending the parcel?',
+  recipientTitle: 'Who is receiving the parcel?',
+  fullName: 'Full name',
+  company: 'Company',
+  optional: 'Optional',
+  addressLine1: 'Address line 1',
+  addressLine2: 'Address line 2',
+  postalCode: 'Postal code',
+  city: 'City',
+  country: 'Country',
+  email: 'Email',
+  mobilePhone: 'Mobile phone',
+  countryCodeSheetTitle: 'Country code',
+  checkingRate: 'Checking rate…',
+  doesNotDeliverSuffix: 'does not deliver on this route.',
+  quoteFetchError: 'Could not fetch a rate. Please try again.',
+
+  customsHeading: "What's inside?",
+  customsSubtitle: 'The carrier requires a customs declaration for this destination.',
+  exportReasonLabel: 'Reason for export',
+  exportReasonSale: 'Sale of goods',
+  exportReasonGift: 'Gift',
+  exportReasonSample: 'Commercial sample',
+  exportReasonReturn: 'Returned goods',
+  exportReasonOther: 'Other',
+  itemLabel: 'Item',
+  addItem: 'Add another item',
+  contentsDescription: 'Contents description',
+  valueDkk: 'Value (DKK)',
+  commodityCode: 'Commodity code (HS code)',
+  hsCodePlaceholder: 'e.g. 610910',
+  hsCodeHelp: 'Not sure? Search Google for e.g. "HS code for [item]" and type the number here.',
+
+  reviewHeading: 'Review your shipment',
+  cardCarrier: 'Carrier',
+  cardParcel: 'Parcel',
+  cardSender: 'Sender',
+  cardRecipient: 'Recipient',
+  customsNotice: 'Customs details are required for this destination. Tap to add them.',
+  confirmCorrect: 'I confirm the details above are correct and the customer accepts the price.',
+  confirmCreateShipment: 'Confirm and create shipment',
+  creatingShipment: 'Creating shipment…',
+  bookingError: 'Could not create the shipment. Please try again.',
+
+  allSetHeading: "You're all set",
+  bookedReady: 'The shipment is booked and ready.',
+  reference: 'Reference',
+  trackingNumber: 'Tracking number',
+  total: 'Total',
+  printLabel: 'Print label',
+  printingProgress: 'Printing…',
+  printingWaitSuffix: '— please wait, do not tap print again',
+  labelSentToPrinter: 'The label was sent to the printer.',
+  labelNotAvailable: 'The label is not available for this shipment.',
+  printError: 'Could not print this label.',
+  doneAction: 'Done',
+}
+
+export const translations: Record<Lang, typeof da> = { da, en }
+
+export const LangContext = createContext<Lang>(DEFAULT_LANG)
+export function useLang() {
+  return translations[useContext(LangContext)]
+}
+export function useLangCode() {
+  return useContext(LangContext)
+}

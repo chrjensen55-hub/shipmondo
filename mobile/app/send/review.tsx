@@ -8,11 +8,13 @@ import { CarrierLogo } from '@/components/CarrierLogo'
 import { useWizard, HS_CODE_RE } from '@/lib/wizard-context'
 import { countries } from '@/lib/countries'
 import { api, ApiError } from '@/lib/api'
+import { useLang } from '@/lib/i18n'
 import { colors, radius } from '@/lib/theme'
 
 export default function ReviewStep() {
   const router = useRouter()
   const { draft, quotes, needsCustoms } = useWizard()
+  const tr = useLang()
   const [confirmed, setConfirmed] = useState(false)
   const [booking, setBooking] = useState(false)
   const [error, setError] = useState('')
@@ -35,19 +37,22 @@ export default function ReviewStep() {
       })
       router.replace({ pathname: '/send/confirmation', params: { reference: result.reference, tracking: result.tracking, shipmentId: String(result.shipmentId ?? ''), customerPrice: String(quote.customerPrice) } })
     } catch (err) {
-      setError(err instanceof ApiError ? err.message : 'Could not create the shipment. Please try again.')
+      setError(err instanceof ApiError ? err.message : tr.bookingError)
     } finally {
       setBooking(false)
     }
   }
 
+  const parcelCount = draft.parcels.length
+  const parcelUnit = parcelCount > 1 ? tr.parcelPlural : tr.parcelSingular
+
   return (
-    <WizardScreen title="Review your shipment" step={7} onContinue={book} continueLabel={booking ? 'Creating shipment…' : 'Confirm and create shipment'} continueDisabled={!confirmed || booking || missingHsCode || !quote} continueLoading={booking} error={error}>
+    <WizardScreen title={tr.reviewHeading} step={7} onContinue={book} continueLabel={booking ? tr.creatingShipment : tr.confirmCreateShipment} continueDisabled={!confirmed || booking || missingHsCode || !quote} continueLoading={booking} error={error}>
       <View style={styles.card}>
-        <Row icon={Truck} label="Carrier" value={`${draft.carrierName ?? ''} — ${countryName(draft.originCountry)} → ${countryName(draft.destinationCountry)}`} />
-        <Row icon={Package} label="Parcel" value={`${draft.parcels.length} parcel${draft.parcels.length > 1 ? 's' : ''}, ${draft.parcels.reduce((n, p) => n + p.weight, 0)} kg`} />
-        <Row icon={UserRound} label="Sender" value={`${draft.sender.fullName}\n${draft.sender.address1}, ${draft.sender.postalCode} ${draft.sender.city}`} />
-        <Row icon={MapPin} label="Recipient" value={`${draft.recipient.fullName}\n${draft.recipient.address1}, ${draft.recipient.postalCode} ${draft.recipient.city}`} last />
+        <Row icon={Truck} label={tr.cardCarrier} value={`${draft.carrierName ?? ''} — ${countryName(draft.originCountry)} → ${countryName(draft.destinationCountry)}`} />
+        <Row icon={Package} label={tr.cardParcel} value={`${parcelCount} ${parcelUnit}, ${draft.parcels.reduce((n, p) => n + p.weight, 0)} kg`} />
+        <Row icon={UserRound} label={tr.cardSender} value={`${draft.sender.fullName}\n${draft.sender.address1}, ${draft.sender.postalCode} ${draft.sender.city}`} />
+        <Row icon={MapPin} label={tr.cardRecipient} value={`${draft.recipient.fullName}\n${draft.recipient.address1}, ${draft.recipient.postalCode} ${draft.recipient.city}`} last />
       </View>
       <View style={styles.serviceCard}>
         <View style={styles.serviceInfo}>
@@ -60,12 +65,12 @@ export default function ReviewStep() {
       </View>
       {missingHsCode && (
         <Pressable style={styles.notice} onPress={() => router.push('/send/customs')}>
-          <Text style={styles.noticeText}>Customs details are required for this destination. Tap to add them.</Text>
+          <Text style={styles.noticeText}>{tr.customsNotice}</Text>
         </Pressable>
       )}
       <Pressable style={styles.confirmRow} onPress={() => setConfirmed((v) => !v)} disabled={missingHsCode}>
         <View style={[styles.checkbox, confirmed && styles.checkboxChecked]} />
-        <Text style={styles.confirmText}>I confirm the details above are correct and the customer accepts the price.</Text>
+        <Text style={styles.confirmText}>{tr.confirmCorrect}</Text>
       </Pressable>
     </WizardScreen>
   )

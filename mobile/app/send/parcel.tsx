@@ -8,6 +8,7 @@ import { TextField } from '@/components/TextField'
 import { StepProgress } from '@/components/StepProgress'
 import { useWizard, firstParcelSize } from '@/lib/wizard-context'
 import { boxSizeFor, weightBrackets } from '@/lib/carrierRates'
+import { useLang } from '@/lib/i18n'
 import { colors, radius } from '@/lib/theme'
 import type { Parcel } from '@/lib/types'
 
@@ -30,6 +31,7 @@ function iconSizeFor(index: number, total: number) {
 export default function ParcelStep() {
   const router = useRouter()
   const { draft, setDraft } = useWizard()
+  const tr = useLang()
   const [weightChosen, setWeightChosen] = useState<Set<string>>(new Set())
   const brackets = weightBrackets(draft.deliveryLocation)
 
@@ -64,7 +66,7 @@ export default function ParcelStep() {
     <SafeAreaView style={styles.screen} edges={['top', 'bottom']}>
       <ScrollView contentContainerStyle={styles.content}>
         <StepProgress step={3} />
-        <Text style={styles.title}>How much does it weigh?</Text>
+        <Text style={styles.title}>{tr.weightHeading}</Text>
         {draft.parcels.map((parcel, index) => (
           <ParcelCard
             key={parcel.id}
@@ -80,12 +82,12 @@ export default function ParcelStep() {
         ))}
         <Pressable style={styles.addButton} onPress={addParcel}>
           <Plus size={18} color={colors.green} />
-          <Text style={styles.addButtonText}>Add another parcel</Text>
+          <Text style={styles.addButtonText}>{tr.addParcel}</Text>
         </Pressable>
       </ScrollView>
       <View style={styles.actions}>
-        <Button label="Back" variant="secondary" onPress={() => router.back()} />
-        <Button label="Continue" onPress={() => router.push('/send/sender')} disabled={!canContinue} />
+        <Button label={tr.backAction} variant="secondary" onPress={() => router.back()} />
+        <Button label={tr.continueAction} onPress={() => router.push('/send/sender')} disabled={!canContinue} />
       </View>
     </SafeAreaView>
   )
@@ -110,14 +112,17 @@ function ParcelCard({
   onUpdateDimension: (key: 'length' | 'width' | 'height', value: string) => void
   onRemove: () => void
 }) {
+  const tr = useLang()
   return (
     <View style={styles.card}>
       <View style={styles.cardHeader}>
-        <Text style={styles.cardTitle}>Parcel {index + 1}</Text>
+        <Text style={styles.cardTitle}>
+          {tr.parcelLabel} {index + 1}
+        </Text>
         {canRemove && (
           <Pressable style={styles.removeButton} onPress={onRemove}>
             <Trash2 size={16} color={colors.error} />
-            <Text style={styles.removeText}>Remove</Text>
+            <Text style={styles.removeText}>{tr.remove}</Text>
           </Pressable>
         )}
       </View>
@@ -136,7 +141,7 @@ function ParcelCard({
               <Package size={iconSizeFor(i, brackets.length)} color={selected ? colors.ocean : colors.muted} strokeWidth={1.75} />
               <Text style={[styles.tileWeight, selected && styles.tileWeightSelected]}>{formatWeightRange(lower, max)}</Text>
               <Text style={styles.tileDims}>
-                Max size {box.length}×{box.width}×{box.height} cm
+                {tr.maxSizeLabel} {box.length}×{box.width}×{box.height} cm
               </Text>
             </Pressable>
           )
@@ -146,12 +151,12 @@ function ParcelCard({
         <View style={styles.dims}>
           <View style={styles.dimsHeader}>
             <Ruler size={15} color={colors.muted} />
-            <Text style={styles.dimsLabel}>Exact size (cm) — adjust if different</Text>
+            <Text style={styles.dimsLabel}>{tr.exactSizeLabel}</Text>
           </View>
           <View style={styles.dimsRow}>
-            <TextField label="Length" keyboardType="number-pad" value={String(parcel.length)} onChangeText={(v) => onUpdateDimension('length', v)} />
-            <TextField label="Width" keyboardType="number-pad" value={String(parcel.width)} onChangeText={(v) => onUpdateDimension('width', v)} />
-            <TextField label="Height" keyboardType="number-pad" value={String(parcel.height)} onChangeText={(v) => onUpdateDimension('height', v)} />
+            <TextField label={tr.lengthLabel} keyboardType="number-pad" value={String(parcel.length)} onChangeText={(v) => onUpdateDimension('length', v)} />
+            <TextField label={tr.widthLabel} keyboardType="number-pad" value={String(parcel.width)} onChangeText={(v) => onUpdateDimension('width', v)} />
+            <TextField label={tr.heightLabel} keyboardType="number-pad" value={String(parcel.height)} onChangeText={(v) => onUpdateDimension('height', v)} />
           </View>
         </View>
       )}

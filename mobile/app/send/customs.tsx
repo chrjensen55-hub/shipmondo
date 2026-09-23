@@ -6,6 +6,7 @@ import { Plus, Trash2 } from 'lucide-react-native'
 import { WizardScreen } from '@/components/WizardScreen'
 import { TextField } from '@/components/TextField'
 import { useWizard, HS_CODE_RE } from '@/lib/wizard-context'
+import { useLang } from '@/lib/i18n'
 import { colors, radius } from '@/lib/theme'
 import type { ShipmentItem } from '@/lib/types'
 
@@ -16,6 +17,7 @@ function blankItem(id: string, weight: number, originCountry: string): ShipmentI
 export default function CustomsStep() {
   const router = useRouter()
   const { draft, setDraft } = useWizard()
+  const tr = useLang()
 
   useEffect(() => {
     if (draft.items.length === 0) {
@@ -39,39 +41,41 @@ export default function CustomsStep() {
   const valid = draft.items.length > 0 && draft.items.every((i) => i.description.trim().length > 1 && HS_CODE_RE.test(i.hsCode ?? '') && i.unitValue > 0)
 
   return (
-    <WizardScreen title="What's inside?" subtitle="The carrier requires a customs declaration for this destination." step={6} onContinue={() => router.push('/send/review')} continueDisabled={!valid}>
+    <WizardScreen title={tr.customsHeading} subtitle={tr.customsSubtitle} step={6} onContinue={() => router.push('/send/review')} continueDisabled={!valid}>
       <View>
-        <Text style={styles.label}>Reason for export</Text>
+        <Text style={styles.label}>{tr.exportReasonLabel}</Text>
         <View style={styles.pickerWrap}>
           <Picker selectedValue={draft.exportReason ?? 'sale_of_goods'} onValueChange={(v) => setDraft((d) => ({ ...d, exportReason: v }))}>
-            <Picker.Item label="Sale of goods" value="sale_of_goods" />
-            <Picker.Item label="Gift" value="gift" />
-            <Picker.Item label="Commercial sample" value="commercial_samples" />
-            <Picker.Item label="Returned goods" value="returned_goods" />
-            <Picker.Item label="Other" value="other" />
+            <Picker.Item label={tr.exportReasonSale} value="sale_of_goods" />
+            <Picker.Item label={tr.exportReasonGift} value="gift" />
+            <Picker.Item label={tr.exportReasonSample} value="commercial_samples" />
+            <Picker.Item label={tr.exportReasonReturn} value="returned_goods" />
+            <Picker.Item label={tr.exportReasonOther} value="other" />
           </Picker>
         </View>
       </View>
       {draft.items.map((item, index) => (
         <View key={item.id} style={styles.card}>
           <View style={styles.cardHeader}>
-            <Text style={styles.cardTitle}>Item {index + 1}</Text>
+            <Text style={styles.cardTitle}>
+              {tr.itemLabel} {index + 1}
+            </Text>
             {draft.items.length > 1 && (
               <Pressable style={styles.removeButton} onPress={() => removeItem(item.id)}>
                 <Trash2 size={16} color={colors.error} />
-                <Text style={styles.removeText}>Remove</Text>
+                <Text style={styles.removeText}>{tr.remove}</Text>
               </Pressable>
             )}
           </View>
-          <TextField label="Contents description" value={item.description} onChangeText={(v) => update(item.id, { description: v })} />
-          <TextField label="Value (DKK)" keyboardType="numeric" value={item.unitValue ? String(item.unitValue) : ''} onChangeText={(v) => update(item.id, { unitValue: v === '' ? 0 : Number(v) || 0 })} />
-          <TextField label="Commodity code (HS code)" placeholder="e.g. 610910" value={item.hsCode ?? ''} onChangeText={(v) => update(item.id, { hsCode: v })} />
-          <Text style={styles.hint}>Not sure? Search Google for e.g. &quot;HS code for [item]&quot; and type the number here.</Text>
+          <TextField label={tr.contentsDescription} value={item.description} onChangeText={(v) => update(item.id, { description: v })} />
+          <TextField label={tr.valueDkk} keyboardType="numeric" value={item.unitValue ? String(item.unitValue) : ''} onChangeText={(v) => update(item.id, { unitValue: v === '' ? 0 : Number(v) || 0 })} />
+          <TextField label={tr.commodityCode} placeholder={tr.hsCodePlaceholder} value={item.hsCode ?? ''} onChangeText={(v) => update(item.id, { hsCode: v })} />
+          <Text style={styles.hint}>{tr.hsCodeHelp}</Text>
         </View>
       ))}
       <Pressable style={styles.addButton} onPress={addItem}>
         <Plus size={18} color={colors.green} />
-        <Text style={styles.addButtonText}>Add another item</Text>
+        <Text style={styles.addButtonText}>{tr.addItem}</Text>
       </Pressable>
     </WizardScreen>
   )

@@ -2,11 +2,13 @@ import { useRouter } from 'expo-router'
 import { WizardScreen } from '@/components/WizardScreen'
 import { AddressForm } from '@/components/AddressForm'
 import { useWizard, required } from '@/lib/wizard-context'
+import { useLang } from '@/lib/i18n'
 import type { Address } from '@/lib/types'
 
 export default function SenderStep() {
   const router = useRouter()
   const { draft, setDraft } = useWizard()
+  const tr = useLang()
 
   function onChange(key: keyof Address, value: string) {
     setDraft((d) => {
@@ -21,7 +23,7 @@ export default function SenderStep() {
   const valid = [a.fullName, a.address1, a.postalCode, a.city, a.email, a.phone].every(required)
 
   return (
-    <WizardScreen title="Who is sending the parcel?" step={4} onContinue={() => router.push('/send/recipient')} continueDisabled={!valid}>
+    <WizardScreen title={tr.senderTitle} step={4} onContinue={() => router.push('/send/recipient')} continueDisabled={!valid}>
       <AddressForm value={draft.sender} onChange={onChange} minimal />
     </WizardScreen>
   )

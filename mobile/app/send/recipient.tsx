@@ -5,11 +5,13 @@ import { AddressForm } from '@/components/AddressForm'
 import { useWizard, required } from '@/lib/wizard-context'
 import { requiresCustoms } from '@/lib/countries'
 import { api, ApiError } from '@/lib/api'
+import { useLang } from '@/lib/i18n'
 import type { Address, ShippingQuote } from '@/lib/types'
 
 export default function RecipientStep() {
   const router = useRouter()
   const { draft, setDraft, setQuotes, setNeedsCustoms } = useWizard()
+  const tr = useLang()
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
 
@@ -31,7 +33,7 @@ export default function RecipientStep() {
     try {
       const quotes = await api<ShippingQuote[]>('/api/quotes', { method: 'POST', body: JSON.stringify(draft) })
       if (!quotes.length) {
-        setError(`${draft.carrierName} does not deliver on this route.`)
+        setError(`${draft.carrierName} ${tr.doesNotDeliverSuffix}`)
         return
       }
       setQuotes(quotes)
@@ -40,14 +42,14 @@ export default function RecipientStep() {
       setNeedsCustoms(customsRequired)
       router.push(customsRequired ? '/send/customs' : '/send/review')
     } catch (err) {
-      setError(err instanceof ApiError ? err.message : 'Could not fetch a rate. Please try again.')
+      setError(err instanceof ApiError ? err.message : tr.quoteFetchError)
     } finally {
       setLoading(false)
     }
   }
 
   return (
-    <WizardScreen title="Who is receiving the parcel?" step={5} onContinue={getQuote} continueLabel={loading ? 'Checking rate…' : 'Continue'} continueDisabled={!valid || loading} continueLoading={loading} error={error}>
+    <WizardScreen title={tr.recipientTitle} step={5} onContinue={getQuote} continueLabel={loading ? tr.checkingRate : tr.continueAction} continueDisabled={!valid || loading} continueLoading={loading} error={error}>
       <AddressForm value={draft.recipient} onChange={onChange} />
     </WizardScreen>
   )

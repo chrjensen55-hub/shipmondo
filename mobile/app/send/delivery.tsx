@@ -6,6 +6,7 @@ import { Button } from '@/components/Button'
 import { StepProgress } from '@/components/StepProgress'
 import { useWizard, SERVICE_POINT_LABEL, firstParcelSize } from '@/lib/wizard-context'
 import { weightBrackets } from '@/lib/carrierRates'
+import { useLang } from '@/lib/i18n'
 import { colors, radius } from '@/lib/theme'
 import type { DeliveryLocation } from '@/lib/types'
 
@@ -19,6 +20,7 @@ const homeDeliveryImage = require('../../assets/images/home-delivery.png')
 export default function DeliveryStep() {
   const router = useRouter()
   const { draft, setDraft } = useWizard()
+  const tr = useLang()
 
   function select(location: DeliveryLocation) {
     setDraft((d) => {
@@ -27,13 +29,13 @@ export default function DeliveryStep() {
     })
   }
 
-  const servicePointLabel = draft.carrierName ? (SERVICE_POINT_LABEL[draft.carrierName] ?? 'Service point') : 'Service point'
+  const servicePointLabel = draft.carrierName ? (SERVICE_POINT_LABEL[draft.carrierName] ?? tr.servicePointFallback) : tr.servicePointFallback
 
   return (
     <SafeAreaView style={styles.screen} edges={['top', 'bottom']}>
       <View style={styles.content}>
         <StepProgress step={2} />
-        <Text style={styles.title}>How should it be delivered?</Text>
+        <Text style={styles.title}>{tr.deliveryHeading}</Text>
         <Pressable style={[styles.card, draft.deliveryLocation === 'service_point' && styles.cardSelected]} onPress={() => select('service_point')}>
           {draft.deliveryLocation === 'service_point' && (
             <View style={styles.checkBadge}>
@@ -42,7 +44,7 @@ export default function DeliveryStep() {
           )}
           <Image source={servicePointImage} style={styles.cardImage} resizeMode="contain" alt="" />
           <Text style={styles.cardTitle}>{servicePointLabel}</Text>
-          <Text style={styles.cardSub}>The recipient picks it up nearby</Text>
+          <Text style={styles.cardSub}>{tr.servicePointSubtitle}</Text>
         </Pressable>
         <Pressable style={[styles.card, draft.deliveryLocation === 'home' && styles.cardSelected]} onPress={() => select('home')}>
           {draft.deliveryLocation === 'home' && (
@@ -51,13 +53,13 @@ export default function DeliveryStep() {
             </View>
           )}
           <Image source={homeDeliveryImage} style={styles.cardImage} resizeMode="contain" alt="" />
-          <Text style={styles.cardTitle}>Home delivery</Text>
-          <Text style={styles.cardSub}>Delivered directly to the recipient&apos;s home address — or the company address if it&apos;s a business</Text>
+          <Text style={styles.cardTitle}>{tr.homeDelivery}</Text>
+          <Text style={styles.cardSub}>{tr.homeDeliverySubtitle}</Text>
         </Pressable>
       </View>
       <View style={styles.actions}>
-        <Button label="Back" variant="secondary" onPress={() => router.back()} />
-        <Button label="Continue" onPress={() => router.push('/send/parcel')} />
+        <Button label={tr.backAction} variant="secondary" onPress={() => router.back()} />
+        <Button label={tr.continueAction} onPress={() => router.push('/send/parcel')} />
       </View>
     </SafeAreaView>
   )
