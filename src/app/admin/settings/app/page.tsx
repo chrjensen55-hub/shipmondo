@@ -2,8 +2,8 @@ import { Download, Smartphone } from 'lucide-react'
 import { AdminShell } from '@/components/admin/admin-shell'
 export const dynamic = 'force-dynamic'
 
-const NATIVE_APK_URL = 'https://github.com/chrjensen55-hub/shipmondo/releases/download/mobile-v1.0.0/pak-and-send-native.apk'
-const RELEASE_PAGE_URL = 'https://github.com/chrjensen55-hub/shipmondo/releases/tag/mobile-v1.0.0'
+const NATIVE_APK_URL = 'https://github.com/chrjensen55-hub/shipmondo/releases/download/mobile-v1.1.0/pak-and-send-native.apk'
+const RELEASE_PAGE_URL = 'https://github.com/chrjensen55-hub/shipmondo/releases/tag/mobile-v1.1.0'
 
 export default function AppDownloadPage() {
   return (
