@@ -14,13 +14,21 @@ export async function POST(request: Request) {
     if (previous) return Response.json({ data: previous })
 
     const client = await ShipmondoClient.create()
-    const live = client.isConfigured() && process.env.SHIPMONDO_MOCK_MODE !== 'true'
+    // No credentials at all (no per-tablet override, no server env vars) is never a legitimate
+    // state to book a real customer's shipment from — it's a setup problem on this tablet, not
+    // something to paper over with a fake reference. Fail loudly here instead of falling through
+    // to the mock branch below, which used to let staff believe a real shipment was created when
+    // nothing was ever sent to Shipmondo at all.
+    if (!client.isConfigured()) {
+      return Response.json({ error: { code: 'SHIPMONDO_NOT_CONFIGURED', message: 'Shipmondo is not set up on this tablet. Go to Admin → Settings and add the Shipmondo API credentials for this location.' } }, { status: 503 })
+    }
+    const live = process.env.SHIPMONDO_MOCK_MODE !== 'true'
 
     // With real credentials configured, the quote lookup and the booking below must both go
     // through Shipmondo for real — never fall back to a mock quote or a fabricated tracking
     // number here. That fallback used to let a booking "succeed" with a fake reference whenever
-    // credentials were bad or the live lookup hiccupped, and the only sign anything was wrong was
-    // a failed print later, with no real shipment behind it to print in the first place.
+    // the live lookup hiccupped, and the only sign anything was wrong was a failed print later,
+    // with no real shipment behind it to print in the first place.
     let quote: ShippingQuote | null = null
     if (live) {
       try {

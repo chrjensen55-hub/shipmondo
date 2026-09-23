@@ -7,12 +7,15 @@ export async function POST(request: Request) {
   try {
     const input = fullQuoteRequestSchema.parse(await request.json())
     const client = await ShipmondoClient.create()
-    // Mock quotes are only a legitimate fallback when Shipmondo isn't configured at all (local
-    // dev, or SHIPMONDO_MOCK_MODE explicitly on). Once real credentials are present, a failure
-    // here (bad key, wrong base URL, network issue) must surface as an error — silently
-    // substituting mock prices let staff book a shipment that was never actually created with
-    // Shipmondo, which only failed later when they tried to print a label that didn't exist.
-    if (!client.isConfigured() || process.env.SHIPMONDO_MOCK_MODE === 'true') {
+    // No credentials at all means this tablet was never set up with a Shipmondo account (or its
+    // per-tablet override never saved) — surface that clearly right here, at the first step that
+    // talks to Shipmondo, instead of quietly quoting mock prices that lead to a booking with no
+    // real shipment behind it. SHIPMONDO_MOCK_MODE stays a separate, deliberate override for
+    // testing with real credentials already in place.
+    if (!client.isConfigured()) {
+      return Response.json({ error: { code: 'SHIPMONDO_NOT_CONFIGURED', message: 'Shipmondo is not set up on this tablet. Go to Admin → Settings and add the Shipmondo API credentials for this location.' } }, { status: 503 })
+    }
+    if (process.env.SHIPMONDO_MOCK_MODE === 'true') {
       return Response.json({ data: mockQuotes(input) })
     }
     try {
