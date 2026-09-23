@@ -3,7 +3,7 @@ import { getAccount } from '@/lib/shipmondo/account'
 import { ShipmondoApiError } from '@/lib/shipmondo/types'
 
 export async function POST() {
-  const client = new ShipmondoClient()
+  const client = await ShipmondoClient.create()
   if (!client.isConfigured()) return Response.json({ error: { code: 'NOT_CONFIGURED', message: 'Add Shipmondo credentials to the server environment.' } }, { status: 503 })
   try {
     const account = await getAccount()

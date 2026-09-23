@@ -13,7 +13,7 @@ export async function POST(request: Request) {
     if (previous) return Response.json({ data: previous })
 
     let quote = null
-    const client = new ShipmondoClient()
+    const client = await ShipmondoClient.create()
     const live = client.isConfigured() && process.env.SHIPMONDO_MOCK_MODE !== 'true'
     if (live) {
       try {

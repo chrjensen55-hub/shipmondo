@@ -6,7 +6,7 @@ import { ShipmondoClient } from '@/lib/shipmondo/client'
 export async function POST(request: Request) {
   try {
     const input = fullQuoteRequestSchema.parse(await request.json())
-    const client = new ShipmondoClient()
+    const client = await ShipmondoClient.create()
     if (client.isConfigured() && process.env.SHIPMONDO_MOCK_MODE !== 'true') {
       try {
         const live = await getLiveQuotes(input)

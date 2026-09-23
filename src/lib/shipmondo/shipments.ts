@@ -60,20 +60,20 @@ export function mapShipmentToShipmondo(draft: ShipmentDraft, options: { productC
 }
 
 export async function createShipment(draft: ShipmentDraft, options: { productCode: string; serviceCodes: string[]; reference: string; requiresCustoms: boolean; ownAgreement?: boolean }): Promise<ShipmondoShipment> {
-  const client = new ShipmondoClient()
+  const client = await ShipmondoClient.create()
   if (!client.isConfigured()) throw new Error('Shipmondo is not configured')
   const body = mapShipmentToShipmondo(draft, options)
   return client.post<ShipmondoShipment>('/shipments', body)
 }
 
 export async function getShipment(id: number): Promise<ShipmondoShipment> {
-  const client = new ShipmondoClient()
+  const client = await ShipmondoClient.create()
   if (!client.isConfigured()) throw new Error('Shipmondo is not configured')
   return client.get<ShipmondoShipment>(`/shipments/${id}`)
 }
 
 export async function listShipments(options: { page?: number; perPage?: number } = {}): Promise<ShipmondoShipment[]> {
-  const client = new ShipmondoClient()
+  const client = await ShipmondoClient.create()
   if (!client.isConfigured()) throw new Error('Shipmondo is not configured')
   const params = new URLSearchParams()
   params.set('page', String(options.page ?? 1))
@@ -82,7 +82,7 @@ export async function listShipments(options: { page?: number; perPage?: number }
 }
 
 export async function getShipmentLabels(id: number, labelFormat?: string, labelDpi?: 200 | 300): Promise<ShipmondoLabel[]> {
-  const client = new ShipmondoClient()
+  const client = await ShipmondoClient.create()
   if (!client.isConfigured()) throw new Error('Shipmondo is not configured')
   const params = new URLSearchParams()
   if (labelFormat) params.set('label_format', labelFormat)

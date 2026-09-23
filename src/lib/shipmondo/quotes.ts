@@ -24,7 +24,7 @@ const PREFERRED_PRODUCTS: Record<string, string[]> = {
 type RawQuote = { carrier_code: string; description: string; product_code: string; service_codes: string | null; price: number; price_before_vat: number; currency_code: string }
 
 async function fetchRealQuotes(draft: Pick<ShipmentDraft, 'originCountry' | 'originPostalCode' | 'destinationCountry' | 'destinationPostalCode' | 'sender' | 'recipient' | 'parcels'>): Promise<RawQuote[]> {
-  const client = new ShipmondoClient()
+  const client = await ShipmondoClient.create()
   return client.post<RawQuote[]>('/quotes/list', {
     sender: { address1: draft.sender.address1, zipcode: draft.originPostalCode, city: draft.sender.city, country_code: draft.originCountry },
     receiver: { address1: draft.recipient.address1, zipcode: draft.destinationPostalCode, city: draft.recipient.city, country_code: draft.destinationCountry },

@@ -8,7 +8,7 @@ export async function GET(request: Request, { params }: { params: Promise<{ id: 
   if (!Number.isFinite(shipmentId)) {
     return Response.json({ error: { code: 'INVALID_REQUEST', message: 'Invalid shipment id.' } }, { status: 400 })
   }
-  const client = new ShipmondoClient()
+  const client = await ShipmondoClient.create()
   if (!client.isConfigured()) return Response.json({ error: { code: 'NOT_CONFIGURED', message: 'Add Shipmondo credentials to the server environment.' } }, { status: 503 })
   try {
     const shipment = await getShipment(shipmentId)

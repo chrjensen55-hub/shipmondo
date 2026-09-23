@@ -1,7 +1,12 @@
 import { createHmac, timingSafeEqual } from 'crypto'
 
 export const SESSION_COOKIE = 'admin_session'
-const SESSION_TTL_MS = 7 * 24 * 60 * 60 * 1000
+// A week made sense for a browser session; the native app's tablets are set up once in the
+// office and then run unattended at a location for months, so a session that quietly expires
+// mid-shift (with no way for staff there to know why booking suddenly stopped working) is a
+// real problem, not just an inconvenience. A year comfortably covers that while still being a
+// real expiry, not "forever".
+const SESSION_TTL_MS = 365 * 24 * 60 * 60 * 1000
 
 function sign(value: string) {
  return createHmac('sha256', process.env.AUTH_SECRET ?? '').update(value).digest('hex')
