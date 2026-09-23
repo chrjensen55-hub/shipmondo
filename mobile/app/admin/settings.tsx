@@ -6,7 +6,10 @@ import { Button } from '@/components/Button'
 import { TextField } from '@/components/TextField'
 import { getShipmondoConfig, setShipmondoConfig, clearShipmondoConfig } from '@/lib/shipmondoConfig'
 import { getSettingsPin, setSettingsPin } from '@/lib/settingsPin'
+import { api, ApiError } from '@/lib/api'
 import { colors, radius } from '@/lib/theme'
+
+type TestState = { status: 'idle' | 'testing' | 'ok' | 'error'; message?: string }
 
 export default function SettingsScreen() {
   const [baseUrl, setBaseUrl] = useState('')
@@ -15,6 +18,7 @@ export default function SettingsScreen() {
   const [configured, setConfigured] = useState(false)
   const [savingShipmondo, setSavingShipmondo] = useState(false)
   const [shipmondoSaved, setShipmondoSaved] = useState(false)
+  const [test, setTest] = useState<TestState>({ status: 'idle' })
 
   const [currentPin, setCurrentPin] = useState('')
   const [newPin, setNewPin] = useState('')
@@ -35,6 +39,7 @@ export default function SettingsScreen() {
   async function saveShipmondo() {
     setSavingShipmondo(true)
     setShipmondoSaved(false)
+    setTest({ status: 'idle' })
     await setShipmondoConfig({ baseUrl, username, apiKey })
     setConfigured(true)
     setSavingShipmondo(false)
@@ -48,6 +53,17 @@ export default function SettingsScreen() {
     setApiKey('')
     setConfigured(false)
     setShipmondoSaved(false)
+    setTest({ status: 'idle' })
+  }
+
+  async function testConnection() {
+    setTest({ status: 'testing' })
+    try {
+      const result = await api<{ accountName: string; countryCode: string }>('/api/shipmondo/test-connection', { method: 'POST' })
+      setTest({ status: 'ok', message: `Connected to ${result.accountName} (${result.countryCode}).` })
+    } catch (err) {
+      setTest({ status: 'error', message: err instanceof ApiError ? err.message : 'Could not reach Shipmondo.' })
+    }
   }
 
   async function savePin() {
@@ -87,8 +103,11 @@ export default function SettingsScreen() {
           {shipmondoSaved && <Text style={styles.success}>Saved.</Text>}
           <View style={styles.row}>
             <Button label="Save" onPress={saveShipmondo} loading={savingShipmondo} disabled={!shipmondoValid} />
+            {configured && <Button label="Test connection" variant="secondary" onPress={testConnection} loading={test.status === 'testing'} />}
             {configured && <Button label="Remove" variant="secondary" onPress={removeShipmondo} />}
           </View>
+          {test.status === 'ok' && <Text style={styles.success}>{test.message}</Text>}
+          {test.status === 'error' && <Text style={styles.error}>{test.message}</Text>}
         </View>
 
         <View style={styles.card}>
@@ -116,7 +135,7 @@ const styles = StyleSheet.create({
   cardHeader: { flexDirection: 'row', alignItems: 'center', gap: 8 },
   cardTitle: { fontWeight: '700', color: colors.ink, fontSize: 16 },
   cardSub: { color: colors.muted, fontSize: 13 },
-  row: { flexDirection: 'row', gap: 10 },
+  row: { flexDirection: 'row', flexWrap: 'wrap', gap: 10 },
   success: { color: colors.success },
   error: { color: colors.error },
 })
