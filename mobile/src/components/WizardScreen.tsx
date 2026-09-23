@@ -2,11 +2,13 @@ import { ScrollView, StyleSheet, Text, View, type ScrollViewProps } from 'react-
 import { SafeAreaView } from 'react-native-safe-area-context'
 import { useRouter } from 'expo-router'
 import { Button } from './Button'
+import { StepProgress } from './StepProgress'
 import { colors } from '@/lib/theme'
 
 type Props = ScrollViewProps & {
   title: string
   subtitle?: string
+  step?: number
   onContinue?: () => void
   continueLabel?: string
   continueDisabled?: boolean
@@ -16,11 +18,12 @@ type Props = ScrollViewProps & {
   children: React.ReactNode
 }
 
-export function WizardScreen({ title, subtitle, onContinue, continueLabel = 'Continue', continueDisabled, continueLoading, error, hideBack, children, ...scrollProps }: Props) {
+export function WizardScreen({ title, subtitle, step, onContinue, continueLabel = 'Continue', continueDisabled, continueLoading, error, hideBack, children, ...scrollProps }: Props) {
   const router = useRouter()
   return (
     <SafeAreaView style={styles.screen} edges={['top', 'bottom']}>
       <ScrollView contentContainerStyle={styles.content} {...scrollProps}>
+        {step ? <StepProgress step={step} /> : null}
         <Text style={styles.title}>{title}</Text>
         {subtitle ? <Text style={styles.subtitle}>{subtitle}</Text> : null}
         {children}

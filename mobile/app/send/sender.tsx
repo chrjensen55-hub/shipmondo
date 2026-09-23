@@ -21,7 +21,7 @@ export default function SenderStep() {
   const valid = [a.fullName, a.address1, a.postalCode, a.city, a.email, a.phone].every(required)
 
   return (
-    <WizardScreen title="Who is sending the parcel?" onContinue={() => router.push('/send/recipient')} continueDisabled={!valid}>
+    <WizardScreen title="Who is sending the parcel?" step={4} onContinue={() => router.push('/send/recipient')} continueDisabled={!valid}>
       <AddressForm value={draft.sender} onChange={onChange} minimal />
     </WizardScreen>
   )

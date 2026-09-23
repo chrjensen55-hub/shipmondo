@@ -47,7 +47,7 @@ export default function RecipientStep() {
   }
 
   return (
-    <WizardScreen title="Who is receiving the parcel?" onContinue={getQuote} continueLabel={loading ? 'Checking rate…' : 'Continue'} continueDisabled={!valid || loading} continueLoading={loading} error={error}>
+    <WizardScreen title="Who is receiving the parcel?" step={5} onContinue={getQuote} continueLabel={loading ? 'Checking rate…' : 'Continue'} continueDisabled={!valid || loading} continueLoading={loading} error={error}>
       <AddressForm value={draft.recipient} onChange={onChange} />
     </WizardScreen>
   )

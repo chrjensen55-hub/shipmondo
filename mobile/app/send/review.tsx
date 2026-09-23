@@ -41,7 +41,7 @@ export default function ReviewStep() {
   }
 
   return (
-    <WizardScreen title="Review your shipment" onContinue={book} continueLabel={booking ? 'Creating shipment…' : 'Confirm and create shipment'} continueDisabled={!confirmed || booking || missingHsCode || !quote} continueLoading={booking} error={error}>
+    <WizardScreen title="Review your shipment" step={7} onContinue={book} continueLabel={booking ? 'Creating shipment…' : 'Confirm and create shipment'} continueDisabled={!confirmed || booking || missingHsCode || !quote} continueLoading={booking} error={error}>
       <View style={styles.card}>
         <Row label="Carrier" value={`${draft.carrierName ?? ''} — ${countryName(draft.originCountry)} → ${countryName(draft.destinationCountry)}`} />
         <Row label="Parcel" value={`${draft.parcels.length} parcel${draft.parcels.length > 1 ? 's' : ''}, ${draft.parcels.reduce((n, p) => n + p.weight, 0)} kg`} />

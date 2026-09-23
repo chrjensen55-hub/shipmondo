@@ -39,7 +39,7 @@ export default function CustomsStep() {
   const valid = draft.items.length > 0 && draft.items.every((i) => i.description.trim().length > 1 && HS_CODE_RE.test(i.hsCode ?? '') && i.unitValue > 0)
 
   return (
-    <WizardScreen title="What's inside?" subtitle="The carrier requires a customs declaration for this destination." onContinue={() => router.push('/send/review')} continueDisabled={!valid}>
+    <WizardScreen title="What's inside?" subtitle="The carrier requires a customs declaration for this destination." step={6} onContinue={() => router.push('/send/review')} continueDisabled={!valid}>
       <View>
         <Text style={styles.label}>Reason for export</Text>
         <View style={styles.pickerWrap}>

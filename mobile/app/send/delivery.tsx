@@ -3,6 +3,7 @@ import { Image, Pressable, StyleSheet, Text, View } from 'react-native'
 import { SafeAreaView } from 'react-native-safe-area-context'
 import { Check } from 'lucide-react-native'
 import { Button } from '@/components/Button'
+import { StepProgress } from '@/components/StepProgress'
 import { useWizard, SERVICE_POINT_LABEL, firstParcelSize } from '@/lib/wizard-context'
 import { weightBrackets } from '@/lib/carrierRates'
 import { colors, radius } from '@/lib/theme'
@@ -31,6 +32,7 @@ export default function DeliveryStep() {
   return (
     <SafeAreaView style={styles.screen} edges={['top', 'bottom']}>
       <View style={styles.content}>
+        <StepProgress step={2} />
         <Text style={styles.title}>How should it be delivered?</Text>
         <Pressable style={[styles.card, draft.deliveryLocation === 'service_point' && styles.cardSelected]} onPress={() => select('service_point')}>
           {draft.deliveryLocation === 'service_point' && (

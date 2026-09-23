@@ -3,6 +3,7 @@ import { Pressable, StyleSheet, Text, View } from 'react-native'
 import { SafeAreaView } from 'react-native-safe-area-context'
 import { useWizard, CARRIERS } from '@/lib/wizard-context'
 import { CarrierLogo } from '@/components/CarrierLogo'
+import { StepProgress } from '@/components/StepProgress'
 import { colors, radius } from '@/lib/theme'
 
 export default function CarrierStep() {
@@ -16,6 +17,7 @@ export default function CarrierStep() {
 
   return (
     <SafeAreaView style={styles.screen} edges={['top', 'bottom']}>
+      <StepProgress step={1} />
       <Text style={styles.title}>Which carrier do you want to use?</Text>
       <View style={styles.grid}>
         {CARRIERS.map((c) => (

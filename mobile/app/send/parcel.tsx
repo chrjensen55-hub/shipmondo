@@ -5,6 +5,7 @@ import { SafeAreaView } from 'react-native-safe-area-context'
 import { Package, Plus, Ruler, Trash2, CheckCircle2 } from 'lucide-react-native'
 import { Button } from '@/components/Button'
 import { TextField } from '@/components/TextField'
+import { StepProgress } from '@/components/StepProgress'
 import { useWizard, firstParcelSize } from '@/lib/wizard-context'
 import { boxSizeFor, weightBrackets } from '@/lib/carrierRates'
 import { colors, radius } from '@/lib/theme'
@@ -60,6 +61,7 @@ export default function ParcelStep() {
   return (
     <SafeAreaView style={styles.screen} edges={['top', 'bottom']}>
       <ScrollView contentContainerStyle={styles.content}>
+        <StepProgress step={3} />
         <Text style={styles.title}>How much does it weigh?</Text>
         {draft.parcels.map((parcel, index) => (
           <ParcelCard
