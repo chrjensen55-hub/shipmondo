@@ -1,4 +1,5 @@
 import * as SecureStore from 'expo-secure-store'
+import { getShipmondoConfig } from './shipmondoConfig'
 
 // Talks to the existing Next.js backend (app.pakogsend.dk) — all business logic (Shipmondo
 // integration, pricing, admin auth) stays server-side exactly as it already is; this app is a
@@ -37,10 +38,15 @@ export function registerUnauthorizedHandler(handler: () => void) {
 type ApiResult<T> = { data: T } | { error: { code?: string; message: string } }
 
 export async function api<T>(path: string, init?: RequestInit): Promise<T> {
-  const token = await getToken()
+  const [token, shipmondoConfig] = await Promise.all([getToken(), getShipmondoConfig()])
   const headers = new Headers(init?.headers)
   headers.set('Content-Type', 'application/json')
   if (token) headers.set('Authorization', `Bearer ${token}`)
+  if (shipmondoConfig) {
+    headers.set('x-shipmondo-api-base-url', shipmondoConfig.baseUrl)
+    headers.set('x-shipmondo-api-username', shipmondoConfig.username)
+    headers.set('x-shipmondo-api-key', shipmondoConfig.apiKey)
+  }
 
   const res = await fetch(`${API_BASE_URL}${path}`, { ...init, headers })
   const body = (await res.json().catch(() => null)) as ApiResult<T> | null
