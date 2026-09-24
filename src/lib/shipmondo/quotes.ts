@@ -19,7 +19,68 @@ const PREFERRED_PRODUCTS: Record<string, string[]> = {
   dhl_express: ['DHLE_EW', 'DHLE_ES'],
   ups: ['UPS_STANDARD', 'UPS_SAVER', 'UPS_EXPRESS'],
   bring: ['BRI_HDP', 'BRI_BP'],
+  dao: ['DAO_STH', 'DAO_STS'],
 }
+
+// DAO_H and DAO_P (the "(pickup)" products the regular /products endpoint returns) are never
+// bookable on this account: Shipmondo's own_agreement_available:false for both, yet the booking
+// API rejects them without an agreement too — confirmed with Shipmondo support, this account's
+// DAO agreement (customer number 218779) is only registered against the "drop-off" products
+// DAO_STH/DAO_STS instead. Those two don't appear in /products at all (only in the slower,
+// async carrier setup file — see /api/setups/carriers), so they're hardcoded here from that
+// file's real response rather than polling it on every quote request. Domestic (DK->DK) only,
+// the one route confirmed configured; DAO_R (returns) is unaffected and keeps coming from
+// /products as before.
+const DAO_DOMESTIC_DROPOFF_PRODUCTS: ShipmondoProduct[] = [
+  {
+    code: 'DAO_STH',
+    id: 0,
+    name: 'daoHOME (drop-off)',
+    available: true,
+    own_agreement_available: true,
+    customs_declaration_required: false,
+    service_point_available: false,
+    service_point_required: false,
+    sender_country_code: 'DK',
+    receiver_country_code: 'DK',
+    expected_transit_time: null,
+    required_fields: null,
+    optional_fields: null,
+    required_parcel_fields: null,
+    optional_parcel_fields: null,
+    carrier: { id: 8, code: 'dao', name: 'dao' },
+    available_services: [],
+    required_services: [
+      { code: 'EMAIL_NT', id: 17, name: 'E-mail notification', required_fields: 'receiver_email', optional_fields: null, own_agreement_required: false, note: 'One type of notification must be selected' },
+      { code: 'SMS_NT', id: 18, name: 'SMS notification', required_fields: 'receiver_mobile', optional_fields: null, own_agreement_required: false, note: '' },
+    ],
+    weight_intervals: [],
+  },
+  {
+    code: 'DAO_STS',
+    id: 0,
+    name: 'daoSHOP (drop-off)',
+    available: true,
+    own_agreement_available: true,
+    customs_declaration_required: false,
+    service_point_available: true,
+    service_point_required: true,
+    sender_country_code: 'DK',
+    receiver_country_code: 'DK',
+    expected_transit_time: null,
+    required_fields: null,
+    optional_fields: null,
+    required_parcel_fields: null,
+    optional_parcel_fields: null,
+    carrier: { id: 8, code: 'dao', name: 'dao' },
+    available_services: [],
+    required_services: [
+      { code: 'EMAIL_NT', id: 17, name: 'E-mail notification', required_fields: 'receiver_email', optional_fields: null, own_agreement_required: false, note: 'One type of notification must be selected' },
+      { code: 'SMS_NT', id: 18, name: 'SMS notification', required_fields: 'receiver_mobile', optional_fields: null, own_agreement_required: false, note: '' },
+    ],
+    weight_intervals: [],
+  },
+]
 
 type RawQuote = { carrier_code: string; description: string; product_code: string; service_codes: string | null; price: number; price_before_vat: number; currency_code: string }
 
@@ -67,10 +128,14 @@ function matchesCarrierName(productCarrierName: string, wanted?: string): boolea
 }
 
 export async function getLiveQuotes(draft: Pick<ShipmentDraft, 'originCountry' | 'originPostalCode' | 'destinationCountry' | 'destinationPostalCode' | 'parcels' | 'sender' | 'recipient' | 'carrierName' | 'deliveryLocation'>): Promise<ShippingQuote[]> {
-  const [products, rawQuotes] = await Promise.all([
+  const [rawProducts, rawQuotes] = await Promise.all([
     listProducts(draft.destinationCountry),
     fetchRealQuotes(draft).catch(() => [] as RawQuote[]),
   ])
+  const domesticDaoRoute = draft.originCountry === 'DK' && draft.destinationCountry === 'DK'
+  const products = rawProducts
+    .filter((p) => !(p.carrier.code === 'dao' && (p.code === 'DAO_H' || p.code === 'DAO_P')))
+    .concat(domesticDaoRoute ? DAO_DOMESTIC_DROPOFF_PRODUCTS : [])
   const weight = totalChargeableWeight(draft.parcels)
   const intl = draft.destinationCountry !== draft.originCountry
   const carrierCodes = [...new Set(products.map((p) => p.carrier.code))].filter((c) => c !== 'unspecified')
