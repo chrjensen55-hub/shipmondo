@@ -15,6 +15,8 @@ export default function RecipientStep() {
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
 
+  const [noContact, setNoContact] = useState(false)
+
   function onChange(key: keyof Address, value: string) {
     setDraft((d) => {
       const next = { ...d, recipient: { ...d.recipient, [key]: value } }
@@ -22,6 +24,11 @@ export default function RecipientStep() {
       if (key === 'postalCode') next.destinationPostalCode = value
       return next
     })
+  }
+
+  function toggleNoContact(checked: boolean) {
+    setNoContact(checked)
+    setDraft((d) => ({ ...d, recipient: { ...d.recipient, email: checked ? d.sender.email : '', phone: checked ? d.sender.phone : '' } }))
   }
 
   const a = draft.recipient
@@ -50,7 +57,7 @@ export default function RecipientStep() {
 
   return (
     <WizardScreen title={tr.recipientTitle} step={5} onContinue={getQuote} continueLabel={loading ? tr.checkingRate : tr.continueAction} continueDisabled={!valid || loading} continueLoading={loading} error={error}>
-      <AddressForm value={draft.recipient} onChange={onChange} />
+      <AddressForm value={draft.recipient} onChange={onChange} noContact={noContact} onToggleNoContact={toggleNoContact} />
     </WizardScreen>
   )
 }

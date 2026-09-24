@@ -24,7 +24,7 @@ export default function CarrierStep() {
       <View style={styles.grid}>
         {CARRIERS.map((c) => (
           <Pressable key={c.name} style={[styles.card, draft.carrierName === c.name && styles.cardSelected]} onPress={() => select(c.name)}>
-            <CarrierLogo name={c.name} size={84} />
+            <CarrierLogo name={c.name} size={108} />
           </Pressable>
         ))}
       </View>
@@ -36,6 +36,6 @@ const styles = StyleSheet.create({
   screen: { flex: 1, backgroundColor: colors.cream, padding: 20 },
   title: { fontSize: 22, fontWeight: '800', color: colors.ink, marginBottom: 20 },
   grid: { flexDirection: 'row', flexWrap: 'wrap', gap: 12 },
-  card: { flexBasis: '47%', flexGrow: 1, alignItems: 'center', justifyContent: 'center', backgroundColor: colors.white, borderWidth: 2, borderColor: colors.line, borderRadius: radius.lg, paddingVertical: 28 },
+  card: { flexBasis: '47%', flexGrow: 1, alignItems: 'center', justifyContent: 'center', backgroundColor: colors.white, borderWidth: 2, borderColor: colors.line, borderRadius: radius.lg, paddingVertical: 34 },
   cardSelected: { borderColor: colors.ocean },
 })

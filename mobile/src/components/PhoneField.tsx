@@ -5,7 +5,7 @@ import { dialCodes, joinPhone, splitPhone, DEFAULT_DIAL_CODE } from '@/lib/dialC
 import { useLang } from '@/lib/i18n'
 import { colors, radius } from '@/lib/theme'
 
-export function PhoneField({ label, value, onChange }: { label: string; value: string; onChange: (v: string) => void }) {
+export function PhoneField({ label, value, onChange, editable = true }: { label: string; value: string; onChange: (v: string) => void; editable?: boolean }) {
   const tr = useLang()
   const [pickerOpen, setPickerOpen] = useState(false)
   const { countryCode, local } = splitPhone(value)
@@ -15,17 +15,18 @@ export function PhoneField({ label, value, onChange }: { label: string; value: s
     <View style={styles.wrap}>
       <Text style={styles.label}>{label}</Text>
       <View style={styles.row}>
-        <Pressable style={styles.dialButton} onPress={() => setPickerOpen(true)}>
+        <Pressable style={[styles.dialButton, !editable && styles.disabled]} onPress={() => editable && setPickerOpen(true)} disabled={!editable}>
           <Text style={styles.dialText}>{current.dial}</Text>
           <ChevronDown size={14} color={colors.muted} />
         </Pressable>
         <TextInput
-          style={styles.input}
+          style={[styles.input, !editable && styles.disabled]}
           value={local}
           onChangeText={(v) => onChange(joinPhone(countryCode, v))}
           keyboardType="phone-pad"
           placeholder="12345678"
           placeholderTextColor={colors.muted}
+          editable={editable}
         />
       </View>
 
@@ -74,6 +75,7 @@ const styles = StyleSheet.create({
   },
   dialText: { fontSize: 16, fontWeight: '700', color: colors.ink },
   input: { flex: 1, minHeight: 48, borderWidth: 1, borderColor: colors.line, borderRadius: radius.sm, paddingHorizontal: 14, fontSize: 16, color: colors.ink, backgroundColor: colors.white },
+  disabled: { backgroundColor: colors.cream, opacity: 0.6 },
   backdrop: { flex: 1, backgroundColor: 'rgba(15, 36, 54, 0.35)', justifyContent: 'flex-end' },
   sheet: { backgroundColor: colors.white, borderTopLeftRadius: radius.lg, borderTopRightRadius: radius.lg, maxHeight: '70%', paddingTop: 16 },
   sheetTitle: { fontSize: 16, fontWeight: '800', color: colors.ink, paddingHorizontal: 20, paddingBottom: 8 },

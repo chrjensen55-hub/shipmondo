@@ -9,7 +9,7 @@ import { colors, radius } from '@/lib/theme'
 export function LanguageSwitch({ lang, onChange }: { lang: Lang; onChange: (lang: Lang) => void }) {
   const insets = useSafeAreaInsets()
   return (
-    <View style={[styles.wrap, { top: insets.top + 8 }]}>
+    <View style={[styles.wrap, { top: insets.top + 20 }]}>
       <Pressable style={[styles.button, lang === 'da' && styles.buttonSelected]} onPress={() => onChange('da')} accessibilityLabel="Dansk">
         <Text style={styles.flag}>🇩🇰</Text>
         <Text style={[styles.code, lang === 'da' && styles.codeSelected]}>DA</Text>

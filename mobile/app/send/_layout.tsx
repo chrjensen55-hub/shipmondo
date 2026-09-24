@@ -53,13 +53,13 @@ function HamburgerMenu() {
 
   return (
     <>
-      <Pressable style={[styles.button, { top: insets.top + 8 }]} onPress={() => setMenuOpen(true)}>
+      <Pressable style={[styles.button, { top: insets.top + 20 }]} onPress={() => setMenuOpen(true)}>
         <Menu size={20} color={colors.ink} />
       </Pressable>
 
       <Modal visible={menuOpen} transparent animationType="fade" onRequestClose={closeAll}>
         <Pressable style={styles.backdrop} onPress={closeAll}>
-          <View style={[styles.menu, { top: insets.top + 56 }]}>
+          <View style={[styles.menu, { top: insets.top + 68 }]}>
             <Pressable style={styles.menuItem} onPress={goHome}>
               <Home size={18} color={colors.ink} />
               <Text style={styles.menuItemText}>{tr.menuHome}</Text>
