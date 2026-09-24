@@ -92,13 +92,6 @@ export async function getLiveQuotes(draft: Pick<ShipmentDraft, 'originCountry' |
     // Domestic price-list rates are charged to the customer exactly as published, with no markup.
     const domestic = isDomestic(draft.originCountry, draft.destinationCountry)
     const customerPrice = domestic && rateCardPrice !== undefined ? rateCardPrice : calculateCustomerPrice(purchasePrice, DEFAULT_PRICING_RULE)
-    // Shipmondo's own /products metadata says own_agreement_available:false for DAO's home and
-    // shop-pickup products (DAO_H, DAO_P), but the /shipments endpoint rejects a booking for
-    // either one unless own_agreement is actually true — confirmed against this account's real
-    // "Ready for use" DAO agreement, and consistent across every other carrier's products, whose
-    // own_agreement_available flag matches how they actually book. Only DAO's non-return products
-    // are wrong, so override just those rather than trusting the flag for this one carrier.
-    const ownAgreement = carrierCode === 'dao' && product.code !== 'DAO_R' ? true : product.own_agreement_available
     quotes.push({
       id: `${product.carrier.code}-${product.code}`,
       carrier: product.carrier.name,
@@ -109,7 +102,7 @@ export async function getLiveQuotes(draft: Pick<ShipmentDraft, 'originCountry' |
       customerPrice,
       currency: realQuote?.currency_code ?? 'DKK',
       estimatedDelivery: product.expected_transit_time ?? 'Contact us for delivery time',
-      metadata: { source: 'shipmondo', chargeableWeight: weight, requiresCustoms: product.customs_declaration_required, estimated, ownAgreement },
+      metadata: { source: 'shipmondo', chargeableWeight: weight, requiresCustoms: product.customs_declaration_required, estimated, ownAgreement: product.own_agreement_available },
     })
   }
   return quotes.sort((a, b) => a.customerPrice - b.customerPrice)
