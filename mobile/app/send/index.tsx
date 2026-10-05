@@ -1,12 +1,12 @@
 import { useRouter } from 'expo-router'
-import { Pressable, StyleSheet, Text, View } from 'react-native'
-import { SafeAreaView } from 'react-native-safe-area-context'
+import { Pressable, View } from 'react-native'
 import { useWizard, CARRIERS } from '@/lib/wizard-context'
 import { CarrierLogo } from '@/components/CarrierLogo'
-import { StepProgress } from '@/components/StepProgress'
+import { WizardScreen } from '@/components/WizardScreen'
 import { useLang } from '@/lib/i18n'
-import { colors, radius } from '@/lib/theme'
 
+// Selecting a carrier moves straight on to delivery, so this step has no Continue button. The logos
+// are the main target on the screen and are sized to be easy to find and tap on a counter tablet.
 export default function CarrierStep() {
   const router = useRouter()
   const { draft, setDraft } = useWizard()
@@ -18,24 +18,24 @@ export default function CarrierStep() {
   }
 
   return (
-    <SafeAreaView style={styles.screen} edges={['top', 'bottom']}>
-      <StepProgress step={1} />
-      <Text style={styles.title}>{tr.carrierHeading}</Text>
-      <View style={styles.grid}>
-        {CARRIERS.map((c) => (
-          <Pressable key={c.name} style={[styles.card, draft.carrierName === c.name && styles.cardSelected]} onPress={() => select(c.name)}>
-            <CarrierLogo name={c.name} size={108} />
-          </Pressable>
-        ))}
+    <WizardScreen title={tr.carrierHeading} step={1}>
+      <View className="flex-row flex-wrap gap-3">
+        {CARRIERS.map((c) => {
+          const selected = draft.carrierName === c.name
+          return (
+            <Pressable
+              key={c.name}
+              accessibilityRole="radio"
+              accessibilityState={{ selected }}
+              accessibilityLabel={c.name}
+              onPress={() => select(c.name)}
+              className={`min-h-[160px] flex-grow basis-[47%] items-center justify-center rounded-lg border-2 bg-white py-8 active:bg-cream ${selected ? 'border-ocean' : 'border-line'}`}
+            >
+              <CarrierLogo name={c.name} size={108} />
+            </Pressable>
+          )
+        })}
       </View>
-    </SafeAreaView>
+    </WizardScreen>
   )
 }
-
-const styles = StyleSheet.create({
-  screen: { flex: 1, backgroundColor: colors.cream, padding: 20 },
-  title: { fontSize: 22, fontWeight: '800', color: colors.ink, marginBottom: 20 },
-  grid: { flexDirection: 'row', flexWrap: 'wrap', gap: 12 },
-  card: { flexBasis: '47%', flexGrow: 1, alignItems: 'center', justifyContent: 'center', backgroundColor: colors.white, borderWidth: 2, borderColor: colors.line, borderRadius: radius.lg, paddingVertical: 34 },
-  cardSelected: { borderColor: colors.ocean },
-})

@@ -1,19 +1,33 @@
-import { StyleSheet, Text, TextInput, View, type TextInputProps } from 'react-native'
-import { colors, radius } from '@/lib/theme'
+import { useState } from 'react'
+import { Text, TextInput, View, type TextInputProps } from 'react-native'
 
-type Props = TextInputProps & { label: string }
+type Props = TextInputProps & { label: string; error?: string }
 
-export function TextField({ label, style, ...rest }: Props) {
+// Label sits above the field and the input is a fixed, touch-friendly height. The border turns
+// ocean while focused so the active field is always obvious, and red with a plain-language message
+// when there's a validation problem.
+export function TextField({ label, error, onFocus, onBlur, editable = true, ...rest }: Props) {
+  const [focused, setFocused] = useState(false)
+  const border = error ? 'border-error' : focused ? 'border-ocean' : 'border-line'
   return (
-    <View style={styles.wrap}>
-      <Text style={styles.label}>{label}</Text>
-      <TextInput style={[styles.input, style]} placeholderTextColor={colors.muted} {...rest} />
+    <View className="gap-1.5">
+      <Text className="text-sm font-semibold text-ink">{label}</Text>
+      <TextInput
+        className={`min-h-[52px] rounded-sm border-[1.5px] bg-white px-3.5 text-base text-ink ${border} ${editable ? '' : 'bg-cream opacity-60'}`}
+        placeholderTextColor="#5c7080"
+        editable={editable}
+        accessibilityLabel={label}
+        onFocus={(e) => {
+          setFocused(true)
+          onFocus?.(e)
+        }}
+        onBlur={(e) => {
+          setFocused(false)
+          onBlur?.(e)
+        }}
+        {...rest}
+      />
+      {error ? <Text className="text-sm text-error">{error}</Text> : null}
     </View>
   )
 }
-
-const styles = StyleSheet.create({
-  wrap: { gap: 6 },
-  label: { fontSize: 13, fontWeight: '600', color: colors.ink },
-  input: { minHeight: 48, borderWidth: 1, borderColor: colors.line, borderRadius: radius.sm, paddingHorizontal: 14, fontSize: 16, color: colors.ink, backgroundColor: colors.white },
-})

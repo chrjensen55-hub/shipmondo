@@ -1,15 +1,14 @@
 import { useState } from 'react'
 import { useRouter } from 'expo-router'
-import { Pressable, StyleSheet, Text, View } from 'react-native'
+import { Pressable, Text, View } from 'react-native'
 import * as Crypto from 'expo-crypto'
-import { Truck, Package, UserRound, MapPin, type LucideIcon } from 'lucide-react-native'
+import { Truck, Package, UserRound, MapPin, AlertTriangle, type LucideIcon } from 'lucide-react-native'
 import { WizardScreen } from '@/components/WizardScreen'
 import { CarrierLogo } from '@/components/CarrierLogo'
 import { useWizard, HS_CODE_RE } from '@/lib/wizard-context'
 import { countries } from '@/lib/countries'
 import { api, ApiError } from '@/lib/api'
 import { useLang } from '@/lib/i18n'
-import { colors, radius } from '@/lib/theme'
 
 export default function ReviewStep() {
   const router = useRouter()
@@ -27,7 +26,7 @@ export default function ReviewStep() {
   }
 
   async function book() {
-    if (!confirmed || !quote || missingHsCode) return
+    if (!confirmed || !quote || missingHsCode || booking) return
     setBooking(true)
     setError('')
     try {
@@ -45,32 +44,51 @@ export default function ReviewStep() {
 
   const parcelCount = draft.parcels.length
   const parcelUnit = parcelCount > 1 ? tr.parcelPlural : tr.parcelSingular
+  const canSubmit = confirmed && !booking && !missingHsCode && !!quote
 
   return (
-    <WizardScreen title={tr.reviewHeading} step={7} onContinue={book} continueLabel={booking ? tr.creatingShipment : tr.confirmCreateShipment} continueDisabled={!confirmed || booking || missingHsCode || !quote} continueLoading={booking} error={error}>
-      <View style={styles.card}>
+    <WizardScreen
+      title={tr.reviewHeading}
+      step={7}
+      onContinue={book}
+      continueLabel={booking ? tr.creatingShipment : tr.confirmCreateShipment}
+      continueDisabled={!canSubmit}
+      continueLoading={booking}
+      error={error}
+    >
+      <View className="rounded-md border border-line bg-white px-4">
         <Row icon={Truck} label={tr.cardCarrier} value={`${draft.carrierName ?? ''} — ${countryName(draft.originCountry)} → ${countryName(draft.destinationCountry)}`} />
         <Row icon={Package} label={tr.cardParcel} value={`${parcelCount} ${parcelUnit}, ${draft.parcels.reduce((n, p) => n + p.weight, 0)} kg`} />
         <Row icon={UserRound} label={tr.cardSender} value={`${draft.sender.fullName}\n${draft.sender.address1}, ${draft.sender.postalCode} ${draft.sender.city}`} />
         <Row icon={MapPin} label={tr.cardRecipient} value={`${draft.recipient.fullName}\n${draft.recipient.address1}, ${draft.recipient.postalCode} ${draft.recipient.city}`} last />
       </View>
-      <View style={styles.serviceCard}>
-        <View style={styles.serviceInfo}>
+
+      <View className="flex-row items-center justify-between gap-3 rounded-md bg-mint p-4">
+        <View className="flex-shrink flex-row items-center gap-2.5">
           <CarrierLogo name={quote?.carrier ?? ''} size={36} />
-          <Text style={styles.serviceName}>
+          <Text className="flex-shrink font-bold text-ink">
             {quote?.carrier} {quote?.serviceName}
           </Text>
         </View>
-        <Text style={styles.servicePrice}>{quote?.customerPrice} DKK</Text>
+        <Text className="text-lg font-extrabold text-green-dark">{quote?.customerPrice} DKK</Text>
       </View>
+
       {missingHsCode && (
-        <Pressable style={styles.notice} onPress={() => router.push('/send/customs')}>
-          <Text style={styles.noticeText}>{tr.customsNotice}</Text>
+        <Pressable accessibilityRole="button" onPress={() => router.push('/send/customs')} className="flex-row items-center gap-2.5 rounded-sm bg-error-bg p-3.5 active:opacity-80">
+          <AlertTriangle size={18} color="#a33b2e" />
+          <Text className="flex-1 text-sm font-medium text-error">{tr.customsNotice}</Text>
         </Pressable>
       )}
-      <Pressable style={styles.confirmRow} onPress={() => setConfirmed((v) => !v)} disabled={missingHsCode}>
-        <View style={[styles.checkbox, confirmed && styles.checkboxChecked]} />
-        <Text style={styles.confirmText}>{tr.confirmCorrect}</Text>
+
+      <Pressable
+        accessibilityRole="checkbox"
+        accessibilityState={{ checked: confirmed, disabled: missingHsCode }}
+        onPress={() => setConfirmed((v) => !v)}
+        disabled={missingHsCode}
+        className="flex-row items-start gap-3 py-1"
+      >
+        <View className={`mt-0.5 h-6 w-6 items-center justify-center rounded-md border-2 ${confirmed ? 'border-ocean bg-ocean' : 'border-line bg-white'}`} />
+        <Text className="flex-1 text-base text-ink">{tr.confirmCorrect}</Text>
       </Pressable>
     </WizardScreen>
   )
@@ -78,31 +96,12 @@ export default function ReviewStep() {
 
 function Row({ icon: Icon, label, value, last }: { icon: LucideIcon; label: string; value: string; last?: boolean }) {
   return (
-    <View style={[styles.row, !last && styles.rowDivider]}>
-      <View style={styles.rowHeader}>
-        <Icon size={15} color={colors.muted} />
-        <Text style={styles.rowLabel}>{label}</Text>
+    <View className={`gap-1 py-3 ${last ? '' : 'border-b border-line'}`}>
+      <View className="flex-row items-center gap-1.5">
+        <Icon size={15} color="#5c7080" />
+        <Text className="text-xs font-bold uppercase text-muted">{label}</Text>
       </View>
-      <Text style={styles.rowValue}>{value}</Text>
+      <Text className="text-base text-ink">{value}</Text>
     </View>
   )
 }
-
-const styles = StyleSheet.create({
-  card: { backgroundColor: colors.white, borderRadius: radius.md, borderWidth: 1, borderColor: colors.line, padding: 16 },
-  row: { gap: 4, paddingVertical: 10 },
-  rowDivider: { borderBottomWidth: 1, borderBottomColor: colors.line },
-  rowHeader: { flexDirection: 'row', alignItems: 'center', gap: 6 },
-  rowLabel: { color: colors.muted, fontSize: 12, textTransform: 'uppercase', fontWeight: '700' },
-  rowValue: { color: colors.ink, fontSize: 15 },
-  serviceCard: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', backgroundColor: colors.mint, borderRadius: radius.md, padding: 16 },
-  serviceInfo: { flexDirection: 'row', alignItems: 'center', gap: 10, flexShrink: 1 },
-  serviceName: { fontWeight: '700', color: colors.ink },
-  servicePrice: { fontWeight: '800', fontSize: 18, color: colors.greenDark },
-  notice: { backgroundColor: colors.errorBg, borderRadius: radius.sm, padding: 14 },
-  noticeText: { color: colors.error },
-  confirmRow: { flexDirection: 'row', gap: 12, alignItems: 'flex-start' },
-  checkbox: { width: 22, height: 22, borderRadius: 6, borderWidth: 2, borderColor: colors.line, marginTop: 2 },
-  checkboxChecked: { backgroundColor: colors.ocean, borderColor: colors.ocean },
-  confirmText: { flex: 1, color: colors.ink },
-})

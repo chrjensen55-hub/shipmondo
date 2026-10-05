@@ -97,6 +97,19 @@ const da = {
   labelNotAvailable: 'Fragtsedlen er ikke tilgængelig for denne forsendelse.',
   printError: 'Kunne ikke udskrive denne fragtseddel.',
   doneAction: 'Færdig',
+  exitAction: 'Afslut',
+  menuRefresh: 'Opdater',
+  refreshTitle: 'Opdater forsendelse?',
+  refreshMessage: 'Dine nuværende forsendelsesoplysninger bliver slettet.',
+  refreshAction: 'Opdater',
+  cancelAction: 'Annuller',
+  shipmentCreated: 'Forsendelsen er oprettet',
+  preparingLabel: 'Forbereder fragtseddel…',
+  printingLabel: 'Udskriver fragtseddel…',
+  labelPrintedSuccess: 'Fragtseddel udskrevet',
+  findingCity: 'Finder by…',
+  cityFound: 'Byen blev fundet automatisk',
+  cityNotFound: 'Vi kunne ikke finde en dansk by til dette postnummer. Tjek postnummeret og prøv igen.',
 }
 
 const en: Record<keyof typeof da, string> = {
@@ -188,6 +201,19 @@ const en: Record<keyof typeof da, string> = {
   labelNotAvailable: 'The label is not available for this shipment.',
   printError: 'Could not print this label.',
   doneAction: 'Done',
+  exitAction: 'Exit',
+  menuRefresh: 'Refresh',
+  refreshTitle: 'Refresh shipment?',
+  refreshMessage: 'Your current shipment information will be cleared.',
+  refreshAction: 'Refresh',
+  cancelAction: 'Cancel',
+  shipmentCreated: 'Shipment created successfully',
+  preparingLabel: 'Preparing label…',
+  printingLabel: 'Printing label…',
+  labelPrintedSuccess: 'Label printed successfully',
+  findingCity: 'Finding city…',
+  cityFound: 'City found automatically',
+  cityNotFound: 'We could not find a Danish city for this postal code. Please check the postal code and try again.',
 }
 
 export const translations: Record<Lang, typeof da> = { da, en }

@@ -67,3 +67,18 @@ export function useWizard() {
 }
 
 export const required = (value: string) => value.trim().length > 1
+
+// Refresh only asks for confirmation when the customer's details were actually started, so an
+// empty wizard restarts immediately.
+export function hasActiveShipmentData(draft: ShipmentDraft): boolean {
+  return Boolean(
+    draft.carrierName ||
+      draft.sender.fullName.trim() ||
+      draft.sender.address1.trim() ||
+      draft.recipient.fullName.trim() ||
+      draft.recipient.address1.trim() ||
+      draft.recipient.phone.trim() ||
+      draft.recipient.email.trim() ||
+      draft.items.length > 0,
+  )
+}

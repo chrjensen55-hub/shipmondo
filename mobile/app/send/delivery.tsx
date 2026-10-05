@@ -1,13 +1,10 @@
 import { useRouter } from 'expo-router'
-import { Image, Pressable, StyleSheet, Text, View } from 'react-native'
-import { SafeAreaView } from 'react-native-safe-area-context'
+import { Image, Pressable, Text, View } from 'react-native'
 import { Check } from 'lucide-react-native'
-import { Button } from '@/components/Button'
-import { StepProgress } from '@/components/StepProgress'
+import { WizardScreen } from '@/components/WizardScreen'
 import { useWizard, SERVICE_POINT_LABEL, firstParcelSize } from '@/lib/wizard-context'
 import { weightBrackets } from '@/lib/carrierRates'
 import { useLang } from '@/lib/i18n'
-import { colors, radius } from '@/lib/theme'
 import type { DeliveryLocation } from '@/lib/types'
 
 // require() (not import) is the standard Expo/React Native pattern for static image assets - see
@@ -32,48 +29,30 @@ export default function DeliveryStep() {
   const servicePointLabel = draft.carrierName ? (SERVICE_POINT_LABEL[draft.carrierName] ?? tr.servicePointFallback) : tr.servicePointFallback
 
   return (
-    <SafeAreaView style={styles.screen} edges={['top', 'bottom']}>
-      <View style={styles.content}>
-        <StepProgress step={2} />
-        <Text style={styles.title}>{tr.deliveryHeading}</Text>
-        <Pressable style={[styles.card, draft.deliveryLocation === 'service_point' && styles.cardSelected]} onPress={() => select('service_point')}>
-          {draft.deliveryLocation === 'service_point' && (
-            <View style={styles.checkBadge}>
-              <Check size={14} color={colors.white} />
-            </View>
-          )}
-          <Image source={servicePointImage} style={styles.cardImage} resizeMode="contain" alt="" />
-          <Text style={styles.cardTitle}>{servicePointLabel}</Text>
-          <Text style={styles.cardSub}>{tr.servicePointSubtitle}</Text>
-        </Pressable>
-        <Pressable style={[styles.card, draft.deliveryLocation === 'home' && styles.cardSelected]} onPress={() => select('home')}>
-          {draft.deliveryLocation === 'home' && (
-            <View style={styles.checkBadge}>
-              <Check size={14} color={colors.white} />
-            </View>
-          )}
-          <Image source={homeDeliveryImage} style={styles.cardImage} resizeMode="contain" alt="" />
-          <Text style={styles.cardTitle}>{tr.homeDelivery}</Text>
-          <Text style={styles.cardSub}>{tr.homeDeliverySubtitle}</Text>
-        </Pressable>
-      </View>
-      <View style={styles.actions}>
-        <Button label={tr.backAction} variant="secondary" onPress={() => router.back()} />
-        <Button label={tr.continueAction} onPress={() => router.push('/send/parcel')} />
-      </View>
-    </SafeAreaView>
+    <WizardScreen title={tr.deliveryHeading} step={2} onContinue={() => router.push('/send/parcel')}>
+      <DeliveryCard selected={draft.deliveryLocation === 'service_point'} onPress={() => select('service_point')} image={servicePointImage} title={servicePointLabel} subtitle={tr.servicePointSubtitle} />
+      <DeliveryCard selected={draft.deliveryLocation === 'home'} onPress={() => select('home')} image={homeDeliveryImage} title={tr.homeDelivery} subtitle={tr.homeDeliverySubtitle} />
+    </WizardScreen>
   )
 }
 
-const styles = StyleSheet.create({
-  screen: { flex: 1, backgroundColor: colors.cream },
-  content: { padding: 20, gap: 12 },
-  title: { fontSize: 22, fontWeight: '800', color: colors.ink, marginBottom: 8 },
-  card: { backgroundColor: colors.white, borderWidth: 2, borderColor: colors.line, borderRadius: radius.lg, padding: 20, alignItems: 'center' },
-  cardSelected: { borderColor: colors.ocean },
-  cardImage: { width: 72, height: 72, marginBottom: 10 },
-  cardTitle: { fontSize: 17, fontWeight: '700', color: colors.ink },
-  cardSub: { color: colors.muted, marginTop: 4, textAlign: 'center' },
-  checkBadge: { position: 'absolute', top: 12, right: 12, width: 24, height: 24, borderRadius: 12, backgroundColor: colors.ocean, alignItems: 'center', justifyContent: 'center' },
-  actions: { flexDirection: 'row', justifyContent: 'space-between', gap: 12, padding: 20, borderTopWidth: 1, borderTopColor: colors.line, backgroundColor: colors.white },
-})
+function DeliveryCard({ selected, onPress, image, title, subtitle }: { selected: boolean; onPress: () => void; image: number; title: string; subtitle: string }) {
+  return (
+    <Pressable
+      accessibilityRole="radio"
+      accessibilityState={{ selected }}
+      accessibilityLabel={`${title}. ${subtitle}`}
+      onPress={onPress}
+      className={`items-center gap-2 rounded-lg border-2 bg-white p-5 active:bg-cream ${selected ? 'border-ocean' : 'border-line'}`}
+    >
+      {selected && (
+        <View className="absolute right-3 top-3 h-6 w-6 items-center justify-center rounded-full bg-ocean">
+          <Check size={14} color="#ffffff" />
+        </View>
+      )}
+      <Image source={image} className="mb-1 h-[72px] w-[72px]" resizeMode="contain" alt="" />
+      <Text className="text-lg font-bold text-ink">{title}</Text>
+      <Text className="text-center text-base text-muted">{subtitle}</Text>
+    </Pressable>
+  )
+}

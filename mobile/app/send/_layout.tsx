@@ -1,25 +1,26 @@
 import { useEffect, useState } from 'react'
 import { Stack, useRouter } from 'expo-router'
-import { Modal, Pressable, StyleSheet, Text, TextInput, View } from 'react-native'
+import { Modal, Pressable, Text, TextInput, View } from 'react-native'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import * as SecureStore from 'expo-secure-store'
-import { Menu, Home, Settings as SettingsIcon } from 'lucide-react-native'
-import { WizardProvider } from '@/lib/wizard-context'
+import { Menu, Home, RotateCcw, Settings as SettingsIcon } from 'lucide-react-native'
+import { WizardProvider, useWizard, hasActiveShipmentData } from '@/lib/wizard-context'
 import { getSettingsPin } from '@/lib/settingsPin'
 import { LangContext, DEFAULT_LANG, LANG_STORAGE_KEY, useLang, type Lang } from '@/lib/i18n'
 import { LanguageSwitch } from '@/components/LanguageSwitch'
-import { colors, radius } from '@/lib/theme'
+import { ConfirmDialog } from '@/components/ConfirmDialog'
+import { Button } from '@/components/Button'
 
-// A floating button rather than a native header bar: the wizard screens each already manage
-// their own full-screen layout and SafeAreaView insets, so adding a real header here would
-// double up on top spacing across every one of them. This floats above whichever screen is
-// active instead, without touching each screen's own layout.
+// Floating controls rather than a native header: each wizard screen already manages its own
+// full-screen layout and safe-area padding, so one shared header would double up the top spacing.
 function HamburgerMenu() {
   const router = useRouter()
   const insets = useSafeAreaInsets()
   const tr = useLang()
+  const { draft, reset } = useWizard()
   const [menuOpen, setMenuOpen] = useState(false)
   const [pinPromptOpen, setPinPromptOpen] = useState(false)
+  const [refreshConfirmOpen, setRefreshConfirmOpen] = useState(false)
   const [pin, setPin] = useState('')
   const [pinError, setPinError] = useState(false)
 
@@ -30,9 +31,27 @@ function HamburgerMenu() {
     setPinError(false)
   }
 
+  // Home returns to the first page without discarding anything the customer already entered.
   function goHome() {
     closeAll()
-    router.push('/send')
+    router.dismissAll()
+    router.replace('/send')
+  }
+
+  // Refresh restarts only the active shipment: clears the temporary draft and returns to step one.
+  // Completed shipments and the shipment history live server-side and are untouched.
+  function doRefresh() {
+    setMenuOpen(false)
+    setRefreshConfirmOpen(false)
+    reset()
+    router.dismissAll()
+    router.replace('/send')
+  }
+
+  function requestRefresh() {
+    setMenuOpen(false)
+    if (hasActiveShipmentData(draft)) setRefreshConfirmOpen(true)
+    else doRefresh()
   }
 
   function openSettings() {
@@ -53,31 +72,42 @@ function HamburgerMenu() {
 
   return (
     <>
-      <Pressable style={[styles.button, { top: insets.top + 20 }]} onPress={() => setMenuOpen(true)}>
-        <Menu size={20} color={colors.ink} />
+      <Pressable
+        accessibilityRole="button"
+        accessibilityLabel={tr.menuLabel}
+        onPress={() => setMenuOpen(true)}
+        className="absolute left-3 z-50 h-11 w-11 items-center justify-center rounded-full border border-line bg-white shadow-sm active:bg-cream"
+        style={{ top: insets.top + 20 }}
+      >
+        <Menu size={22} color="#0f2436" />
       </Pressable>
 
       <Modal visible={menuOpen} transparent animationType="fade" onRequestClose={closeAll}>
-        <Pressable style={styles.backdrop} onPress={closeAll}>
-          <View style={[styles.menu, { top: insets.top + 68 }]}>
-            <Pressable style={styles.menuItem} onPress={goHome}>
-              <Home size={18} color={colors.ink} />
-              <Text style={styles.menuItemText}>{tr.menuHome}</Text>
-            </Pressable>
-            <Pressable style={styles.menuItem} onPress={openSettings}>
-              <SettingsIcon size={18} color={colors.ink} />
-              <Text style={styles.menuItemText}>{tr.menuSettings}</Text>
-            </Pressable>
+        <Pressable className="flex-1 bg-ink/20" onPress={closeAll}>
+          <View className="absolute left-3 min-w-[200px] rounded-md border border-line bg-white py-1.5 shadow-lg" style={{ top: insets.top + 72 }}>
+            <MenuItem icon={<Home size={18} color="#0f2436" />} label={tr.menuHome} onPress={goHome} />
+            <MenuItem icon={<RotateCcw size={18} color="#0f2436" />} label={tr.menuRefresh} onPress={requestRefresh} />
+            <MenuItem icon={<SettingsIcon size={18} color="#0f2436" />} label={tr.menuSettings} onPress={openSettings} />
           </View>
         </Pressable>
       </Modal>
 
+      <ConfirmDialog
+        visible={refreshConfirmOpen}
+        title={tr.refreshTitle}
+        message={tr.refreshMessage}
+        cancelLabel={tr.cancelAction}
+        confirmLabel={tr.refreshAction}
+        onCancel={() => setRefreshConfirmOpen(false)}
+        onConfirm={doRefresh}
+      />
+
       <Modal visible={pinPromptOpen} transparent animationType="fade" onRequestClose={closeAll}>
-        <Pressable style={styles.backdrop} onPress={closeAll}>
-          <Pressable style={styles.pinCard} onPress={(e) => e.stopPropagation()}>
-            <Text style={styles.pinTitle}>{tr.settingsCodePrompt}</Text>
+        <Pressable className="flex-1 items-center justify-center bg-ink/40 p-6" onPress={closeAll}>
+          <Pressable className="w-full max-w-sm gap-4 rounded-lg bg-white p-6" onPress={(e) => e.stopPropagation()}>
+            <Text className="text-xl font-extrabold text-ink">{tr.settingsCodePrompt}</Text>
             <TextInput
-              style={styles.pinInput}
+              className="min-h-[56px] rounded-sm border-[1.5px] border-line bg-white text-center text-2xl tracking-[12px] text-ink"
               value={pin}
               onChangeText={(v) => {
                 setPin(v.replace(/[^0-9]/g, '').slice(0, 4))
@@ -88,15 +118,23 @@ function HamburgerMenu() {
               maxLength={4}
               autoFocus
               onSubmitEditing={submitPin}
+              accessibilityLabel={tr.settingsCodePrompt}
             />
-            {pinError && <Text style={styles.pinError}>{tr.settingsCodeIncorrect}</Text>}
-            <Pressable style={styles.pinButton} onPress={submitPin}>
-              <Text style={styles.pinButtonText}>{tr.continueAction}</Text>
-            </Pressable>
+            {pinError && <Text className="text-sm font-medium text-error">{tr.settingsCodeIncorrect}</Text>}
+            <Button label={tr.continueAction} onPress={submitPin} />
           </Pressable>
         </Pressable>
       </Modal>
     </>
+  )
+}
+
+function MenuItem({ icon, label, onPress }: { icon: React.ReactNode; label: string; onPress: () => void }) {
+  return (
+    <Pressable onPress={onPress} accessibilityRole="menuitem" className="flex-row items-center gap-3 px-4 py-3.5 active:bg-cream">
+      {icon}
+      <Text className="text-base font-semibold text-ink">{label}</Text>
+    </Pressable>
   )
 }
 
@@ -124,48 +162,3 @@ export default function SendLayout() {
     </LangContext.Provider>
   )
 }
-
-const styles = StyleSheet.create({
-  button: {
-    position: 'absolute',
-    left: 12,
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-    backgroundColor: colors.white,
-    borderWidth: 1,
-    borderColor: colors.line,
-    alignItems: 'center',
-    justifyContent: 'center',
-    shadowColor: '#000',
-    shadowOpacity: 0.08,
-    shadowRadius: 6,
-    shadowOffset: { width: 0, height: 2 },
-    elevation: 3,
-    zIndex: 50,
-  },
-  backdrop: { flex: 1, backgroundColor: 'rgba(15, 36, 54, 0.2)' },
-  menu: {
-    position: 'absolute',
-    left: 12,
-    backgroundColor: colors.white,
-    borderRadius: radius.md,
-    borderWidth: 1,
-    borderColor: colors.line,
-    paddingVertical: 6,
-    minWidth: 180,
-    shadowColor: '#000',
-    shadowOpacity: 0.15,
-    shadowRadius: 12,
-    shadowOffset: { width: 0, height: 6 },
-    elevation: 8,
-  },
-  menuItem: { flexDirection: 'row', alignItems: 'center', gap: 12, paddingVertical: 14, paddingHorizontal: 16 },
-  menuItemText: { fontSize: 16, fontWeight: '600', color: colors.ink },
-  pinCard: { margin: 'auto', backgroundColor: colors.white, borderRadius: radius.lg, padding: 24, width: '100%', maxWidth: 320, gap: 12, alignItems: 'center' },
-  pinTitle: { fontSize: 16, fontWeight: '700', color: colors.ink },
-  pinInput: { width: '100%', minHeight: 56, borderWidth: 1, borderColor: colors.line, borderRadius: radius.sm, fontSize: 24, letterSpacing: 12, textAlign: 'center', color: colors.ink },
-  pinError: { color: colors.error, fontSize: 13 },
-  pinButton: { minHeight: 48, paddingHorizontal: 28, borderRadius: radius.md, backgroundColor: colors.ocean, alignItems: 'center', justifyContent: 'center' },
-  pinButtonText: { color: colors.white, fontWeight: '700', fontSize: 16 },
-})

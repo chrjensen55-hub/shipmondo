@@ -1,9 +1,8 @@
 import { useState } from 'react'
-import { FlatList, Modal, Pressable, StyleSheet, Text, TextInput, View } from 'react-native'
+import { FlatList, Modal, Pressable, Text, TextInput, View } from 'react-native'
 import { ChevronDown } from 'lucide-react-native'
 import { dialCodes, joinPhone, splitPhone, DEFAULT_DIAL_CODE } from '@/lib/dialCodes'
 import { useLang } from '@/lib/i18n'
-import { colors, radius } from '@/lib/theme'
 
 export function PhoneField({ label, value, onChange, editable = true }: { label: string; value: string; onChange: (v: string) => void; editable?: boolean }) {
   const tr = useLang()
@@ -12,42 +11,50 @@ export function PhoneField({ label, value, onChange, editable = true }: { label:
   const current = dialCodes.find((d) => d.code === countryCode) ?? dialCodes.find((d) => d.code === DEFAULT_DIAL_CODE)!
 
   return (
-    <View style={styles.wrap}>
-      <Text style={styles.label}>{label}</Text>
-      <View style={styles.row}>
-        <Pressable style={[styles.dialButton, !editable && styles.disabled]} onPress={() => editable && setPickerOpen(true)} disabled={!editable}>
-          <Text style={styles.dialText}>{current.dial}</Text>
-          <ChevronDown size={14} color={colors.muted} />
+    <View className="gap-1.5">
+      <Text className="text-sm font-semibold text-ink">{label}</Text>
+      <View className="flex-row gap-2">
+        <Pressable
+          accessibilityRole="button"
+          accessibilityLabel={tr.countryCodeSheetTitle}
+          disabled={!editable}
+          onPress={() => setPickerOpen(true)}
+          className={`min-h-[52px] flex-row items-center gap-1 rounded-sm border-[1.5px] border-line bg-white px-3 ${editable ? '' : 'opacity-60'}`}
+        >
+          <Text className="text-base font-bold text-ink">{current.dial}</Text>
+          <ChevronDown size={14} color="#5c7080" />
         </Pressable>
         <TextInput
-          style={[styles.input, !editable && styles.disabled]}
+          className={`min-h-[52px] flex-1 rounded-sm border-[1.5px] border-line bg-white px-3.5 text-base text-ink ${editable ? '' : 'bg-cream opacity-60'}`}
           value={local}
           onChangeText={(v) => onChange(joinPhone(countryCode, v))}
           keyboardType="phone-pad"
           placeholder="12345678"
-          placeholderTextColor={colors.muted}
+          placeholderTextColor="#5c7080"
           editable={editable}
+          accessibilityLabel={label}
         />
       </View>
 
       <Modal visible={pickerOpen} transparent animationType="slide" onRequestClose={() => setPickerOpen(false)}>
-        <Pressable style={styles.backdrop} onPress={() => setPickerOpen(false)}>
-          <Pressable style={styles.sheet} onPress={(e) => e.stopPropagation()}>
-            <Text style={styles.sheetTitle}>{tr.countryCodeSheetTitle}</Text>
+        <Pressable className="flex-1 justify-end bg-ink/40" onPress={() => setPickerOpen(false)}>
+          <Pressable className="max-h-[70%] rounded-t-lg bg-white pt-4" onPress={(e) => e.stopPropagation()}>
+            <Text className="px-5 pb-2 text-lg font-extrabold text-ink">{tr.countryCodeSheetTitle}</Text>
             <FlatList
               data={dialCodes}
               keyExtractor={(d) => d.code}
-              style={styles.sheetList}
+              className="px-2"
               renderItem={({ item }) => (
                 <Pressable
-                  style={styles.option}
+                  accessibilityRole="button"
+                  className="flex-row items-center justify-between border-b border-line px-3 py-3.5 active:bg-cream"
                   onPress={() => {
                     onChange(joinPhone(item.code, local))
                     setPickerOpen(false)
                   }}
                 >
-                  <Text style={styles.optionName}>{item.name}</Text>
-                  <Text style={styles.optionDial}>{item.dial}</Text>
+                  <Text className="flex-shrink text-base text-ink">{item.name}</Text>
+                  <Text className="font-bold text-muted">{item.dial}</Text>
                 </Pressable>
               )}
             />
@@ -57,30 +64,3 @@ export function PhoneField({ label, value, onChange, editable = true }: { label:
     </View>
   )
 }
-
-const styles = StyleSheet.create({
-  wrap: { gap: 6 },
-  label: { fontSize: 13, fontWeight: '600', color: colors.ink },
-  row: { flexDirection: 'row', gap: 8 },
-  dialButton: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 4,
-    minHeight: 48,
-    paddingHorizontal: 12,
-    borderWidth: 1,
-    borderColor: colors.line,
-    borderRadius: radius.sm,
-    backgroundColor: colors.white,
-  },
-  dialText: { fontSize: 16, fontWeight: '700', color: colors.ink },
-  input: { flex: 1, minHeight: 48, borderWidth: 1, borderColor: colors.line, borderRadius: radius.sm, paddingHorizontal: 14, fontSize: 16, color: colors.ink, backgroundColor: colors.white },
-  disabled: { backgroundColor: colors.cream, opacity: 0.6 },
-  backdrop: { flex: 1, backgroundColor: 'rgba(15, 36, 54, 0.35)', justifyContent: 'flex-end' },
-  sheet: { backgroundColor: colors.white, borderTopLeftRadius: radius.lg, borderTopRightRadius: radius.lg, maxHeight: '70%', paddingTop: 16 },
-  sheetTitle: { fontSize: 16, fontWeight: '800', color: colors.ink, paddingHorizontal: 20, paddingBottom: 8 },
-  sheetList: { paddingHorizontal: 8 },
-  option: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingVertical: 14, paddingHorizontal: 12, borderBottomWidth: 1, borderBottomColor: colors.line },
-  optionName: { color: colors.ink, fontSize: 15, flexShrink: 1, marginRight: 8 },
-  optionDial: { color: colors.muted, fontWeight: '700' },
-})

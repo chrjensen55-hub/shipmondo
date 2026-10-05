@@ -1,13 +1,12 @@
 import { useRouter } from 'expo-router'
 import { useEffect } from 'react'
-import { Pressable, StyleSheet, Text, View } from 'react-native'
+import { Pressable, Text, View } from 'react-native'
 import { Picker } from '@react-native-picker/picker'
 import { Plus, Trash2 } from 'lucide-react-native'
 import { WizardScreen } from '@/components/WizardScreen'
 import { TextField } from '@/components/TextField'
 import { useWizard, HS_CODE_RE } from '@/lib/wizard-context'
 import { useLang } from '@/lib/i18n'
-import { colors, radius } from '@/lib/theme'
 import type { ShipmentItem } from '@/lib/types'
 
 function blankItem(id: string, weight: number, originCountry: string): ShipmentItem {
@@ -42,9 +41,9 @@ export default function CustomsStep() {
 
   return (
     <WizardScreen title={tr.customsHeading} subtitle={tr.customsSubtitle} step={6} onContinue={() => router.push('/send/review')} continueDisabled={!valid}>
-      <View>
-        <Text style={styles.label}>{tr.exportReasonLabel}</Text>
-        <View style={styles.pickerWrap}>
+      <View className="gap-1.5">
+        <Text className="text-sm font-semibold text-ink">{tr.exportReasonLabel}</Text>
+        <View className="overflow-hidden rounded-sm border-[1.5px] border-line bg-white">
           <Picker selectedValue={draft.exportReason ?? 'sale_of_goods'} onValueChange={(v) => setDraft((d) => ({ ...d, exportReason: v }))}>
             <Picker.Item label={tr.exportReasonSale} value="sale_of_goods" />
             <Picker.Item label={tr.exportReasonGift} value="gift" />
@@ -54,42 +53,35 @@ export default function CustomsStep() {
           </Picker>
         </View>
       </View>
+
       {draft.items.map((item, index) => (
-        <View key={item.id} style={styles.card}>
-          <View style={styles.cardHeader}>
-            <Text style={styles.cardTitle}>
+        <View key={item.id} className="gap-3.5 rounded-md border border-line bg-white p-4">
+          <View className="flex-row items-center justify-between">
+            <Text className="text-base font-bold text-ink">
               {tr.itemLabel} {index + 1}
             </Text>
             {draft.items.length > 1 && (
-              <Pressable style={styles.removeButton} onPress={() => removeItem(item.id)}>
-                <Trash2 size={16} color={colors.error} />
-                <Text style={styles.removeText}>{tr.remove}</Text>
+              <Pressable accessibilityRole="button" onPress={() => removeItem(item.id)} className="flex-row items-center gap-1 py-1">
+                <Trash2 size={16} color="#a33b2e" />
+                <Text className="text-sm font-semibold text-error">{tr.remove}</Text>
               </Pressable>
             )}
           </View>
           <TextField label={tr.contentsDescription} value={item.description} onChangeText={(v) => update(item.id, { description: v })} />
           <TextField label={tr.valueDkk} keyboardType="numeric" value={item.unitValue ? String(item.unitValue) : ''} onChangeText={(v) => update(item.id, { unitValue: v === '' ? 0 : Number(v) || 0 })} />
           <TextField label={tr.commodityCode} placeholder={tr.hsCodePlaceholder} value={item.hsCode ?? ''} onChangeText={(v) => update(item.id, { hsCode: v })} />
-          <Text style={styles.hint}>{tr.hsCodeHelp}</Text>
+          <Text className="text-sm text-muted">{tr.hsCodeHelp}</Text>
         </View>
       ))}
-      <Pressable style={styles.addButton} onPress={addItem}>
-        <Plus size={18} color={colors.green} />
-        <Text style={styles.addButtonText}>{tr.addItem}</Text>
+
+      <Pressable
+        accessibilityRole="button"
+        onPress={addItem}
+        className="min-h-[52px] flex-row items-center justify-center gap-2 rounded-md border border-dashed border-muted bg-white active:bg-cream"
+      >
+        <Plus size={18} color="#0369a1" />
+        <Text className="text-base font-semibold text-green">{tr.addItem}</Text>
       </Pressable>
     </WizardScreen>
   )
 }
-
-const styles = StyleSheet.create({
-  label: { fontSize: 13, fontWeight: '600', color: colors.ink, marginBottom: 6 },
-  pickerWrap: { borderWidth: 1, borderColor: colors.line, borderRadius: radius.sm, backgroundColor: colors.white },
-  card: { backgroundColor: colors.white, borderRadius: radius.md, borderWidth: 1, borderColor: colors.line, padding: 16, gap: 12 },
-  cardHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
-  cardTitle: { fontWeight: '700', color: colors.ink, fontSize: 15 },
-  removeButton: { flexDirection: 'row', alignItems: 'center', gap: 4 },
-  removeText: { color: colors.error, fontWeight: '600', fontSize: 13 },
-  hint: { color: colors.muted, fontSize: 13 },
-  addButton: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8, minHeight: 48, borderWidth: 1, borderStyle: 'dashed', borderColor: '#aab8b1', borderRadius: radius.md },
-  addButtonText: { color: colors.green, fontWeight: '700' },
-})
