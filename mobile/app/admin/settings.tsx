@@ -1,11 +1,13 @@
 import { useEffect, useState } from 'react'
-import { ScrollView, Text, View } from 'react-native'
+import { Pressable, ScrollView, Text, View } from 'react-native'
 import { SafeAreaView } from 'react-native-safe-area-context'
-import { Cloud, KeyRound } from 'lucide-react-native'
+import { Cloud, KeyRound, MapPin, Type } from 'lucide-react-native'
 import { Button } from '@/components/Button'
 import { TextField } from '@/components/TextField'
 import { getShipmondoConfig, setShipmondoConfig, clearShipmondoConfig } from '@/lib/shipmondoConfig'
 import { getSettingsPin, setSettingsPin } from '@/lib/settingsPin'
+import { getDanadresseKey, setDanadresseKey, clearDanadresseKey } from '@/lib/danadresseConfig'
+import { applyTextSize, loadTextSize, saveTextSize, TEXT_SIZES, type TextSize } from '@/lib/textSize'
 import { api } from '@/lib/api'
 
 type TestState = { status: 'idle' | 'testing' | 'ok' | 'error'; message?: string }
@@ -13,6 +15,13 @@ type TestState = { status: 'idle' | 'testing' | 'ok' | 'error'; message?: string
 // Every real deployment uses this same production endpoint, so it's pre-filled. Staff only change
 // the username and key, which is what actually differs between accounts.
 const DEFAULT_BASE_URL = 'https://app.shipmondo.com/api/public/v3'
+
+const TEXT_SIZE_LABELS: Record<TextSize, string> = {
+  small: 'Small',
+  normal: 'Normal',
+  large: 'Large',
+  xlarge: 'Extra large',
+}
 
 export default function SettingsScreen() {
   const [baseUrl, setBaseUrl] = useState(DEFAULT_BASE_URL)
@@ -29,6 +38,13 @@ export default function SettingsScreen() {
   const [pinSaved, setPinSaved] = useState(false)
   const [pinError, setPinError] = useState('')
 
+  const [textSize, setTextSizeState] = useState<TextSize>('normal')
+
+  const [danadresseInput, setDanadresseInput] = useState('')
+  const [danadresseConfigured, setDanadresseConfigured] = useState(false)
+  const [danadresseSaved, setDanadresseSaved] = useState(false)
+  const [danadresseTest, setDanadresseTest] = useState<TestState>({ status: 'idle' })
+
   useEffect(() => {
     getShipmondoConfig().then((config) => {
       if (config) {
@@ -38,7 +54,41 @@ export default function SettingsScreen() {
         setConfigured(true)
       }
     })
+    loadTextSize().then(setTextSizeState)
+    getDanadresseKey().then((key) => setDanadresseConfigured(!!key))
   }, [])
+
+  function chooseTextSize(size: TextSize) {
+    setTextSizeState(size)
+    applyTextSize(size)
+    saveTextSize(size)
+  }
+
+  async function saveDanadresse() {
+    setDanadresseSaved(false)
+    setDanadresseTest({ status: 'idle' })
+    await setDanadresseKey(danadresseInput)
+    setDanadresseInput('')
+    setDanadresseConfigured(true)
+    setDanadresseSaved(true)
+  }
+
+  async function removeDanadresse() {
+    await clearDanadresseKey()
+    setDanadresseConfigured(false)
+    setDanadresseSaved(false)
+    setDanadresseTest({ status: 'idle' })
+  }
+
+  async function testDanadresse() {
+    setDanadresseTest({ status: 'testing' })
+    try {
+      const result = await api<{ postalCode: string; city: string }>('/api/postal/2730')
+      setDanadresseTest({ status: 'ok', message: `Working. 2730 is ${result.city}.` })
+    } catch {
+      setDanadresseTest({ status: 'error', message: 'The city lookup did not respond. Check the key, or try again later.' })
+    }
+  }
 
   async function saveShipmondo() {
     setSavingShipmondo(true)
@@ -105,6 +155,60 @@ export default function SettingsScreen() {
         <Text className="text-xl font-extrabold text-ink" accessibilityRole="header">
           Settings
         </Text>
+
+        <View className="gap-3 rounded-md border border-line bg-white p-4">
+          <View className="flex-row items-center gap-2">
+            <Type size={20} color="#075985" />
+            <Text className="text-lg font-bold text-ink">Text size</Text>
+          </View>
+          <Text className="text-sm text-muted">Changes the size of all text in the app on this device.</Text>
+          <View className="flex-row gap-2">
+            {(Object.keys(TEXT_SIZES) as TextSize[]).map((size) => {
+              const selected = textSize === size
+              return (
+                <Pressable
+                  key={size}
+                  accessibilityRole="radio"
+                  accessibilityState={{ selected }}
+                  onPress={() => chooseTextSize(size)}
+                  className={`flex-1 items-center rounded-sm border-[1.5px] py-3 ${selected ? 'border-ocean bg-mint' : 'border-line bg-white'}`}
+                >
+                  <Text className={`text-sm font-bold ${selected ? 'text-ocean' : 'text-ink'}`}>{TEXT_SIZE_LABELS[size]}</Text>
+                </Pressable>
+              )
+            })}
+          </View>
+        </View>
+
+        <View className="gap-3 rounded-md border border-line bg-white p-4">
+          <View className="flex-row items-center gap-2">
+            <MapPin size={20} color="#075985" />
+            <Text className="text-lg font-bold text-ink">City lookup key (Danadresse)</Text>
+          </View>
+          <Text className="text-sm text-muted">
+            Postal codes fill in the city using Danadresse. Each tablet needs its own free key from danadresse.dk, which allows 2,000 lookups per month. Enter the key once. Without a key the app still fills in the city from its built-in list.
+          </Text>
+          <Text className="text-sm font-semibold text-ink">{danadresseConfigured ? 'A key is saved on this tablet.' : 'No key saved on this tablet.'}</Text>
+          <TextField label="Danadresse API key" autoCapitalize="none" autoCorrect={false} secureTextEntry value={danadresseInput} onChangeText={setDanadresseInput} />
+          {danadresseSaved && <Text className="text-sm font-semibold text-success">Saved.</Text>}
+          <View className="flex-row flex-wrap gap-2.5">
+            <View className="min-w-[120px] flex-1">
+              <Button label="Save key" onPress={saveDanadresse} disabled={danadresseInput.trim().length < 10} />
+            </View>
+            {danadresseConfigured && (
+              <View className="min-w-[120px] flex-1">
+                <Button label="Test lookup" variant="secondary" onPress={testDanadresse} loading={danadresseTest.status === 'testing'} />
+              </View>
+            )}
+            {danadresseConfigured && (
+              <View className="min-w-[120px] flex-1">
+                <Button label="Remove key" variant="destructive" onPress={removeDanadresse} />
+              </View>
+            )}
+          </View>
+          {danadresseTest.status === 'ok' && <Text className="text-sm font-semibold text-success">{danadresseTest.message}</Text>}
+          {danadresseTest.status === 'error' && <Text className="text-sm font-medium text-error">{danadresseTest.message}</Text>}
+        </View>
 
         <View className="gap-3 rounded-md border border-line bg-white p-4">
           <View className="flex-row items-center gap-2">
