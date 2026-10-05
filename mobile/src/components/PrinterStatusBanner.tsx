@@ -1,12 +1,12 @@
 import { useEffect, useState } from 'react'
-import { StyleSheet, Text, View } from 'react-native'
+import { Text, View } from 'react-native'
 import { TriangleAlert } from 'lucide-react-native'
 import { isPrinterPaired } from '@/lib/zebraBluetooth'
 
 const CHECK_INTERVAL_MS = 25000
 
-// Mirrors the web app's PrinterStatusBanner — warns across Admin the moment the printer pairing
-// is lost, instead of staff finding out only when a customer's print fails.
+// Warns across Admin the moment the printer pairing is lost, instead of staff finding out only when
+// a customer's print fails.
 export function PrinterStatusBanner() {
   const [paired, setPaired] = useState(true)
 
@@ -28,14 +28,9 @@ export function PrinterStatusBanner() {
   if (paired) return null
 
   return (
-    <View style={styles.banner}>
+    <View className="flex-row items-center gap-2.5 border-b border-line bg-[#fff8e6] px-4 py-2.5" accessibilityRole="alert">
       <TriangleAlert size={18} color="#8a5a00" />
-      <Text style={styles.text}>No printer paired — printing will fail until one is paired again in the Printer tab.</Text>
+      <Text className="flex-1 text-sm font-semibold text-[#8a5a00]">No printer is paired. Printing will fail until one is paired again in the Printer tab.</Text>
     </View>
   )
 }
-
-const styles = StyleSheet.create({
-  banner: { flexDirection: 'row', alignItems: 'center', gap: 10, backgroundColor: '#fff8e6', borderBottomWidth: 1, borderBottomColor: '#f0dca0', paddingVertical: 10, paddingHorizontal: 16 },
-  text: { flex: 1, color: '#8a5a00', fontWeight: '600', fontSize: 13 },
-})

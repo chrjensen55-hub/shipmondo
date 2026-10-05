@@ -1,10 +1,9 @@
 import { useState } from 'react'
 import { Redirect } from 'expo-router'
-import { KeyboardAvoidingView, Platform, StyleSheet, Text, View } from 'react-native'
+import { KeyboardAvoidingView, Platform, Text, View } from 'react-native'
 import { Button } from '@/components/Button'
 import { TextField } from '@/components/TextField'
 import { ApiError, useAuth } from '@/lib/auth-context'
-import { colors } from '@/lib/theme'
 
 export default function Login() {
   const { status, login } = useAuth()
@@ -21,38 +20,35 @@ export default function Login() {
     try {
       await login(identifier, password)
     } catch (err) {
-      setError(err instanceof ApiError ? err.message : 'Could not sign in.')
+      setError(err instanceof ApiError && err.status === 401 ? 'Wrong username or password. Please try again.' : 'We could not sign you in. Check your connection and try again.')
     } finally {
       setLoading(false)
     }
   }
 
   return (
-    <KeyboardAvoidingView style={styles.screen} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
-      <View style={styles.card}>
-        <View style={styles.brandMark}>
-          <Text style={styles.brandMarkText}>P</Text>
+    <KeyboardAvoidingView className="flex-1 items-center justify-center bg-cream p-5" behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
+      <View className="w-full max-w-sm gap-4 rounded-lg border border-line bg-white p-7">
+        <View className="h-12 w-12 items-center justify-center self-center rounded-xl bg-ocean">
+          <Text className="text-2xl font-extrabold text-white">P</Text>
         </View>
-        <Text style={styles.title}>Pak &amp; Send</Text>
-        <Text style={styles.subtitle}>Staff sign-in</Text>
-        <View style={styles.fields}>
+        <Text className="text-center text-xl font-extrabold text-ink" accessibilityRole="header">
+          Pak &amp; Send
+        </Text>
+        <Text className="-mt-2 text-center text-base text-muted">Staff sign-in</Text>
+        <View className="gap-3">
           <TextField label="Username or email" autoCapitalize="none" autoCorrect={false} value={identifier} onChangeText={setIdentifier} />
           <TextField label="Password" secureTextEntry value={password} onChangeText={setPassword} onSubmitEditing={submit} />
         </View>
-        {error ? <Text style={styles.error}>{error}</Text> : null}
+        {error ? (
+          <View className="rounded-sm bg-error-bg p-3">
+            <Text className="text-center text-sm font-medium text-error" accessibilityRole="alert">
+              {error}
+            </Text>
+          </View>
+        ) : null}
         <Button label="Sign in" onPress={submit} loading={loading} disabled={!identifier || !password} />
       </View>
     </KeyboardAvoidingView>
   )
 }
-
-const styles = StyleSheet.create({
-  screen: { flex: 1, backgroundColor: colors.cream, alignItems: 'center', justifyContent: 'center', padding: 20 },
-  card: { width: '100%', maxWidth: 380, backgroundColor: colors.white, borderRadius: 18, padding: 28, gap: 14, borderWidth: 1, borderColor: colors.line },
-  brandMark: { width: 48, height: 48, borderRadius: 14, backgroundColor: colors.ocean, alignItems: 'center', justifyContent: 'center', alignSelf: 'center' },
-  brandMarkText: { color: colors.white, fontWeight: '800', fontSize: 22 },
-  title: { fontSize: 20, fontWeight: '800', color: colors.ink, textAlign: 'center' },
-  subtitle: { fontSize: 14, color: colors.muted, textAlign: 'center', marginBottom: 6 },
-  fields: { gap: 12 },
-  error: { color: colors.error, fontSize: 13, textAlign: 'center' },
-})

@@ -1,20 +1,19 @@
 import { Component, type ReactNode } from 'react'
-import { StyleSheet, Text, View } from 'react-native'
+import { Text, View } from 'react-native'
 import { TriangleAlert } from 'lucide-react-native'
 import { Button } from './Button'
-import { colors } from '@/lib/theme'
 
 type Props = { children: ReactNode }
-type State = { error: Error | null }
+type State = { hasError: boolean }
 
-// A crash anywhere in the tree otherwise takes down the whole app to a blank white screen with
-// no way back short of force-closing — this at least gives staff a "something went wrong, try
-// again" screen with a reset button, on a device that runs unattended all day.
+// A crash anywhere in the tree would otherwise leave a blank white screen with no way back short of
+// force-closing, on a device that runs unattended all day. Staff get a plain message and a retry
+// button; the technical error goes to the log only, never onto the screen.
 export class ErrorBoundary extends Component<Props, State> {
-  state: State = { error: null }
+  state: State = { hasError: false }
 
-  static getDerivedStateFromError(error: Error): State {
-    return { error }
+  static getDerivedStateFromError(): State {
+    return { hasError: true }
   }
 
   componentDidCatch(error: Error) {
@@ -22,22 +21,20 @@ export class ErrorBoundary extends Component<Props, State> {
   }
 
   render() {
-    if (this.state.error) {
+    if (this.state.hasError) {
       return (
-        <View style={styles.screen}>
-          <TriangleAlert size={40} color={colors.error} />
-          <Text style={styles.title}>Something went wrong</Text>
-          <Text style={styles.message}>{this.state.error.message || 'An unexpected error occurred.'}</Text>
-          <Button label="Try again" onPress={() => this.setState({ error: null })} />
+        <View className="flex-1 items-center justify-center gap-4 bg-white p-6">
+          <TriangleAlert size={40} color="#a33b2e" />
+          <Text className="text-center text-lg font-extrabold text-ink" accessibilityRole="header">
+            Something went wrong
+          </Text>
+          <Text className="text-center text-base text-muted">Please try again. If it keeps happening, ask a staff member for help.</Text>
+          <View className="w-full max-w-xs">
+            <Button label="Try again" onPress={() => this.setState({ hasError: false })} />
+          </View>
         </View>
       )
     }
     return this.props.children
   }
 }
-
-const styles = StyleSheet.create({
-  screen: { flex: 1, alignItems: 'center', justifyContent: 'center', gap: 14, padding: 24, backgroundColor: colors.white },
-  title: { fontSize: 18, fontWeight: '800', color: colors.ink },
-  message: { color: colors.muted, textAlign: 'center' },
-})

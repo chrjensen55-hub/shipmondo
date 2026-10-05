@@ -1,10 +1,9 @@
 import { useEffect, useState } from 'react'
-import { FlatList, StyleSheet, Text, View } from 'react-native'
+import { FlatList, Text, View } from 'react-native'
 import { Bluetooth } from 'lucide-react-native'
 import { SafeAreaView } from 'react-native-safe-area-context'
 import { Button } from '@/components/Button'
 import { clearPairedPrinter, getPairedPrinter, pairPrinter, requestBlePermissions, scanForPrinters, type ScannedDevice } from '@/lib/zebraBluetooth'
-import { colors, radius } from '@/lib/theme'
 
 export default function PrinterSettings() {
   const [paired, setPaired] = useState<ScannedDevice | null>(null)
@@ -27,7 +26,7 @@ export default function PrinterSettings() {
     setScanning(true)
     const stop = scanForPrinters(
       (device) => setFound((prev) => (prev.some((d) => d.id === device.id) ? prev : [...prev, device])),
-      (message) => setError(message),
+      () => setError('We could not search for printers. Check that Bluetooth is turned on and try again.'),
     )
     setTimeout(() => {
       stop()
@@ -47,42 +46,38 @@ export default function PrinterSettings() {
   }
 
   return (
-    <SafeAreaView style={styles.screen} edges={['top']}>
-      <View style={styles.header}>
-        <Bluetooth color={colors.ocean} size={28} />
-        <Text style={styles.title}>{paired ? `Paired with ${paired.name}` : 'No printer paired'}</Text>
-        <Text style={styles.subtitle}>
-          Connects directly to the Zebra printer over Bluetooth — look for a name starting with &quot;ZTC&quot; or &quot;ZQ&quot;/&quot;ZD&quot; plus the model number.
+    <SafeAreaView className="flex-1 bg-cream" edges={['top']}>
+      <View className="items-center gap-1.5 p-5">
+        <Bluetooth color="#075985" size={28} />
+        <Text className="text-center text-lg font-extrabold text-ink" accessibilityRole="header">
+          {paired ? `Paired with ${paired.name}` : 'No printer paired'}
         </Text>
+        <Text className="text-center text-sm text-muted">Connects directly to the Zebra printer over Bluetooth. Look for a name starting with ZTC, ZQ or ZD, followed by the model number.</Text>
       </View>
-      {error ? <Text style={styles.error}>{error}</Text> : null}
+      {error ? (
+        <View className="mx-5 mb-2 rounded-sm bg-error-bg p-3">
+          <Text className="text-center text-sm font-medium text-error" accessibilityRole="alert">
+            {error}
+          </Text>
+        </View>
+      ) : null}
       <FlatList
-        style={styles.list}
+        className="flex-1 px-5"
         data={found}
         keyExtractor={(d) => d.id}
         renderItem={({ item }) => (
-          <View style={styles.row}>
-            <Text style={styles.rowText}>{item.name}</Text>
-            <Button label={paired?.id === item.id ? 'In use' : 'Use this printer'} variant="secondary" onPress={() => choose(item)} disabled={paired?.id === item.id} />
+          <View className="mb-2 flex-row items-center justify-between gap-3 rounded-sm border border-line bg-white p-3.5">
+            <Text className="flex-shrink text-base font-semibold text-ink">{item.name}</Text>
+            <View className="w-40">
+              <Button label={paired?.id === item.id ? 'In use' : 'Use this printer'} variant="secondary" onPress={() => choose(item)} disabled={paired?.id === item.id} />
+            </View>
           </View>
         )}
       />
-      <View style={styles.actions}>
+      <View className="gap-2.5 p-5">
         <Button label={scanning ? 'Scanning…' : 'Scan for printer'} onPress={startScan} loading={scanning} />
         {paired ? <Button label="Forget this printer" variant="secondary" onPress={forget} /> : null}
       </View>
     </SafeAreaView>
   )
 }
-
-const styles = StyleSheet.create({
-  screen: { flex: 1, backgroundColor: colors.cream },
-  header: { padding: 20, gap: 6, alignItems: 'center' },
-  title: { fontSize: 18, fontWeight: '800', color: colors.ink, textAlign: 'center' },
-  subtitle: { fontSize: 13, color: colors.muted, textAlign: 'center' },
-  error: { color: colors.error, textAlign: 'center', marginBottom: 8 },
-  list: { flex: 1, paddingHorizontal: 20 },
-  row: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', backgroundColor: colors.white, borderRadius: radius.sm, borderWidth: 1, borderColor: colors.line, padding: 14, marginBottom: 8 },
-  rowText: { fontWeight: '600', color: colors.ink, flexShrink: 1, marginRight: 8 },
-  actions: { padding: 20, gap: 10 },
-})
