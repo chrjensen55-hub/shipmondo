@@ -1,5 +1,5 @@
-import { describe, expect, it } from 'vitest'
-import { bundledDanishCity } from './lookup'
+import { afterEach, describe, expect, it, vi } from 'vitest'
+import { bundledDanishCity, findDanishCity } from './lookup'
 import postnumre from './da-postnumre.json'
 
 describe('bundled Danish postal codes', () => {
@@ -20,5 +20,31 @@ describe('bundled Danish postal codes', () => {
 
   it.each(['0000', '9999'])('returns null for a code that does not exist (%s)', (nr) => {
     expect(bundledDanishCity(nr)).toBeNull()
+  })
+})
+
+describe('findDanishCity', () => {
+  afterEach(() => {
+    vi.unstubAllGlobals()
+  })
+
+  it('uses the bundled data and makes no network call when a device has no key', async () => {
+    const fetchMock = vi.fn()
+    vi.stubGlobal('fetch', fetchMock)
+    expect(await findDanishCity('2730', null)).toBe('Herlev')
+    expect(fetchMock).not.toHaveBeenCalled()
+  })
+
+  it('uses the device key when Danadresse answers', async () => {
+    vi.stubGlobal(
+      'fetch',
+      vi.fn().mockResolvedValue({ ok: true, json: async () => [{ nr: '8000', navn: 'Aarhus C' }] }),
+    )
+    expect(await findDanishCity('8000', 'device-key-a')).toBe('Aarhus C')
+  })
+
+  it('falls back to the bundled data when the device key is rejected or over quota', async () => {
+    vi.stubGlobal('fetch', vi.fn().mockResolvedValue({ ok: false, status: 429, json: async () => ({}) }))
+    expect(await findDanishCity('9000', 'device-key-b')).toBe('Aalborg')
   })
 })
