@@ -52,9 +52,19 @@ export function splitPhone(phone: string): { countryCode: string; local: string 
   return { countryCode: DEFAULT_DIAL_CODE, local: trimmed }
 }
 
+// Always keeps the dial code, even with no digits typed yet — returning '' here was the bug:
+// picking a country before typing a number produced an empty phone value, which splitPhone then
+// read as "no prefix at all" and silently fell back to the +45 default on the next render.
 export function joinPhone(countryCode: string, local: string): string {
   const entry = dialCodes.find((d) => d.code === countryCode)
   const dial = entry?.dial ?? '+45'
   const digits = local.trim()
-  return digits ? `${dial} ${digits}` : ''
+  return digits ? `${dial} ${digits}` : dial
+}
+
+// A dial code with no digits after it (e.g. "+46" alone, right after picking a country) isn't a
+// real phone number yet — callers validating the field should check this instead of just the
+// string's length, since that would now be non-empty even with no digits entered.
+export function hasPhoneDigits(phone: string): boolean {
+  return splitPhone(phone).local.trim().length > 0
 }

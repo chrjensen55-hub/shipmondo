@@ -3,6 +3,7 @@ import { useRouter } from 'expo-router'
 import { WizardScreen } from '@/components/WizardScreen'
 import { AddressForm } from '@/components/AddressForm'
 import { useWizard, required } from '@/lib/wizard-context'
+import { hasPhoneDigits } from '@/lib/dialCodes'
 import { requiresCustoms } from '@/lib/countries'
 import { api, ApiError } from '@/lib/api'
 import { useLang } from '@/lib/i18n'
@@ -32,7 +33,7 @@ export default function RecipientStep() {
   }
 
   const a = draft.recipient
-  const valid = [a.fullName, a.address1, a.postalCode, a.city, a.email, a.phone].every(required)
+  const valid = [a.fullName, a.address1, a.postalCode, a.city, a.email].every(required) && hasPhoneDigits(a.phone)
 
   async function getQuote() {
     setLoading(true)
