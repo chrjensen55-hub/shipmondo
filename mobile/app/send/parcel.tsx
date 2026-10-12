@@ -1,6 +1,6 @@
 import { useRouter } from 'expo-router'
 import { useState } from 'react'
-import { Pressable, ScrollView, Text, View } from 'react-native'
+import { Image, Pressable, ScrollView, Text, View } from 'react-native'
 import { SafeAreaView } from 'react-native-safe-area-context'
 import { Package, Plus, Ruler, Trash2, CheckCircle2 } from 'lucide-react-native'
 import { Button } from '@/components/Button'
@@ -10,6 +10,11 @@ import { useWizard, firstParcelSize } from '@/lib/wizard-context'
 import { boxSizeFor, weightBrackets } from '@/lib/carrierRates'
 import { useLang } from '@/lib/i18n'
 import type { Parcel } from '@/lib/types'
+
+/* eslint-disable @typescript-eslint/no-require-imports */
+const boxWeightImage = require('../../assets/images/box-weight.png')
+const boxSizeImage = require('../../assets/images/box-size.png')
+/* eslint-enable @typescript-eslint/no-require-imports */
 
 // Plain "0 - 1 kg" rather than switching to grams below 1kg — a customer glancing at the tile
 // should be able to read the range at a single unit without doing a mental conversion.
@@ -64,6 +69,10 @@ export default function ParcelStep() {
     <SafeAreaView className="flex-1 bg-cream" edges={['top', 'bottom']}>
       <ScrollView className="flex-1" contentContainerClassName="gap-4 p-5 pb-10 pt-16">
         <StepProgress step={3} />
+        <View className="flex-row justify-center gap-3">
+          <Image source={boxWeightImage} resizeMode="contain" className="h-16 w-16" alt="" />
+          <Image source={boxSizeImage} resizeMode="contain" className="h-16 w-16" alt="" />
+        </View>
         <Text className="text-2xl font-extrabold text-ink" accessibilityRole="header">
           {tr.weightHeading}
         </Text>

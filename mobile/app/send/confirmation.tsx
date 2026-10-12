@@ -1,6 +1,6 @@
 import { useCallback, useState } from 'react'
 import { useFocusEffect, useLocalSearchParams, useRouter } from 'expo-router'
-import { ActivityIndicator, BackHandler, ScrollView, Text, View } from 'react-native'
+import { ActivityIndicator, BackHandler, Image, ScrollView, Text, View } from 'react-native'
 import { SafeAreaView } from 'react-native-safe-area-context'
 import { CircleCheck, CheckCircle2 } from 'lucide-react-native'
 import { Button } from '@/components/Button'
@@ -11,6 +11,9 @@ import { printZplViaBluetooth } from '@/lib/zebraBluetooth'
 import { useLang } from '@/lib/i18n'
 import { base64ToUtf8 } from '@/lib/base64'
 
+/* eslint-disable @typescript-eslint/no-require-imports */
+const printImage = require('../../assets/images/print-step.png')
+/* eslint-enable @typescript-eslint/no-require-imports */
 
 type PrintState = 'ready' | 'preparing' | 'printing' | 'printed' | 'failed'
 
@@ -101,7 +104,10 @@ export default function Confirmation() {
               <Text className="text-base font-semibold text-white">{tr.preparingLabel}</Text>
             </View>
           ) : (
-            <Button label={tr.printLabel} variant="primary" onPress={printLabel} disabled={busy} accessibilityLabel={tr.printLabel} />
+            <View className="gap-3">
+              <Image source={printImage} resizeMode="contain" className="h-20 w-20 self-center" alt="" />
+              <Button label={tr.printLabel} variant="primary" onPress={printLabel} disabled={busy} accessibilityLabel={tr.printLabel} />
+            </View>
           )}
           {state === 'failed' && error ? (
             <View className="rounded-sm bg-error-bg p-3.5">

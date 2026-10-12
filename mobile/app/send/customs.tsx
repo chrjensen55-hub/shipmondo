@@ -9,6 +9,10 @@ import { useWizard, HS_CODE_RE } from '@/lib/wizard-context'
 import { useLang } from '@/lib/i18n'
 import type { ShipmentItem } from '@/lib/types'
 
+/* eslint-disable @typescript-eslint/no-require-imports */
+const customsImage = require('../../assets/images/customs-step.png')
+/* eslint-enable @typescript-eslint/no-require-imports */
+
 function blankItem(id: string, weight: number, originCountry: string): ShipmentItem {
   return { id, description: '', quantity: 1, unitValue: 0, currency: 'DKK', weight, originCountry, hsCode: '' }
 }
@@ -40,7 +44,7 @@ export default function CustomsStep() {
   const valid = draft.items.length > 0 && draft.items.every((i) => i.description.trim().length > 1 && HS_CODE_RE.test(i.hsCode ?? '') && i.unitValue > 0)
 
   return (
-    <WizardScreen title={tr.customsHeading} subtitle={tr.customsSubtitle} step={6} onContinue={() => router.push('/send/review')} continueDisabled={!valid}>
+    <WizardScreen title={tr.customsHeading} subtitle={tr.customsSubtitle} step={6} icon={customsImage} onContinue={() => router.push('/send/review')} continueDisabled={!valid}>
       <View className="gap-1.5">
         <Text className="text-sm font-semibold text-ink">{tr.exportReasonLabel}</Text>
         <View className="overflow-hidden rounded-sm border-[1.5px] border-line bg-white">

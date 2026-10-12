@@ -9,6 +9,10 @@ import { api, ApiError } from '@/lib/api'
 import { useLang } from '@/lib/i18n'
 import type { Address, ShippingQuote } from '@/lib/types'
 
+/* eslint-disable @typescript-eslint/no-require-imports */
+const recipientImage = require('../../assets/images/recipient-step.png')
+/* eslint-enable @typescript-eslint/no-require-imports */
+
 export default function RecipientStep() {
   const router = useRouter()
   const { draft, setDraft, setQuotes, setNeedsCustoms } = useWizard()
@@ -57,7 +61,7 @@ export default function RecipientStep() {
   }
 
   return (
-    <WizardScreen title={tr.recipientTitle} step={5} onContinue={getQuote} continueLabel={loading ? tr.checkingRate : tr.continueAction} continueDisabled={!valid || loading} continueLoading={loading} error={error}>
+    <WizardScreen title={tr.recipientTitle} step={5} icon={recipientImage} onContinue={getQuote} continueLabel={loading ? tr.checkingRate : tr.continueAction} continueDisabled={!valid || loading} continueLoading={loading} error={error}>
       <AddressForm value={draft.recipient} onChange={onChange} noContact={noContact} onToggleNoContact={toggleNoContact} />
     </WizardScreen>
   )

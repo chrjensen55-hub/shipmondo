@@ -1,4 +1,4 @@
-import { ScrollView, Text, View, type ScrollViewProps } from 'react-native'
+import { Image, ScrollView, Text, View, type ImageSourcePropType, type ScrollViewProps } from 'react-native'
 import { SafeAreaView } from 'react-native-safe-area-context'
 import { useRouter } from 'expo-router'
 import { Button } from './Button'
@@ -9,6 +9,7 @@ type Props = ScrollViewProps & {
   title: string
   subtitle?: string
   step?: number
+  icon?: ImageSourcePropType
   onContinue?: () => void
   continueLabel?: string
   continueDisabled?: boolean
@@ -18,10 +19,10 @@ type Props = ScrollViewProps & {
   children: React.ReactNode
 }
 
-// Shared frame for every wizard step: progress at the top, one clear heading, the step's content,
-// and a single action bar with Back (secondary) and Continue (primary) so the next move is always
-// the most obvious thing on the screen.
-export function WizardScreen({ title, subtitle, step, onContinue, continueLabel, continueDisabled, continueLoading, error, hideBack, children, ...scrollProps }: Props) {
+// Shared frame for every wizard step: progress at the top, an optional hero icon, one clear
+// heading, the step's content, and a single action bar with Back (secondary) and Continue
+// (primary) so the next move is always the most obvious thing on the screen.
+export function WizardScreen({ title, subtitle, step, icon, onContinue, continueLabel, continueDisabled, continueLoading, error, hideBack, children, ...scrollProps }: Props) {
   const router = useRouter()
   const tr = useLang()
   const showBack = !hideBack && router.canGoBack()
@@ -29,6 +30,7 @@ export function WizardScreen({ title, subtitle, step, onContinue, continueLabel,
     <SafeAreaView className="flex-1 bg-cream" edges={['top', 'bottom']}>
       <ScrollView className="flex-1" contentContainerClassName="gap-4 p-5 pb-10 pt-16" {...scrollProps}>
         {step ? <StepProgress step={step} /> : null}
+        {icon ? <Image source={icon} resizeMode="contain" className="h-20 w-20 self-center" alt="" /> : null}
         <Text className="text-2xl font-extrabold text-ink" accessibilityRole="header">
           {title}
         </Text>

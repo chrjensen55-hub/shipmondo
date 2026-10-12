@@ -6,6 +6,10 @@ import { hasPhoneDigits } from '@/lib/dialCodes'
 import { useLang } from '@/lib/i18n'
 import type { Address } from '@/lib/types'
 
+/* eslint-disable @typescript-eslint/no-require-imports */
+const senderImage = require('../../assets/images/sender-step.png')
+/* eslint-enable @typescript-eslint/no-require-imports */
+
 export default function SenderStep() {
   const router = useRouter()
   const { draft, setDraft } = useWizard()
@@ -24,7 +28,7 @@ export default function SenderStep() {
   const valid = [a.fullName, a.address1, a.postalCode, a.city, a.email].every(required) && hasPhoneDigits(a.phone)
 
   return (
-    <WizardScreen title={tr.senderTitle} step={4} onContinue={() => router.push('/send/recipient')} continueDisabled={!valid}>
+    <WizardScreen title={tr.senderTitle} step={4} icon={senderImage} onContinue={() => router.push('/send/recipient')} continueDisabled={!valid}>
       <AddressForm value={draft.sender} onChange={onChange} minimal />
     </WizardScreen>
   )
