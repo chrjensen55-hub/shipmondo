@@ -17,20 +17,26 @@ export function AddressForm({
   value,
   onChange,
   minimal = false,
-  noContact,
-  onToggleNoContact,
+  noEmail,
+  onToggleNoEmail,
+  noPhone,
+  onToggleNoPhone,
 }: {
   value: Address
   onChange: (key: keyof Address, v: string) => void
   minimal?: boolean
-  // Recipient-only: lets staff skip requiring the recipient's own email/phone (common for
+  // Recipient-only: lets staff skip requiring the recipient's own email and/or phone (common for
   // walk-in customers sending on someone else's behalf who don't have those details) and use the
-  // sender's instead, since Shipmondo still needs a valid contact on the recipient party.
-  noContact?: boolean
-  onToggleNoContact?: (checked: boolean) => void
+  // sender's instead, since Shipmondo still needs a valid contact on the recipient party. Email and
+  // phone are independent — a customer might have one but not the other.
+  noEmail?: boolean
+  onToggleNoEmail?: (checked: boolean) => void
+  noPhone?: boolean
+  onToggleNoPhone?: (checked: boolean) => void
 }) {
   const tr = useLang()
-  const showNoContactOption = onToggleNoContact !== undefined
+  const showNoEmailOption = onToggleNoEmail !== undefined
+  const showNoPhoneOption = onToggleNoPhone !== undefined
   const [result, setResult] = useState<LookupResult | null>(null)
   const lookupCode = value.country === 'DK' && /^\d{4}$/.test(value.postalCode) ? value.postalCode : null
   // Loading is derived rather than stored: a lookup is in flight whenever the current Danish postal
@@ -100,22 +106,24 @@ export function AddressForm({
           </Picker>
         </View>
       </View>
-      {showNoContactOption && (
-        <Pressable
-          accessibilityRole="checkbox"
-          accessibilityState={{ checked: !!noContact }}
-          onPress={() => onToggleNoContact?.(!noContact)}
-          className="flex-row items-center gap-3 py-1"
-        >
-          <View className={`h-6 w-6 items-center justify-center rounded-md border-2 ${noContact ? 'border-ocean bg-ocean' : 'border-line bg-white'}`}>
-            {noContact && <Check size={15} color="#ffffff" />}
-          </View>
-          <Text className="flex-1 text-base text-ink">{tr.noRecipientContact}</Text>
-        </Pressable>
-      )}
-      <TextField label={tr.email} value={value.email} onChangeText={(v) => onChange('email', v)} keyboardType="email-address" autoCapitalize="none" editable={!noContact} />
-      <PhoneField label={tr.mobilePhone} value={value.phone} onChange={(v) => onChange('phone', v)} editable={!noContact} />
-      {noContact && <Text className="-mt-2 text-sm text-muted">{tr.noRecipientContactNote}</Text>}
+      {showNoEmailOption && <ContactCheckbox checked={!!noEmail} onToggle={() => onToggleNoEmail?.(!noEmail)} label={tr.noRecipientEmail} />}
+      <TextField label={tr.email} value={value.email} onChangeText={(v) => onChange('email', v)} keyboardType="email-address" autoCapitalize="none" editable={!noEmail} />
+      {noEmail && <Text className="-mt-2 text-sm text-muted">{tr.noRecipientContactNote}</Text>}
+
+      {showNoPhoneOption && <ContactCheckbox checked={!!noPhone} onToggle={() => onToggleNoPhone?.(!noPhone)} label={tr.noRecipientPhone} />}
+      <PhoneField label={tr.mobilePhone} value={value.phone} onChange={(v) => onChange('phone', v)} editable={!noPhone} />
+      {noPhone && <Text className="-mt-2 text-sm text-muted">{tr.noRecipientContactNote}</Text>}
     </View>
+  )
+}
+
+function ContactCheckbox({ checked, onToggle, label }: { checked: boolean; onToggle: () => void; label: string }) {
+  return (
+    <Pressable accessibilityRole="checkbox" accessibilityState={{ checked }} onPress={onToggle} className="flex-row items-center gap-3 py-1">
+      <View className={`h-6 w-6 items-center justify-center rounded-md border-2 ${checked ? 'border-ocean bg-ocean' : 'border-line bg-white'}`}>
+        {checked && <Check size={15} color="#ffffff" />}
+      </View>
+      <Text className="flex-1 text-base text-ink">{label}</Text>
+    </Pressable>
   )
 }

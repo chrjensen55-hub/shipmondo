@@ -29,11 +29,20 @@ const DIAL: Record<string, string> = {
   VU: '+678', VA: '+379', VE: '+58', VN: '+84', YE: '+967', ZM: '+260', ZW: '+263',
 }
 
-export type DialCode = { code: string; name: string; dial: string }
+export type DialCode = { code: string; name: string; dial: string; flag: string }
+
+// Regional indicator flag emoji built from the ISO code itself — Android's system emoji font
+// renders these natively, so no bundled flag images are needed (same approach as the language
+// switch's 🇩🇰/🇬🇧).
+function flagEmoji(isoCode: string): string {
+  return isoCode
+    .toUpperCase()
+    .replace(/./g, (char) => String.fromCodePoint(127397 + char.charCodeAt(0)))
+}
 
 export const dialCodes: DialCode[] = countries
   .filter((c) => DIAL[c.code])
-  .map((c) => ({ code: c.code, name: c.name, dial: DIAL[c.code] }))
+  .map((c) => ({ code: c.code, name: c.name, dial: DIAL[c.code], flag: flagEmoji(c.code) }))
 
 export const DEFAULT_DIAL_CODE = 'DK'
 

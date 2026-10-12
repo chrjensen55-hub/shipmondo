@@ -21,6 +21,7 @@ export function PhoneField({ label, value, onChange, editable = true }: { label:
           onPress={() => setPickerOpen(true)}
           className={`min-h-[52px] flex-row items-center gap-1 rounded-sm border-[1.5px] border-line bg-white px-3 ${editable ? '' : 'opacity-60'}`}
         >
+          <Text className="text-lg">{current.flag}</Text>
           <Text className="text-base font-bold text-ink">{current.dial}</Text>
           <ChevronDown size={14} color="#5c7080" />
         </Pressable>
@@ -53,7 +54,10 @@ export function PhoneField({ label, value, onChange, editable = true }: { label:
                     setPickerOpen(false)
                   }}
                 >
-                  <Text className="flex-shrink text-base text-ink">{item.name}</Text>
+                  <View className="flex-shrink flex-row items-center gap-2">
+                    <Text className="text-lg">{item.flag}</Text>
+                    <Text className="flex-shrink text-base text-ink">{item.name}</Text>
+                  </View>
                   <Text className="font-bold text-muted">{item.dial}</Text>
                 </Pressable>
               )}
