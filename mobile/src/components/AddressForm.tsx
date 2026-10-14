@@ -84,13 +84,13 @@ export function AddressForm({
           <TextField label={tr.city} value={value.city} onChangeText={(v) => onChange('city', v)} />
           {status === 'loading' && (
             <View className="flex-row items-center gap-2">
-              <ActivityIndicator size="small" color="#075985" />
+              <ActivityIndicator size="small" color="#0B6EF3" />
               <Text className="text-sm font-semibold text-muted">{tr.findingCity}</Text>
             </View>
           )}
           {status === 'found' && (
             <View className="flex-row items-center gap-1.5">
-              <Check size={14} color="#0a7a4a" />
+              <Check size={14} color="#16A34A" />
               <Text className="text-sm font-semibold text-success">{tr.cityFound}</Text>
             </View>
           )}

@@ -1,20 +1,22 @@
-// Matches the web app's palette (src/app/globals.css :root) so both feel like the same product.
+// "Parcel App – Base Design System" palette — mirrors mobile/tailwind.config.js's color tokens.
 export const colors = {
-  ink: '#0f2436',
-  muted: '#5c7080',
-  green: '#0369a1',
-  greenDark: '#075985',
-  mint: '#e0f2fe',
-  cream: '#f2f8fc',
-  line: '#d7e3ec',
+  ink: '#0F172A',
+  muted: '#64748B',
+  body: '#334155',
+  green: '#0B6EF3',
+  greenDark: '#0958C9',
+  mint: '#EAF2FE',
+  cream: '#F5F9FF',
+  line: '#E2E8F0',
   white: '#ffffff',
-  orange: '#e96d3a',
+  orange: '#F59E0B',
   sky: '#38bdf8',
-  ocean: '#075985',
+  ocean: '#0B6EF3',
   error: '#a33b2e',
   errorBg: '#fff1ee',
-  success: '#0a7a4a',
-  successBg: '#e8f9f0',
+  success: '#16A34A',
+  successBg: '#E7F8ED',
+  disabled: '#94A3B8',
 }
 
 export const radius = { sm: 9, md: 12, lg: 15, xl: 18 }

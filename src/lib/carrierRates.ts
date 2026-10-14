@@ -5,7 +5,7 @@ export type BoxSize = { length: number; width: number; height: number }
 // carrier is booked. `maxWeight` is the upper bound (kg) of that weight class.
 
 // "POSTPAKKER DANMARK 2026": Collect (service point) vs Home. Collect has no 35 kg tier ("Ikke muligt").
-type DomesticBracket = { maxWeight: number; service_point: number | null; home: number }
+export type DomesticBracket = { maxWeight: number; service_point: number | null; home: number }
 const DOMESTIC_BRACKETS: DomesticBracket[] = [
   { maxWeight: 1, service_point: 89, home: 119 },
   { maxWeight: 5, service_point: 98, home: 149 },
@@ -45,10 +45,17 @@ export function isDomestic(originCountry: string, destinationCountry: string): b
   return originCountry === destinationCountry
 }
 
-/** Pak & Send's real price (DKK) for this route/location/weight, or undefined once it exceeds the max weight. */
-export function rateForWeight(originCountry: string, destinationCountry: string, location: DeliveryLocation, weightKg: number): number | undefined {
+/**
+ * Pak & Send's real price (DKK) for this route/location/weight, or undefined once it exceeds the
+ * max weight. `overrideBrackets` is the active shop location's own price list, sent by the native
+ * app (each location — e.g. Courier Copenhagen vs. Pak og Send Lyngby — publishes its own domestic
+ * prices); it takes priority over the hardcoded default below, which stays as the fallback when no
+ * location override is sent (e.g. the web app's own callers).
+ */
+export function rateForWeight(originCountry: string, destinationCountry: string, location: DeliveryLocation, weightKg: number, overrideBrackets?: DomesticBracket[]): number | undefined {
   if (isDomestic(originCountry, destinationCountry)) {
-    const bracket = DOMESTIC_BRACKETS.find((b) => weightKg <= b.maxWeight)
+    const brackets = overrideBrackets ?? DOMESTIC_BRACKETS
+    const bracket = brackets.find((b) => weightKg <= b.maxWeight)
     if (!bracket) return undefined
     return location === 'service_point' ? (bracket.service_point ?? undefined) : bracket.home
   }

@@ -20,12 +20,12 @@ export function StepProgress({ step }: { step: number }) {
           return (
             <View key={n} className="flex-1 flex-row items-center">
               <View
-                className={`h-7 w-7 items-center justify-center rounded-full border-2 ${
+                className={`h-8 w-8 items-center justify-center rounded-full border-2 ${
                   done ? 'border-ocean bg-ocean' : current ? 'border-ocean bg-white' : 'border-line bg-white'
                 }`}
               >
                 {done ? (
-                  <Check size={14} color="#ffffff" />
+                  <Check size={15} color="#ffffff" />
                 ) : (
                   <Text className={`text-xs font-bold ${current ? 'text-ocean' : 'text-muted'}`}>{n}</Text>
                 )}

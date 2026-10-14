@@ -3,4 +3,7 @@ export type Parcel = { id: string; weight: number; length: number; width: number
 export type DeliveryLocation = 'home' | 'service_point'
 export type ShipmentItem = { id: string; description: string; quantity: number; unitValue: number; currency: string; weight: number; originCountry: string; hsCode?: string }
 export type ShippingQuote = { id: string; carrier: string; serviceName: string; productCode: string; serviceCodes: string[]; purchasePrice: number; customerPrice: number; currency: string; estimatedDelivery: string; metadata: { source: 'mock' | 'shipmondo'; chargeableWeight: number; requiresCustoms?: boolean; estimated?: boolean; ownAgreement?: boolean } }
-export type ShipmentDraft = { originCountry: string; originPostalCode: string; destinationCountry: string; destinationPostalCode: string; carrierName?: string; deliveryLocation: DeliveryLocation; sender: Address; recipient: Address; parcels: Parcel[]; contentsType: 'DOCUMENTS' | 'GOODS'; items: ShipmentItem[]; exportReason?: string; selectedQuoteId?: string }
+// Sent by the native app for the tablet's active shop location — its own published domestic price
+// list, shared by every carrier at that location. See src/lib/carrierRates.ts's rateForWeight.
+export type LocationRateBracket = { maxWeight: number; service_point: number | null; home: number }
+export type ShipmentDraft = { originCountry: string; originPostalCode: string; destinationCountry: string; destinationPostalCode: string; carrierName?: string; deliveryLocation: DeliveryLocation; sender: Address; recipient: Address; parcels: Parcel[]; contentsType: 'DOCUMENTS' | 'GOODS'; items: ShipmentItem[]; exportReason?: string; selectedQuoteId?: string; locationRates?: LocationRateBracket[] }

@@ -7,6 +7,7 @@ import { Button } from '@/components/Button'
 import { TextField } from '@/components/TextField'
 import { StepProgress } from '@/components/StepProgress'
 import { useWizard, firstParcelSize } from '@/lib/wizard-context'
+import { useLocations } from '@/lib/location-context'
 import { boxSizeFor, weightBrackets } from '@/lib/carrierRates'
 import { useLang } from '@/lib/i18n'
 import type { Parcel } from '@/lib/types'
@@ -34,9 +35,10 @@ function iconSizeFor(index: number, total: number) {
 export default function ParcelStep() {
   const router = useRouter()
   const { draft, setDraft } = useWizard()
+  const { activeLocation } = useLocations()
   const tr = useLang()
   const [weightChosen, setWeightChosen] = useState<Set<string>>(new Set())
-  const brackets = weightBrackets(draft.deliveryLocation)
+  const brackets = weightBrackets(draft.deliveryLocation, activeLocation.rates)
 
   function chooseWeight(id: string, maxWeight: number) {
     setWeightChosen((prev) => new Set(prev).add(id))
@@ -51,7 +53,7 @@ export default function ParcelStep() {
 
   function addParcel() {
     const id = `parcel-${Date.now()}`
-    setDraft((d) => ({ ...d, parcels: [...d.parcels, { id, ...firstParcelSize(d.deliveryLocation) }] }))
+    setDraft((d) => ({ ...d, parcels: [...d.parcels, { id, ...firstParcelSize(d.deliveryLocation, activeLocation.rates) }] }))
   }
 
   function removeParcel(id: string) {
@@ -67,13 +69,13 @@ export default function ParcelStep() {
 
   return (
     <SafeAreaView className="flex-1 bg-cream" edges={['top', 'bottom']}>
-      <ScrollView className="flex-1" contentContainerClassName="gap-4 p-5 pb-10 pt-16">
+      <ScrollView className="flex-1" contentContainerClassName="gap-6 p-8 pb-10 pt-16">
         <StepProgress step={3} />
         <View className="flex-row justify-center gap-3">
           <Image source={boxWeightImage} resizeMode="contain" className="h-16 w-16" alt="" />
           <Image source={boxSizeImage} resizeMode="contain" className="h-16 w-16" alt="" />
         </View>
-        <Text className="text-2xl font-extrabold text-ink" accessibilityRole="header">
+        <Text className="text-[28px] font-semibold text-ink" accessibilityRole="header">
           {tr.weightHeading}
         </Text>
         {draft.parcels.map((parcel, index) => (
@@ -94,7 +96,7 @@ export default function ParcelStep() {
           onPress={addParcel}
           className="min-h-[52px] flex-row items-center justify-center gap-2 rounded-md border border-dashed border-muted bg-white active:bg-cream"
         >
-          <Plus size={18} color="#0369a1" />
+          <Plus size={18} color="#0B6EF3" />
           <Text className="text-base font-semibold text-green">{tr.addParcel}</Text>
         </Pressable>
       </ScrollView>
@@ -159,10 +161,10 @@ function ParcelCard({
             >
               {selected && (
                 <View className="absolute right-1.5 top-1.5">
-                  <CheckCircle2 size={18} color="#075985" fill="#ffffff" />
+                  <CheckCircle2 size={18} color="#0B6EF3" fill="#ffffff" />
                 </View>
               )}
-              <Package size={iconSizeFor(i, brackets.length)} color={selected ? '#075985' : '#5c7080'} strokeWidth={1.75} />
+              <Package size={iconSizeFor(i, brackets.length)} color={selected ? '#0B6EF3' : '#64748B'} strokeWidth={1.75} />
               <Text className={`text-center text-sm font-bold ${selected ? 'text-ocean' : 'text-ink'}`}>{formatWeightRange(lower, max)}</Text>
               <Text className="text-center text-xs text-muted">
                 {tr.maxSizeLabel} {box.length}×{box.width}×{box.height} cm
@@ -174,7 +176,7 @@ function ParcelCard({
       {selectedWeight !== null && (
         <View className="gap-2.5">
           <View className="flex-row items-center gap-1.5">
-            <Ruler size={15} color="#5c7080" />
+            <Ruler size={15} color="#64748B" />
             <Text className="text-sm font-bold text-ink">{tr.exactSizeLabel}</Text>
           </View>
           <View className="flex-row gap-2.5">

@@ -98,7 +98,7 @@ function Row({ icon: Icon, label, value, last }: { icon: LucideIcon; label: stri
   return (
     <View className={`gap-1 py-3 ${last ? '' : 'border-b border-line'}`}>
       <View className="flex-row items-center gap-1.5">
-        <Icon size={15} color="#5c7080" />
+        <Icon size={15} color="#64748B" />
         <Text className="text-xs font-bold uppercase text-muted">{label}</Text>
       </View>
       <Text className="text-base text-ink">{value}</Text>

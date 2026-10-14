@@ -72,8 +72,8 @@ export default function Confirmation() {
     <SafeAreaView className="flex-1 bg-cream" edges={['top', 'bottom']}>
       <ScrollView contentContainerClassName="gap-5 p-5 pb-10 pt-16" className="flex-1">
         <View className="items-center gap-3">
-          <CircleCheck color="#0a7a4a" size={56} />
-          <Text className="text-center text-2xl font-extrabold text-ink" accessibilityRole="header">
+          <CircleCheck color="#16A34A" size={56} />
+          <Text className="text-center text-[28px] font-semibold text-ink" accessibilityRole="header">
             {tr.shipmentCreated}
           </Text>
           <Text className="text-center text-base text-muted">{tr.bookedReady}</Text>
@@ -89,7 +89,7 @@ export default function Confirmation() {
           {state === 'printed' ? (
             <View className="items-center gap-4">
               <View className="flex-row items-center gap-2">
-                <CheckCircle2 size={22} color="#0a7a4a" />
+                <CheckCircle2 size={22} color="#16A34A" />
                 <Text className="text-lg font-bold text-success" accessibilityRole="alert">
                   {tr.labelPrintedSuccess}
                 </Text>

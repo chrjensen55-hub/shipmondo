@@ -83,7 +83,7 @@ export default function CustomsStep() {
         onPress={addItem}
         className="min-h-[52px] flex-row items-center justify-center gap-2 rounded-md border border-dashed border-muted bg-white active:bg-cream"
       >
-        <Plus size={18} color="#0369a1" />
+        <Plus size={18} color="#0B6EF3" />
         <Text className="text-base font-semibold text-green">{tr.addItem}</Text>
       </Pressable>
     </WizardScreen>

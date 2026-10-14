@@ -22,6 +22,7 @@ export default function AdminLayout() {
       <Tabs.Screen name="index" options={{ title: 'Dashboard', tabBarIcon: ({ color, size }) => <LayoutDashboard color={color} size={size} /> }} />
       <Tabs.Screen name="shipments/index" options={{ title: 'Shipments', tabBarIcon: ({ color, size }) => <Box color={color} size={size} /> }} />
       <Tabs.Screen name="shipments/[id]" options={{ href: null }} />
+      <Tabs.Screen name="location" options={{ href: null }} />
       <Tabs.Screen name="printer" options={{ title: 'Printer', tabBarIcon: ({ color, size }) => <PrinterIcon color={color} size={size} /> }} />
       <Tabs.Screen name="settings" options={{ title: 'Settings', tabBarIcon: ({ color, size }) => <SettingsIcon color={color} size={size} /> }} />
       <Tabs.Screen

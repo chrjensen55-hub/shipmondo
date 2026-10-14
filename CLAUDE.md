@@ -4,13 +4,20 @@
 
 These are standing project rules. Read them before any change, and treat them as unchanged unless the user explicitly changes them. Do not remove working functionality unless a rule below requires it.
 
-## 1. Download page keeps every version
+## 1. Download page keeps only the 5 latest versions
 
-- A new app release is ADDED to the download page, never REPLACED.
-- Never delete an older version. Keep every previous version downloadable.
+- Always keep exactly the 5 most recent versions downloadable. Older versions are deleted.
 - The newest version is labelled **Latest Version**.
-- Before publishing a new version, verify that all previous versions are still available.
-- Releases are published as separate GitHub releases (`mobile-vX.Y.Z`), each with its own APK asset. The download page lists all of them.
+- After publishing a new version, delete GitHub releases beyond the 5 latest (`gh release delete`) so the count never exceeds 5.
+- Releases are published as separate GitHub releases (`mobile-vX.Y.Z`), each with its own APK asset. The download page lists whichever of them still exist.
+
+## 1a. Locations and prices
+
+- The Admin > Settings screen has a "Location" section at the top, listing every shop location (Courier Copenhagen, Pak og Send Lyngby, Pak og Send Borups Allé, Location 4–10).
+- Choosing a location makes it the active location for that tablet and opens its price list for editing.
+- Customers on a tablet only ever see that tablet's active location's prices and enabled carriers.
+- Within one location, every enabled carrier shares the same price for a given weight bracket. Carriers can be turned on/off per location; an off carrier never appears in carrier selection.
+- Location data (carriers, prices) lives on-device (`mobile/src/lib/locations.ts` + `location-context.tsx`) and is sent to the server with each quote/booking request so pricing matches what the tablet shows.
 
 ## 2. Denmark → Denmark city from postal code
 
@@ -57,4 +64,5 @@ These are standing project rules. Read them before any change, and treat them as
 4. Exit prepares the app for another shipment.
 5. Layouts work on phone, tablet, and desktop.
 6. Existing carriers and international shipments still work.
-7. All previous app versions are still listed on the download page.
+7. Exactly the 5 most recent app versions are listed on the download page — no more, no fewer.
+8. Switching the active location changes the prices and carriers customers see, and prices sent to the server match what was shown.

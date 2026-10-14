@@ -11,10 +11,10 @@ export function TextField({ label, error, onFocus, onBlur, editable = true, ...r
   const border = error ? 'border-error' : focused ? 'border-ocean' : 'border-line'
   return (
     <View className="gap-1.5">
-      <Text className="text-sm font-semibold text-ink">{label}</Text>
+      <Text className="text-sm font-medium text-ink">{label}</Text>
       <TextInput
-        className={`min-h-[52px] rounded-sm border-[1.5px] bg-white px-3.5 text-base text-ink ${border} ${editable ? '' : 'bg-cream opacity-60'}`}
-        placeholderTextColor="#5c7080"
+        className={`min-h-[56px] rounded-sm border-[1.5px] bg-white px-3.5 text-base text-ink ${border} ${editable ? '' : 'bg-cream opacity-60'}`}
+        placeholderTextColor="#64748B"
         editable={editable}
         accessibilityLabel={label}
         onFocus={(e) => {

@@ -127,7 +127,7 @@ function matchesCarrierName(productCarrierName: string, wanted?: string): boolea
   return a.includes(b) || b.includes(a)
 }
 
-export async function getLiveQuotes(draft: Pick<ShipmentDraft, 'originCountry' | 'originPostalCode' | 'destinationCountry' | 'destinationPostalCode' | 'parcels' | 'sender' | 'recipient' | 'carrierName' | 'deliveryLocation'>): Promise<ShippingQuote[]> {
+export async function getLiveQuotes(draft: Pick<ShipmentDraft, 'originCountry' | 'originPostalCode' | 'destinationCountry' | 'destinationPostalCode' | 'parcels' | 'sender' | 'recipient' | 'carrierName' | 'deliveryLocation' | 'locationRates'>): Promise<ShippingQuote[]> {
   const [rawProducts, rawQuotes] = await Promise.all([
     listProducts(draft.destinationCountry),
     fetchRealQuotes(draft).catch(() => [] as RawQuote[]),
@@ -152,7 +152,7 @@ export async function getLiveQuotes(draft: Pick<ShipmentDraft, 'originCountry' |
     // the same price applies no matter which carrier is booked, so it takes priority over
     // Shipmondo's live /quotes/list price. Shipmondo's price (or, failing that, a generic per-kg
     // guess) only fills in for weights the published list doesn't cover (e.g. over 35 kg).
-    const rateCardPrice = rateForWeight(draft.originCountry, draft.destinationCountry, draft.deliveryLocation, weight)
+    const rateCardPrice = rateForWeight(draft.originCountry, draft.destinationCountry, draft.deliveryLocation, weight, draft.locationRates)
     const purchasePrice = rateCardPrice ?? realQuote?.price ?? BASE_FEE + weight * (intl ? PER_KG_INTERNATIONAL : PER_KG_DOMESTIC)
     // Domestic price-list rates are charged to the customer exactly as published, with no markup.
     const domestic = isDomestic(draft.originCountry, draft.destinationCountry)

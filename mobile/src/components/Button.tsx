@@ -27,19 +27,22 @@ const labelClass: Record<Variant, string> = {
 
 export function Button({ label, variant = 'primary', loading, disabled, accessibilityLabel, ...rest }: Props) {
   const inactive = disabled || loading
+  // Disabled uses a solid, deliberately muted fill rather than a translucent variant color — reads
+  // clearly as "not available right now" instead of a dimmed version of the action.
+  const className = disabled && !loading ? 'min-h-[56px] flex-row items-center justify-center rounded-md px-6 bg-disabled' : `min-h-[56px] flex-row items-center justify-center rounded-md px-6 ${containerClass[variant]} ${loading ? 'opacity-70' : ''}`
   return (
     <Pressable
       disabled={inactive}
       accessibilityRole="button"
       accessibilityLabel={accessibilityLabel ?? label}
       accessibilityState={{ disabled: !!inactive, busy: !!loading }}
-      className={`min-h-[52px] flex-row items-center justify-center rounded-md px-6 ${containerClass[variant]} ${inactive ? 'opacity-50' : ''}`}
+      className={className}
       {...rest}
     >
       {loading ? (
-        <ActivityIndicator color={variant === 'primary' ? '#ffffff' : '#075985'} />
+        <ActivityIndicator color={variant === 'primary' ? '#ffffff' : '#0B6EF3'} />
       ) : (
-        <Text className={`text-base font-semibold ${labelClass[variant]}`}>{label}</Text>
+        <Text className={`text-base font-medium ${disabled ? 'text-white' : labelClass[variant]}`}>{label}</Text>
       )}
     </Pressable>
   )

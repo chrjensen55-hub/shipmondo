@@ -1,6 +1,8 @@
 import { createContext, useContext, useState, type ReactNode } from 'react'
 import type { Address, DeliveryLocation, ShipmentDraft, ShippingQuote } from './types'
-import { boxSizeFor, weightBrackets } from './carrierRates'
+import { boxSizeFor, weightBrackets, type DomesticBracket } from './carrierRates'
+import { useLocations } from './location-context'
+import { defaultLocations } from './locations'
 
 export const CARRIERS = [
   { name: 'DAO', tagline: 'Fast Danish parcel delivery' },
@@ -14,13 +16,14 @@ export const HS_CODE_RE = /^\d{6}(\d{2}){0,3}$/
 
 const blankAddress = (country = 'DK'): Address => ({ fullName: '', company: '', address1: '', address2: '', postalCode: '', city: '', country, email: '', phone: '' })
 
-export function firstParcelSize(location: DeliveryLocation) {
-  const brackets = weightBrackets(location)
+export function firstParcelSize(location: DeliveryLocation, domesticBrackets?: DomesticBracket[]) {
+  const brackets = weightBrackets(location, domesticBrackets)
   const first = brackets[0]
   return first !== undefined ? { weight: first, ...boxSizeFor(first) } : { weight: 1, length: 30, width: 20, height: 8 }
 }
 
 function initialDraft(): ShipmentDraft {
+  const rates = defaultLocations()[0].rates
   return {
     originCountry: 'DK',
     originPostalCode: '',
@@ -30,9 +33,10 @@ function initialDraft(): ShipmentDraft {
     deliveryLocation: 'home',
     sender: blankAddress(),
     recipient: blankAddress('DK'),
-    parcels: [{ id: 'parcel-1', ...firstParcelSize('home') }],
+    parcels: [{ id: 'parcel-1', ...firstParcelSize('home', rates) }],
     contentsType: 'GOODS',
     items: [],
+    locationRates: rates,
   }
 }
 
@@ -49,11 +53,17 @@ type WizardContextValue = {
 const WizardContext = createContext<WizardContextValue | null>(null)
 
 export function WizardProvider({ children }: { children: ReactNode }) {
-  const [draft, setDraft] = useState<ShipmentDraft>(initialDraft)
+  const { activeLocation } = useLocations()
+  const [draftState, setDraft] = useState<ShipmentDraft>(initialDraft)
   const [quotes, setQuotes] = useState<ShippingQuote[]>([])
   const [needsCustoms, setNeedsCustoms] = useState(false)
+
+  // Derived during render (not stored via an effect) so the draft always carries whichever
+  // location is currently active on this tablet, including a location switched mid-flow.
+  const draft = draftState.locationRates === activeLocation.rates ? draftState : { ...draftState, locationRates: activeLocation.rates }
+
   function reset() {
-    setDraft(initialDraft())
+    setDraft({ ...initialDraft(), locationRates: activeLocation.rates })
     setQuotes([])
     setNeedsCustoms(false)
   }

@@ -34,7 +34,7 @@ export default function Dashboard() {
     <SafeAreaView className="flex-1 bg-cream" edges={['top']}>
       <View className="flex-row items-center justify-between p-5">
         <View>
-          <Text className="text-xl font-extrabold text-ink" accessibilityRole="header">
+          <Text className="text-[28px] font-semibold text-ink" accessibilityRole="header">
             Shipping Dashboard
           </Text>
           <Text className="mt-0.5 text-sm text-muted">Recent shipments</Text>

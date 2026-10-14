@@ -3,6 +3,7 @@ import { Image, Pressable, Text, View } from 'react-native'
 import { Check } from 'lucide-react-native'
 import { WizardScreen } from '@/components/WizardScreen'
 import { useWizard, SERVICE_POINT_LABEL, firstParcelSize } from '@/lib/wizard-context'
+import { useLocations } from '@/lib/location-context'
 import { weightBrackets } from '@/lib/carrierRates'
 import { useLang } from '@/lib/i18n'
 import type { DeliveryLocation } from '@/lib/types'
@@ -17,12 +18,13 @@ const homeDeliveryImage = require('../../assets/images/home-delivery.png')
 export default function DeliveryStep() {
   const router = useRouter()
   const { draft, setDraft } = useWizard()
+  const { activeLocation } = useLocations()
   const tr = useLang()
 
   function select(location: DeliveryLocation) {
     setDraft((d) => {
-      const brackets = weightBrackets(location)
-      return { ...d, deliveryLocation: location, parcels: d.parcels.map((p) => (brackets.includes(p.weight) ? p : { ...p, ...firstParcelSize(location) })) }
+      const brackets = weightBrackets(location, activeLocation.rates)
+      return { ...d, deliveryLocation: location, parcels: d.parcels.map((p) => (brackets.includes(p.weight) ? p : { ...p, ...firstParcelSize(location, activeLocation.rates) })) }
     })
   }
 

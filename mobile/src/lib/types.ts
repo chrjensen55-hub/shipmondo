@@ -25,6 +25,9 @@ export type Address = { fullName: string; company?: string; address1: string; ad
 export type Parcel = { id: string; weight: number; length: number; width: number; height: number }
 export type DeliveryLocation = 'home' | 'service_point'
 export type ShipmentItem = { id: string; description: string; quantity: number; unitValue: number; currency: string; weight: number; originCountry: string; hsCode?: string }
+// Sent to the server so /api/quotes and /api/shipments price using this tablet's active shop
+// location — see src/lib/locations.ts.
+export type LocationRateBracket = { maxWeight: number; service_point: number | null; home: number }
 export type ShipmentDraft = {
   originCountry: string
   originPostalCode: string
@@ -39,6 +42,7 @@ export type ShipmentDraft = {
   items: ShipmentItem[]
   exportReason?: string
   selectedQuoteId?: string
+  locationRates?: LocationRateBracket[]
 }
 
 export type ShippingQuote = {

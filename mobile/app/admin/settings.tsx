@@ -1,13 +1,15 @@
 import { useEffect, useState } from 'react'
+import { useRouter } from 'expo-router'
 import { Pressable, ScrollView, Text, View } from 'react-native'
 import { SafeAreaView } from 'react-native-safe-area-context'
-import { Cloud, KeyRound, MapPin, Type } from 'lucide-react-native'
+import { Cloud, KeyRound, MapPinned, Store, Type } from 'lucide-react-native'
 import { Button } from '@/components/Button'
 import { TextField } from '@/components/TextField'
 import { getShipmondoConfig, setShipmondoConfig, clearShipmondoConfig } from '@/lib/shipmondoConfig'
 import { getSettingsPin, setSettingsPin } from '@/lib/settingsPin'
 import { getDanadresseKey, setDanadresseKey, clearDanadresseKey } from '@/lib/danadresseConfig'
 import { applyTextSize, loadTextSize, saveTextSize, TEXT_SIZES, type TextSize } from '@/lib/textSize'
+import { useLocations } from '@/lib/location-context'
 import { api } from '@/lib/api'
 
 type TestState = { status: 'idle' | 'testing' | 'ok' | 'error'; message?: string }
@@ -24,6 +26,8 @@ const TEXT_SIZE_LABELS: Record<TextSize, string> = {
 }
 
 export default function SettingsScreen() {
+  const router = useRouter()
+  const { activeLocation, loading: locationsLoading } = useLocations()
   const [baseUrl, setBaseUrl] = useState(DEFAULT_BASE_URL)
   const [username, setUsername] = useState('')
   const [apiKey, setApiKey] = useState('')
@@ -152,13 +156,23 @@ export default function SettingsScreen() {
   return (
     <SafeAreaView className="flex-1 bg-cream" edges={['top']}>
       <ScrollView className="flex-1" contentContainerClassName="gap-4 p-5 pb-10">
-        <Text className="text-xl font-extrabold text-ink" accessibilityRole="header">
+        <Text className="text-[28px] font-semibold text-ink" accessibilityRole="header">
           Settings
         </Text>
 
         <View className="gap-3 rounded-md border border-line bg-white p-4">
           <View className="flex-row items-center gap-2">
-            <Type size={20} color="#075985" />
+            <Store size={20} color="#0B6EF3" />
+            <Text className="text-lg font-bold text-ink">Location</Text>
+          </View>
+          <Text className="text-sm text-muted">Choose which shop location this tablet represents. Customers only see that location&apos;s prices and carriers.</Text>
+          <Text className="text-sm font-semibold text-ink">{locationsLoading ? 'Loading…' : `Active location: ${activeLocation.name}`}</Text>
+          <Button label="Choose location & edit prices" onPress={() => router.push('/admin/location')} />
+        </View>
+
+        <View className="gap-3 rounded-md border border-line bg-white p-4">
+          <View className="flex-row items-center gap-2">
+            <Type size={20} color="#0B6EF3" />
             <Text className="text-lg font-bold text-ink">Text size</Text>
           </View>
           <Text className="text-sm text-muted">Changes the size of all text in the app on this device.</Text>
@@ -182,7 +196,7 @@ export default function SettingsScreen() {
 
         <View className="gap-3 rounded-md border border-line bg-white p-4">
           <View className="flex-row items-center gap-2">
-            <MapPin size={20} color="#075985" />
+            <MapPinned size={20} color="#0B6EF3" />
             <Text className="text-lg font-bold text-ink">City lookup key (Danadresse)</Text>
           </View>
           <Text className="text-sm text-muted">
@@ -212,7 +226,7 @@ export default function SettingsScreen() {
 
         <View className="gap-3 rounded-md border border-line bg-white p-4">
           <View className="flex-row items-center gap-2">
-            <Cloud size={20} color="#075985" />
+            <Cloud size={20} color="#0B6EF3" />
             <Text className="text-lg font-bold text-ink">Shipmondo account</Text>
           </View>
           <Text className="text-sm text-muted">
@@ -245,7 +259,7 @@ export default function SettingsScreen() {
 
         <View className="gap-3 rounded-md border border-line bg-white p-4">
           <View className="flex-row items-center gap-2">
-            <KeyRound size={20} color="#075985" />
+            <KeyRound size={20} color="#0B6EF3" />
             <Text className="text-lg font-bold text-ink">Settings code</Text>
           </View>
           <Text className="text-sm text-muted">The 4-digit code needed to open Settings from the booking screen.</Text>

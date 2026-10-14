@@ -4,11 +4,18 @@
 export type DeliveryLocation = 'home' | 'service_point'
 export type BoxSize = { length: number; width: number; height: number }
 
-const DOMESTIC_MAX_WEIGHTS = [{ maxWeight: 1, hasServicePoint: true }, { maxWeight: 5, hasServicePoint: true }, { maxWeight: 10, hasServicePoint: true }, { maxWeight: 20, hasServicePoint: true }, { maxWeight: 35, hasServicePoint: false }]
+// Fallback domestic brackets, used before the active shop location's own rates have loaded.
+// Matches Courier Copenhagen's defaults — see src/lib/locations.ts.
+const DEFAULT_DOMESTIC_BRACKETS: DomesticBracket[] = [{ maxWeight: 1, service_point: 89 }, { maxWeight: 5, service_point: 98 }, { maxWeight: 10, service_point: 149 }, { maxWeight: 20, service_point: 198 }, { maxWeight: 35, service_point: null }]
 const INTL_MAX_WEIGHTS = [1, 2, 5, 10, 15, 20]
 
-export function weightBrackets(location: DeliveryLocation): number[] {
-  const domestic = DOMESTIC_MAX_WEIGHTS.filter((b) => location !== 'service_point' || b.hasServicePoint).map((b) => b.maxWeight)
+export type DomesticBracket = { maxWeight: number; service_point: number | null }
+
+// `domesticBrackets` is the active shop location's own price list (see src/lib/locations.ts) —
+// different locations can offer different weight classes, so the bracket set shown to the
+// customer always reflects whichever location this tablet is currently set to.
+export function weightBrackets(location: DeliveryLocation, domesticBrackets: DomesticBracket[] = DEFAULT_DOMESTIC_BRACKETS): number[] {
+  const domestic = domesticBrackets.filter((b) => location !== 'service_point' || b.service_point !== null).map((b) => b.maxWeight)
   return [...new Set([...domestic, ...INTL_MAX_WEIGHTS])].sort((a, b) => a - b)
 }
 

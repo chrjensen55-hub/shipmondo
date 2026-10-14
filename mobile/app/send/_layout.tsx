@@ -79,15 +79,15 @@ function HamburgerMenu() {
         className="absolute left-3 z-50 h-11 w-11 items-center justify-center rounded-full border border-line bg-white shadow-sm active:bg-cream"
         style={{ top: insets.top + 20 }}
       >
-        <Menu size={22} color="#0f2436" />
+        <Menu size={22} color="#0F172A" />
       </Pressable>
 
       <Modal visible={menuOpen} transparent animationType="fade" onRequestClose={closeAll}>
         <Pressable className="flex-1 bg-ink/20" onPress={closeAll}>
           <View className="absolute left-3 min-w-[200px] rounded-md border border-line bg-white py-1.5 shadow-lg" style={{ top: insets.top + 72 }}>
-            <MenuItem icon={<Home size={18} color="#0f2436" />} label={tr.menuHome} onPress={goHome} />
-            <MenuItem icon={<RotateCcw size={18} color="#0f2436" />} label={tr.menuRefresh} onPress={requestRefresh} />
-            <MenuItem icon={<SettingsIcon size={18} color="#0f2436" />} label={tr.menuSettings} onPress={openSettings} />
+            <MenuItem icon={<Home size={18} color="#0F172A" />} label={tr.menuHome} onPress={goHome} />
+            <MenuItem icon={<RotateCcw size={18} color="#0F172A" />} label={tr.menuRefresh} onPress={requestRefresh} />
+            <MenuItem icon={<SettingsIcon size={18} color="#0F172A" />} label={tr.menuSettings} onPress={openSettings} />
           </View>
         </Pressable>
       </Modal>

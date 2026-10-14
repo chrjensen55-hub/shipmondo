@@ -28,13 +28,13 @@ export function WizardScreen({ title, subtitle, step, icon, onContinue, continue
   const showBack = !hideBack && router.canGoBack()
   return (
     <SafeAreaView className="flex-1 bg-cream" edges={['top', 'bottom']}>
-      <ScrollView className="flex-1" contentContainerClassName="gap-4 p-5 pb-10 pt-16" {...scrollProps}>
+      <ScrollView className="flex-1" contentContainerClassName="gap-6 p-8 pb-10 pt-16" {...scrollProps}>
         {step ? <StepProgress step={step} /> : null}
         {icon ? <Image source={icon} resizeMode="contain" className="h-20 w-20 self-center" alt="" /> : null}
-        <Text className="text-2xl font-extrabold text-ink" accessibilityRole="header">
+        <Text className="text-[28px] font-semibold text-ink" accessibilityRole="header">
           {title}
         </Text>
-        {subtitle ? <Text className="-mt-2 text-base text-muted">{subtitle}</Text> : null}
+        {subtitle ? <Text className="-mt-4 text-base text-body">{subtitle}</Text> : null}
         {children}
         {error ? (
           <View className="rounded-sm bg-error-bg p-3.5">

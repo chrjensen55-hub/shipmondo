@@ -35,14 +35,14 @@ export default function ShipmentsList() {
 
   return (
     <SafeAreaView className="flex-1 bg-cream" edges={['top']}>
-      <Text className="px-5 pt-4 text-xl font-extrabold text-ink" accessibilityRole="header">
+      <Text className="px-5 pt-4 text-[28px] font-semibold text-ink" accessibilityRole="header">
         Shipments
       </Text>
       <View className="px-5 pb-2 pt-3">
         <TextInput
           className="min-h-[52px] rounded-sm border-[1.5px] border-line bg-white px-3.5 text-base text-ink"
           placeholder="Search reference, tracking or recipient"
-          placeholderTextColor="#5c7080"
+          placeholderTextColor="#64748B"
           value={search}
           onChangeText={setSearch}
           accessibilityLabel="Search shipments"

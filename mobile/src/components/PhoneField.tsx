@@ -23,7 +23,7 @@ export function PhoneField({ label, value, onChange, editable = true }: { label:
         >
           <Text className="text-lg">{current.flag}</Text>
           <Text className="text-base font-bold text-ink">{current.dial}</Text>
-          <ChevronDown size={14} color="#5c7080" />
+          <ChevronDown size={14} color="#64748B" />
         </Pressable>
         <TextInput
           className={`min-h-[52px] flex-1 rounded-sm border-[1.5px] border-line bg-white px-3.5 text-base text-ink ${editable ? '' : 'bg-cream opacity-60'}`}
@@ -31,7 +31,7 @@ export function PhoneField({ label, value, onChange, editable = true }: { label:
           onChangeText={(v) => onChange(joinPhone(countryCode, v))}
           keyboardType="phone-pad"
           placeholder="12345678"
-          placeholderTextColor="#5c7080"
+          placeholderTextColor="#64748B"
           editable={editable}
           accessibilityLabel={label}
         />
