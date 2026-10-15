@@ -20,7 +20,7 @@ export function StepProgress({ step }: { step: number }) {
           return (
             <View key={n} className="flex-1 flex-row items-center">
               <View
-                className={`h-8 w-8 items-center justify-center rounded-full border-2 ${
+                className={`${current ? 'h-9 w-9' : 'h-8 w-8'} items-center justify-center rounded-full border-2 ${
                   done ? 'border-ocean bg-ocean' : current ? 'border-ocean bg-white' : 'border-line bg-white'
                 }`}
               >
@@ -35,7 +35,7 @@ export function StepProgress({ step }: { step: number }) {
           )
         })}
       </View>
-      <Text className="text-xs font-semibold text-muted">
+      <Text className="text-xs text-muted">
         {tr.stepLabel} {step} {tr.stepOf} {TOTAL_STEPS}
       </Text>
     </View>

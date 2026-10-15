@@ -48,7 +48,7 @@ export default function PrinterSettings() {
   return (
     <SafeAreaView className="flex-1 bg-cream" edges={['top']}>
       <View className="items-center gap-1.5 p-5">
-        <Bluetooth color="#0B6EF3" size={28} />
+        <Bluetooth color="#0B4F82" size={28} />
         <Text className="text-center text-lg font-extrabold text-ink" accessibilityRole="header">
           {paired ? `Paired with ${paired.name}` : 'No printer paired'}
         </Text>

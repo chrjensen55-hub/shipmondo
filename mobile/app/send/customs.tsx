@@ -46,7 +46,7 @@ export default function CustomsStep() {
   return (
     <WizardScreen title={tr.customsHeading} subtitle={tr.customsSubtitle} step={6} icon={customsImage} onContinue={() => router.push('/send/review')} continueDisabled={!valid}>
       <View className="gap-1.5">
-        <Text className="text-sm font-semibold text-ink">{tr.exportReasonLabel}</Text>
+        <Text className="text-[13px] font-medium text-ink">{tr.exportReasonLabel}</Text>
         <View className="overflow-hidden rounded-sm border-[1.5px] border-line bg-white">
           <Picker selectedValue={draft.exportReason ?? 'sale_of_goods'} onValueChange={(v) => setDraft((d) => ({ ...d, exportReason: v }))}>
             <Picker.Item label={tr.exportReasonSale} value="sale_of_goods" />
@@ -81,10 +81,10 @@ export default function CustomsStep() {
       <Pressable
         accessibilityRole="button"
         onPress={addItem}
-        className="min-h-[52px] flex-row items-center justify-center gap-2 rounded-md border border-dashed border-muted bg-white active:bg-cream"
+        className="min-h-[48px] flex-row items-center justify-center gap-2 rounded-md border border-dashed border-ocean bg-white active:bg-cream"
       >
-        <Plus size={18} color="#0B6EF3" />
-        <Text className="text-base font-semibold text-green">{tr.addItem}</Text>
+        <Plus size={18} color="#0B4F82" />
+        <Text className="text-base font-medium text-ocean">{tr.addItem}</Text>
       </Pressable>
     </WizardScreen>
   )

@@ -1,6 +1,5 @@
 import { useRouter } from 'expo-router'
 import { Image, Pressable, Text, View } from 'react-native'
-import { Check } from 'lucide-react-native'
 import { WizardScreen } from '@/components/WizardScreen'
 import { useWizard, SERVICE_POINT_LABEL, firstParcelSize } from '@/lib/wizard-context'
 import { useLocations } from '@/lib/location-context'
@@ -31,7 +30,7 @@ export default function DeliveryStep() {
   const servicePointLabel = draft.carrierName ? (SERVICE_POINT_LABEL[draft.carrierName] ?? tr.servicePointFallback) : tr.servicePointFallback
 
   return (
-    <WizardScreen title={tr.deliveryHeading} step={2} onContinue={() => router.push('/send/parcel')}>
+    <WizardScreen title={tr.deliveryHeading} subtitle={tr.deliveryHint} step={2} onContinue={() => router.push('/send/parcel')}>
       <DeliveryCard selected={draft.deliveryLocation === 'service_point'} onPress={() => select('service_point')} image={servicePointImage} title={servicePointLabel} subtitle={tr.servicePointSubtitle} />
       <DeliveryCard selected={draft.deliveryLocation === 'home'} onPress={() => select('home')} image={homeDeliveryImage} title={tr.homeDelivery} subtitle={tr.homeDeliverySubtitle} />
     </WizardScreen>
@@ -45,16 +44,16 @@ function DeliveryCard({ selected, onPress, image, title, subtitle }: { selected:
       accessibilityState={{ selected }}
       accessibilityLabel={`${title}. ${subtitle}`}
       onPress={onPress}
-      className={`items-center gap-2 rounded-lg border-2 bg-white p-5 active:bg-cream ${selected ? 'border-ocean' : 'border-line'}`}
+      className={`flex-row items-center gap-4 rounded-md border-2 bg-white p-4 active:bg-cream ${selected ? 'border-ocean' : 'border-line'}`}
     >
-      {selected && (
-        <View className="absolute right-3 top-3 h-6 w-6 items-center justify-center rounded-full bg-ocean">
-          <Check size={14} color="#ffffff" />
-        </View>
-      )}
-      <Image source={image} className="mb-1 h-[72px] w-[72px]" resizeMode="contain" alt="" />
-      <Text className="text-lg font-bold text-ink">{title}</Text>
-      <Text className="text-center text-base text-muted">{subtitle}</Text>
+      <Image source={image} className="h-[72px] w-[72px]" resizeMode="contain" alt="" />
+      <View className="flex-1 gap-1">
+        <Text className="text-base font-bold text-ink">{title}</Text>
+        <Text className="text-sm text-muted">{subtitle}</Text>
+      </View>
+      <View className={`h-6 w-6 items-center justify-center rounded-full border-2 ${selected ? 'border-ocean' : 'border-line'}`}>
+        {selected && <View className="h-3 w-3 rounded-full bg-ocean" />}
+      </View>
     </Pressable>
   )
 }

@@ -21,7 +21,7 @@ function LangButton({ code, flag, label, selected, onPress }: { code: string; fl
       accessibilityRole="button"
       accessibilityLabel={label}
       accessibilityState={{ selected }}
-      className={`h-10 flex-row items-center gap-1 rounded-md border bg-white px-2.5 shadow-sm active:bg-cream ${selected ? 'border-ocean bg-mint' : 'border-line'}`}
+      className={`h-9 flex-row items-center gap-1 rounded-full border bg-white px-3 active:bg-cream ${selected ? 'border-ocean bg-mint' : 'border-line'}`}
     >
       <Text className="text-lg">{flag}</Text>
       <Text className={`text-xs font-bold ${selected ? 'text-ocean' : 'text-muted'}`}>{code}</Text>

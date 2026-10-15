@@ -15,7 +15,7 @@
     "android": {
       "package": "dk.pakogsend.app",
       "adaptiveIcon": {
-        "backgroundColor": "#0B6EF3",
+        "backgroundColor": "#0B4F82",
         "foregroundImage": "./assets/android-icon-foreground.png",
         "backgroundImage": "./assets/android-icon-background.png",
         "monochromeImage": "./assets/android-icon-monochrome.png"

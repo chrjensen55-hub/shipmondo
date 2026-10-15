@@ -56,6 +56,12 @@ These are standing project rules. Read them before any change, and treat them as
 - Keep transitions short and subtle. Never make the app feel slower.
 - Errors and success messages are plain language. Technical details go to logs only.
 
+## 7. Kiosk mode and keyboard
+
+- The tablet runs as a public kiosk. Kiosk Mode (Android Lock Task) is provided by the local Expo module `mobile/modules/kiosk`; setup is in `KIOSK_SETUP.md`. The exit code lives in one constant, `KIOSK_EXIT_CODE` in `mobile/src/lib/kiosk.tsx`.
+- Every screen with text fields uses `KeyboardAwareScreen` so the focused field and the Back/Continue bar stay above the keyboard (edge-to-edge and immersive mode do not resize the window).
+- Design reference: `docs/design-reference.png`. Tokens live in `mobile/tailwind.config.js` / `mobile/src/lib/theme.ts`.
+
 ## Testing checklist before every release
 
 1. Denmark → Denmark postal code auto-fills the city for several valid codes (e.g. 2730, 2000, 2100, 2800, 8000, 9000). An invalid code shows the friendly message.
@@ -66,3 +72,4 @@ These are standing project rules. Read them before any change, and treat them as
 6. Existing carriers and international shipments still work.
 7. Exactly the 5 most recent app versions are listed on the download page — no more, no fewer.
 8. Switching the active location changes the prices and carriers customers see, and prices sent to the server match what was shown.
+9. Email and Phone fields stay visible above the keyboard with kiosk mode on and off; kiosk exit code works and blocks after 5 wrong tries.

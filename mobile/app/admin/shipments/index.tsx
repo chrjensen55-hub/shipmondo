@@ -42,7 +42,7 @@ export default function ShipmentsList() {
         <TextInput
           className="min-h-[52px] rounded-sm border-[1.5px] border-line bg-white px-3.5 text-base text-ink"
           placeholder="Search reference, tracking or recipient"
-          placeholderTextColor="#64748B"
+          placeholderTextColor="#6B7280"
           value={search}
           onChangeText={setSearch}
           accessibilityLabel="Search shipments"

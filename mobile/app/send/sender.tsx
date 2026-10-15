@@ -28,7 +28,7 @@ export default function SenderStep() {
   const valid = [a.fullName, a.address1, a.postalCode, a.city, a.email].every(required) && hasPhoneDigits(a.phone)
 
   return (
-    <WizardScreen title={tr.senderTitle} step={4} icon={senderImage} onContinue={() => router.push('/send/recipient')} continueDisabled={!valid}>
+    <WizardScreen title={tr.senderTitle} subtitle={tr.senderHint} step={4} icon={senderImage} onContinue={() => router.push('/send/recipient')} continueDisabled={!valid}>
       <AddressForm value={draft.sender} onChange={onChange} minimal />
     </WizardScreen>
   )

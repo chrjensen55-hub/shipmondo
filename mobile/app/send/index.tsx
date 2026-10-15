@@ -24,7 +24,7 @@ export default function CarrierStep() {
   }
 
   return (
-    <WizardScreen title={tr.carrierHeading} step={1}>
+    <WizardScreen title={tr.carrierHeading} subtitle={tr.carrierHint} step={1}>
       <View className="flex-row flex-wrap gap-3">
         {carriers.map((c) => {
           const selected = draft.carrierName === c.name
@@ -35,7 +35,7 @@ export default function CarrierStep() {
               accessibilityState={{ selected }}
               accessibilityLabel={c.name}
               onPress={() => select(c.name)}
-              className={`min-h-[160px] flex-grow basis-[47%] items-center justify-center rounded-lg border-2 bg-white py-8 active:bg-cream ${selected ? 'border-ocean bg-mint' : 'border-line'}`}
+              className={`min-h-[160px] flex-grow basis-[47%] items-center justify-center rounded-lg border-2 bg-white py-8 active:bg-cream ${selected ? 'border-ocean' : 'border-line'}`}
             >
               {selected && (
                 <View className="absolute right-3 top-3 h-6 w-6 items-center justify-center rounded-full bg-ocean">

@@ -1,10 +1,14 @@
 import { useEffect, useState } from 'react'
 import { useRouter } from 'expo-router'
-import { Pressable, ScrollView, Text, View } from 'react-native'
-import { SafeAreaView } from 'react-native-safe-area-context'
-import { Cloud, KeyRound, MapPinned, Store, Type } from 'lucide-react-native'
+import { Pressable, Switch, Text, View } from 'react-native'
+import { Cloud, KeyRound, Lock, MapPinned, Store, Type } from 'lucide-react-native'
 import { Button } from '@/components/Button'
 import { TextField } from '@/components/TextField'
+import { KeyboardAwareScreen } from '@/components/KeyboardAwareScreen'
+import { KioskCodeDialog } from '@/components/KioskCodeDialog'
+import { ConfirmDialog } from '@/components/ConfirmDialog'
+import { useKiosk } from '@/lib/kiosk'
+import { LangContext } from '@/lib/i18n'
 import { getShipmondoConfig, setShipmondoConfig, clearShipmondoConfig } from '@/lib/shipmondoConfig'
 import { getSettingsPin, setSettingsPin } from '@/lib/settingsPin'
 import { getDanadresseKey, setDanadresseKey, clearDanadresseKey } from '@/lib/danadresseConfig'
@@ -27,6 +31,10 @@ const TEXT_SIZE_LABELS: Record<TextSize, string> = {
 
 export default function SettingsScreen() {
   const router = useRouter()
+  const kiosk = useKiosk()
+  const [removeCodeOpen, setRemoveCodeOpen] = useState(false)
+  const [removeConfirmOpen, setRemoveConfirmOpen] = useState(false)
+  const [removeResult, setRemoveResult] = useState('')
   const { activeLocation, loading: locationsLoading } = useLocations()
   const [baseUrl, setBaseUrl] = useState(DEFAULT_BASE_URL)
   const [username, setUsername] = useState('')
@@ -154,15 +162,14 @@ export default function SettingsScreen() {
   const shipmondoValid = baseUrl.trim().length > 0 && username.trim().length > 0 && apiKey.trim().length > 0
 
   return (
-    <SafeAreaView className="flex-1 bg-cream" edges={['top']}>
-      <ScrollView className="flex-1" contentContainerClassName="gap-4 p-5 pb-10">
+    <KeyboardAwareScreen contentContainerClassName="gap-4 p-5 pb-10">
         <Text className="text-[28px] font-semibold text-ink" accessibilityRole="header">
           Settings
         </Text>
 
         <View className="gap-3 rounded-md border border-line bg-white p-4">
           <View className="flex-row items-center gap-2">
-            <Store size={20} color="#0B6EF3" />
+            <Store size={20} color="#0B4F82" />
             <Text className="text-lg font-bold text-ink">Location</Text>
           </View>
           <Text className="text-sm text-muted">Choose which shop location this tablet represents. Customers only see that location&apos;s prices and carriers.</Text>
@@ -172,7 +179,42 @@ export default function SettingsScreen() {
 
         <View className="gap-3 rounded-md border border-line bg-white p-4">
           <View className="flex-row items-center gap-2">
-            <Type size={20} color="#0B6EF3" />
+            <Lock size={20} color="#0B4F82" />
+            <Text className="text-lg font-bold text-ink">Kiosk Mode</Text>
+          </View>
+          <Text className="text-sm text-muted">Locks this tablet into the app so customers cannot reach the home screen, other apps, settings or the notification bar. Switch it on or off from the menu on the booking screen; leaving it needs the exit code.</Text>
+          {!kiosk.deviceOwner && (
+            <View className="rounded-sm bg-error-bg p-3">
+              <Text className="text-sm font-semibold text-error" accessibilityRole="alert">
+                Not Device Owner – kiosk mode is not secure
+              </Text>
+            </View>
+          )}
+          <View className="flex-row items-center justify-between gap-3">
+            <View className="flex-1">
+              <Text className="text-base font-semibold text-ink">Kiosk Mode feature: {kiosk.featureEnabled ? 'Enabled' : 'Disabled'}</Text>
+              <Text className="text-sm text-muted">When disabled, kiosk mode is fully off and hidden from the menu.</Text>
+            </View>
+            <Switch value={kiosk.featureEnabled} onValueChange={(v) => kiosk.setFeatureEnabled(v)} trackColor={{ false: '#CBD5E1', true: '#0B4F82' }} thumbColor="#ffffff" />
+          </View>
+          <View className="flex-row items-center justify-between gap-3">
+            <View className="flex-1">
+              <Text className="text-base font-semibold text-ink">Start in Kiosk Mode after restart</Text>
+              <Text className="text-sm text-muted">The app opens by itself after the tablet restarts or is turned on, and goes straight into kiosk mode.</Text>
+            </View>
+            <Switch value={kiosk.autoStart} onValueChange={(v) => kiosk.setAutoStart(v)} disabled={!kiosk.featureEnabled} trackColor={{ false: '#CBD5E1', true: '#0B4F82' }} thumbColor="#ffffff" />
+          </View>
+          <View className="gap-1 rounded-sm border border-line bg-cream p-3">
+            <Text className="text-sm text-ink">Device Owner: <Text className="font-bold">{kiosk.deviceOwner ? 'Yes' : 'No'}</Text></Text>
+            <Text className="text-sm text-ink">Kiosk Mode active now: <Text className="font-bold">{kiosk.active ? 'Yes' : 'No'}</Text></Text>
+          </View>
+          {removeResult ? <Text className="text-sm font-semibold text-ink">{removeResult}</Text> : null}
+          {kiosk.deviceOwner && <Button label="Remove Device Owner" variant="destructive" onPress={() => setRemoveCodeOpen(true)} />}
+        </View>
+
+        <View className="gap-3 rounded-md border border-line bg-white p-4">
+          <View className="flex-row items-center gap-2">
+            <Type size={20} color="#0B4F82" />
             <Text className="text-lg font-bold text-ink">Text size</Text>
           </View>
           <Text className="text-sm text-muted">Changes the size of all text in the app on this device.</Text>
@@ -196,7 +238,7 @@ export default function SettingsScreen() {
 
         <View className="gap-3 rounded-md border border-line bg-white p-4">
           <View className="flex-row items-center gap-2">
-            <MapPinned size={20} color="#0B6EF3" />
+            <MapPinned size={20} color="#0B4F82" />
             <Text className="text-lg font-bold text-ink">City lookup key (Danadresse)</Text>
           </View>
           <Text className="text-sm text-muted">
@@ -226,7 +268,7 @@ export default function SettingsScreen() {
 
         <View className="gap-3 rounded-md border border-line bg-white p-4">
           <View className="flex-row items-center gap-2">
-            <Cloud size={20} color="#0B6EF3" />
+            <Cloud size={20} color="#0B4F82" />
             <Text className="text-lg font-bold text-ink">Shipmondo account</Text>
           </View>
           <Text className="text-sm text-muted">
@@ -259,7 +301,7 @@ export default function SettingsScreen() {
 
         <View className="gap-3 rounded-md border border-line bg-white p-4">
           <View className="flex-row items-center gap-2">
-            <KeyRound size={20} color="#0B6EF3" />
+            <KeyRound size={20} color="#0B4F82" />
             <Text className="text-lg font-bold text-ink">Settings code</Text>
           </View>
           <Text className="text-sm text-muted">The 4-digit code needed to open Settings from the booking screen.</Text>
@@ -269,7 +311,29 @@ export default function SettingsScreen() {
           {pinSaved && <Text className="text-sm font-semibold text-success">Code updated.</Text>}
           <Button label="Update code" onPress={savePin} disabled={currentPin.length !== 4 || newPin.length !== 4} />
         </View>
-      </ScrollView>
-    </SafeAreaView>
+      <LangContext.Provider value="en">
+      <KioskCodeDialog
+        visible={removeCodeOpen}
+        title="Enter code to continue"
+        onCancel={() => setRemoveCodeOpen(false)}
+        onSuccess={() => {
+          setRemoveCodeOpen(false)
+          setRemoveConfirmOpen(true)
+        }}
+      />
+      </LangContext.Provider>
+      <ConfirmDialog
+        visible={removeConfirmOpen}
+        title="Remove Device Owner?"
+        message="This tablet will no longer be locked down and can be used normally. Kiosk Mode will be switched off."
+        cancelLabel="Cancel"
+        confirmLabel="Remove"
+        onCancel={() => setRemoveConfirmOpen(false)}
+        onConfirm={() => {
+          setRemoveConfirmOpen(false)
+          setRemoveResult(kiosk.removeDeviceOwner() ? 'Device Owner removed.' : 'Could not remove Device Owner.')
+        }}
+      />
+    </KeyboardAwareScreen>
   )
 }

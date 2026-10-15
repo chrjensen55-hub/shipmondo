@@ -111,6 +111,24 @@ const da = {
   findingCity: 'Finder by…',
   cityFound: 'Byen blev fundet automatisk',
   cityNotFound: 'Vi kunne ikke finde en dansk by til dette postnummer. Tjek postnummeret og prøv igen.',
+
+  carrierHint: 'Vælg det fragtfirma, der passer bedst til dine behov.',
+  deliveryHint: 'Vælg, hvordan pakken skal leveres.',
+  weightHint: 'Vælg den vægt, der passer bedst til din pakke.',
+  senderHint: 'Indtast dine kontakt- og adresseoplysninger.',
+  recipientHint: 'Indtast modtagerens kontakt- og adresseoplysninger.',
+  reviewHint: 'Tjek, at alle oplysninger er korrekte, før forsendelsen oprettes.',
+  cardDelivery: 'Leveringsmetode',
+  cityFoundShort: 'By fundet',
+
+  kioskActivate: 'Aktivér kioskfunktion',
+  kioskDisable: 'Deaktivér kioskfunktion',
+  kioskEnterCode: 'Indtast kode for at forlade kioskfunktion',
+  kioskWrongCode: 'Forkert kode',
+  kioskLocked: 'For mange forsøg. Prøv igen om {s} sek.',
+  idleTitle: 'Er du der stadig?',
+  idleMessage: 'Formularen nulstilles snart, hvis du ikke trykker.',
+  idleStay: 'Jeg er her stadig',
 }
 
 const en: Record<keyof typeof da, string> = {
@@ -196,7 +214,7 @@ const en: Record<keyof typeof da, string> = {
   reference: 'Reference',
   trackingNumber: 'Tracking number',
   total: 'Total',
-  printLabel: 'Print label',
+  printLabel: 'Print shipping label',
   printingProgress: 'Printing…',
   printingWaitSuffix: '— please wait, do not tap print again',
   labelSentToPrinter: 'The label was sent to the printer.',
@@ -209,13 +227,31 @@ const en: Record<keyof typeof da, string> = {
   refreshMessage: 'Your current shipment information will be cleared.',
   refreshAction: 'Refresh',
   cancelAction: 'Cancel',
-  shipmentCreated: 'Shipment created successfully',
+  shipmentCreated: 'Shipment created',
   preparingLabel: 'Preparing label…',
   printingLabel: 'Printing label…',
   labelPrintedSuccess: 'Label printed successfully',
   findingCity: 'Finding city…',
   cityFound: 'City found automatically',
   cityNotFound: 'We could not find a Danish city for this postal code. Please check the postal code and try again.',
+
+  carrierHint: 'Choose the carrier that best fits your needs.',
+  deliveryHint: 'Choose how you want the parcel to be delivered.',
+  weightHint: 'Select the weight that best matches your parcel.',
+  senderHint: 'Enter your contact and address details.',
+  recipientHint: "Enter the recipient's contact and address details.",
+  reviewHint: 'Check that all details are correct before creating the shipment.',
+  cardDelivery: 'Delivery method',
+  cityFoundShort: 'City found',
+
+  kioskActivate: 'Activate Kiosk Mode',
+  kioskDisable: 'Disable Kiosk Mode',
+  kioskEnterCode: 'Enter code to exit Kiosk Mode',
+  kioskWrongCode: 'Wrong code',
+  kioskLocked: 'Too many attempts. Try again in {s} s.',
+  idleTitle: 'Are you still there?',
+  idleMessage: 'The form will be cleared soon if you do not tap.',
+  idleStay: "I'm still here",
 }
 
 export const translations: Record<Lang, typeof da> = { da, en }

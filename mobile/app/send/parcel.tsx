@@ -1,11 +1,11 @@
 import { useRouter } from 'expo-router'
 import { useState } from 'react'
-import { Image, Pressable, ScrollView, Text, View } from 'react-native'
-import { SafeAreaView } from 'react-native-safe-area-context'
+import { Image, Pressable, Text, View } from 'react-native'
 import { Package, Plus, Ruler, Trash2, CheckCircle2 } from 'lucide-react-native'
 import { Button } from '@/components/Button'
 import { TextField } from '@/components/TextField'
 import { StepProgress } from '@/components/StepProgress'
+import { KeyboardAwareScreen } from '@/components/KeyboardAwareScreen'
 import { useWizard, firstParcelSize } from '@/lib/wizard-context'
 import { useLocations } from '@/lib/location-context'
 import { boxSizeFor, weightBrackets } from '@/lib/carrierRates'
@@ -68,16 +68,30 @@ export default function ParcelStep() {
   const canContinue = draft.parcels.every((p) => weightChosen.has(p.id) && p.weight > 0 && p.length > 0 && p.width > 0 && p.height > 0)
 
   return (
-    <SafeAreaView className="flex-1 bg-cream" edges={['top', 'bottom']}>
-      <ScrollView className="flex-1" contentContainerClassName="gap-6 p-8 pb-10 pt-16">
+    <KeyboardAwareScreen
+      contentContainerClassName="gap-4 px-6 pb-8 pt-20"
+      footer={
+        <View className="flex-row items-center gap-3 border-t border-line bg-white px-6 py-4">
+          <View className="flex-[2]">
+            <Button label={tr.backAction} variant="secondary" onPress={() => router.back()} />
+          </View>
+          <View className="flex-[3]">
+            <Button label={tr.continueAction} onPress={() => router.push('/send/sender')} disabled={!canContinue} />
+          </View>
+        </View>
+      }
+    >
         <StepProgress step={3} />
         <View className="flex-row justify-center gap-3">
           <Image source={boxWeightImage} resizeMode="contain" className="h-16 w-16" alt="" />
           <Image source={boxSizeImage} resizeMode="contain" className="h-16 w-16" alt="" />
         </View>
-        <Text className="text-[28px] font-semibold text-ink" accessibilityRole="header">
-          {tr.weightHeading}
-        </Text>
+        <View className="gap-1">
+          <Text className="text-2xl font-bold text-ink" accessibilityRole="header">
+            {tr.weightHeading}
+          </Text>
+          <Text className="text-sm text-muted">{tr.weightHint}</Text>
+        </View>
         {draft.parcels.map((parcel, index) => (
           <ParcelCard
             key={parcel.id}
@@ -94,21 +108,12 @@ export default function ParcelStep() {
         <Pressable
           accessibilityRole="button"
           onPress={addParcel}
-          className="min-h-[52px] flex-row items-center justify-center gap-2 rounded-md border border-dashed border-muted bg-white active:bg-cream"
+          className="min-h-[48px] flex-row items-center justify-center gap-2 rounded-md border border-dashed border-ocean bg-white active:bg-cream"
         >
-          <Plus size={18} color="#0B6EF3" />
-          <Text className="text-base font-semibold text-green">{tr.addParcel}</Text>
+          <Plus size={18} color="#0B4F82" />
+          <Text className="text-base font-medium text-ocean">{tr.addParcel}</Text>
         </Pressable>
-      </ScrollView>
-      <View className="flex-row items-center justify-between gap-3 border-t border-line bg-white p-5">
-        <View className="flex-1">
-          <Button label={tr.backAction} variant="secondary" onPress={() => router.back()} />
-        </View>
-        <View className="flex-1">
-          <Button label={tr.continueAction} onPress={() => router.push('/send/sender')} disabled={!canContinue} />
-        </View>
-      </View>
-    </SafeAreaView>
+    </KeyboardAwareScreen>
   )
 }
 
@@ -157,14 +162,14 @@ function ParcelCard({
               accessibilityState={{ selected }}
               accessibilityLabel={`${formatWeightRange(lower, max)}, ${tr.maxSizeLabel} ${box.length}×${box.width}×${box.height} cm`}
               onPress={() => onChooseWeight(max)}
-              className={`min-h-[104px] w-[31%] items-center justify-center gap-1 rounded-md border-[1.5px] px-1 py-2.5 active:bg-line ${selected ? 'border-ocean bg-mint' : 'border-line bg-cream'}`}
+              className={`min-h-[104px] w-[31%] items-center justify-center gap-1 rounded-md border-2 px-1 py-2.5 active:bg-line ${selected ? 'border-ocean bg-white' : 'border-line bg-white'}`}
             >
               {selected && (
                 <View className="absolute right-1.5 top-1.5">
-                  <CheckCircle2 size={18} color="#0B6EF3" fill="#ffffff" />
+                  <CheckCircle2 size={18} color="#0B4F82" fill="#ffffff" />
                 </View>
               )}
-              <Package size={iconSizeFor(i, brackets.length)} color={selected ? '#0B6EF3' : '#64748B'} strokeWidth={1.75} />
+              <Package size={iconSizeFor(i, brackets.length)} color={selected ? '#0B4F82' : '#6B7280'} strokeWidth={1.75} />
               <Text className={`text-center text-sm font-bold ${selected ? 'text-ocean' : 'text-ink'}`}>{formatWeightRange(lower, max)}</Text>
               <Text className="text-center text-xs text-muted">
                 {tr.maxSizeLabel} {box.length}×{box.width}×{box.height} cm
@@ -176,7 +181,7 @@ function ParcelCard({
       {selectedWeight !== null && (
         <View className="gap-2.5">
           <View className="flex-row items-center gap-1.5">
-            <Ruler size={15} color="#64748B" />
+            <Ruler size={15} color="#6B7280" />
             <Text className="text-sm font-bold text-ink">{tr.exactSizeLabel}</Text>
           </View>
           <View className="flex-row gap-2.5">

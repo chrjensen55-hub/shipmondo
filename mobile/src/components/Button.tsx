@@ -29,7 +29,7 @@ export function Button({ label, variant = 'primary', loading, disabled, accessib
   const inactive = disabled || loading
   // Disabled uses a solid, deliberately muted fill rather than a translucent variant color — reads
   // clearly as "not available right now" instead of a dimmed version of the action.
-  const className = disabled && !loading ? 'min-h-[56px] flex-row items-center justify-center rounded-md px-6 bg-disabled' : `min-h-[56px] flex-row items-center justify-center rounded-md px-6 ${containerClass[variant]} ${loading ? 'opacity-70' : ''}`
+  const className = disabled && !loading ? 'min-h-[48px] flex-row items-center justify-center rounded-[10px] px-6 bg-disabled' : `min-h-[48px] flex-row items-center justify-center rounded-[10px] px-6 ${containerClass[variant]} ${loading ? 'opacity-70' : ''}`
   return (
     <Pressable
       disabled={inactive}
@@ -40,7 +40,7 @@ export function Button({ label, variant = 'primary', loading, disabled, accessib
       {...rest}
     >
       {loading ? (
-        <ActivityIndicator color={variant === 'primary' ? '#ffffff' : '#0B6EF3'} />
+        <ActivityIndicator color={variant === 'primary' ? '#ffffff' : '#0B4F82'} />
       ) : (
         <Text className={`text-base font-medium ${disabled ? 'text-white' : labelClass[variant]}`}>{label}</Text>
       )}

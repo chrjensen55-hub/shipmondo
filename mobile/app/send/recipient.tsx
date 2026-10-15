@@ -67,7 +67,7 @@ export default function RecipientStep() {
   }
 
   return (
-    <WizardScreen title={tr.recipientTitle} step={5} icon={recipientImage} onContinue={getQuote} continueLabel={loading ? tr.checkingRate : tr.continueAction} continueDisabled={!valid || loading} continueLoading={loading} error={error}>
+    <WizardScreen title={tr.recipientTitle} subtitle={tr.recipientHint} step={5} icon={recipientImage} onContinue={getQuote} continueLabel={loading ? tr.checkingRate : tr.continueAction} continueDisabled={!valid || loading} continueLoading={loading} error={error}>
       <AddressForm value={draft.recipient} onChange={onChange} noEmail={noEmail} onToggleNoEmail={toggleNoEmail} noPhone={noPhone} onToggleNoPhone={toggleNoPhone} />
     </WizardScreen>
   )

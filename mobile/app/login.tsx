@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { Redirect } from 'expo-router'
-import { KeyboardAvoidingView, Platform, Text, View } from 'react-native'
+import { Text, View } from 'react-native'
+import { KeyboardAwareScreen } from '@/components/KeyboardAwareScreen'
 import { Button } from '@/components/Button'
 import { TextField } from '@/components/TextField'
 import { ApiError, useAuth } from '@/lib/auth-context'
@@ -27,7 +28,7 @@ export default function Login() {
   }
 
   return (
-    <KeyboardAvoidingView className="flex-1 items-center justify-center bg-cream p-5" behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
+    <KeyboardAwareScreen contentContainerClassName="flex-grow items-center justify-center p-5">
       <View className="w-full max-w-sm gap-4 rounded-lg border border-line bg-white p-7">
         <View className="h-12 w-12 items-center justify-center self-center rounded-xl bg-ocean">
           <Text className="text-2xl font-extrabold text-white">P</Text>
@@ -49,6 +50,6 @@ export default function Login() {
         ) : null}
         <Button label="Sign in" onPress={submit} loading={loading} disabled={!identifier || !password} />
       </View>
-    </KeyboardAvoidingView>
+    </KeyboardAwareScreen>
   )
 }

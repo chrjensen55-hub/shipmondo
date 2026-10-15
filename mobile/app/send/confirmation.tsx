@@ -70,16 +70,16 @@ export default function Confirmation() {
 
   return (
     <SafeAreaView className="flex-1 bg-cream" edges={['top', 'bottom']}>
-      <ScrollView contentContainerClassName="gap-5 p-5 pb-10 pt-16" className="flex-1">
+      <ScrollView contentContainerClassName="gap-6 px-6 pb-10 pt-20" className="flex-1">
         <View className="items-center gap-3">
-          <CircleCheck color="#16A34A" size={56} />
-          <Text className="text-center text-[28px] font-semibold text-ink" accessibilityRole="header">
+          <CircleCheck color="#22A05B" size={72} strokeWidth={1.5} />
+          <Text className="text-center text-2xl font-bold text-ink" accessibilityRole="header">
             {tr.shipmentCreated}
           </Text>
-          <Text className="text-center text-base text-muted">{tr.bookedReady}</Text>
+          <Text className="text-center text-sm text-muted">{tr.bookedReady}</Text>
         </View>
 
-        <View className="w-full max-w-md self-center gap-3 rounded-md border border-line bg-white p-5">
+        <View className="w-full max-w-md gap-3.5 self-center rounded-md border border-line bg-white p-5">
           <Row label={tr.reference} value={reference} />
           <Row label={tr.trackingNumber} value={tracking} />
           <Row label={tr.total} value={`${customerPrice} DKK`} />
@@ -89,7 +89,7 @@ export default function Confirmation() {
           {state === 'printed' ? (
             <View className="items-center gap-4">
               <View className="flex-row items-center gap-2">
-                <CheckCircle2 size={22} color="#16A34A" />
+                <CheckCircle2 size={22} color="#22A05B" />
                 <Text className="text-lg font-bold text-success" accessibilityRole="alert">
                   {tr.labelPrintedSuccess}
                 </Text>
@@ -99,13 +99,13 @@ export default function Confirmation() {
           ) : state === 'printing' ? (
             <PrintProgressBar progress={printProgress} />
           ) : state === 'preparing' ? (
-            <View className="min-h-[52px] flex-row items-center justify-center gap-3 rounded-md bg-ocean px-6">
+            <View className="min-h-[48px] flex-row items-center justify-center gap-3 rounded-[10px] bg-ocean px-6">
               <ActivityIndicator color="#ffffff" />
-              <Text className="text-base font-semibold text-white">{tr.preparingLabel}</Text>
+              <Text className="text-base font-medium text-white">{tr.preparingLabel}</Text>
             </View>
           ) : (
             <View className="gap-3">
-              <Image source={printImage} resizeMode="contain" className="h-20 w-20 self-center" alt="" />
+              <Image source={printImage} resizeMode="contain" className="h-28 w-28 self-center" alt="" />
               <Button label={tr.printLabel} variant="primary" onPress={printLabel} disabled={busy} accessibilityLabel={tr.printLabel} />
             </View>
           )}
@@ -125,8 +125,8 @@ export default function Confirmation() {
 function Row({ label, value }: { label: string; value: string }) {
   return (
     <View className="flex-row items-center justify-between gap-3">
-      <Text className="text-base text-muted">{label}</Text>
-      <Text className="flex-shrink text-right text-base font-bold text-ink">{value}</Text>
+      <Text className="text-sm text-muted">{label}</Text>
+      <Text className="flex-shrink text-right text-sm font-bold text-ink">{value}</Text>
     </View>
   )
 }

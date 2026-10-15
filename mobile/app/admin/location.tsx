@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { useRouter } from 'expo-router'
 import { Pressable, ScrollView, Text, View } from 'react-native'
 import { SafeAreaView } from 'react-native-safe-area-context'
+import { KeyboardAwareScreen } from '@/components/KeyboardAwareScreen'
 import { ChevronLeft, ChevronRight, Check } from 'lucide-react-native'
 import { Button } from '@/components/Button'
 import { TextField } from '@/components/TextField'
@@ -43,10 +44,9 @@ export default function LocationScreen() {
 
   if (editingId && draft) {
     return (
-      <SafeAreaView className="flex-1 bg-cream" edges={['top']}>
-        <ScrollView className="flex-1" contentContainerClassName="gap-4 p-5 pb-10">
+      <KeyboardAwareScreen contentContainerClassName="gap-4 p-5 pb-10">
           <Pressable accessibilityRole="button" onPress={() => setEditingId(null)} className="flex-row items-center gap-1 py-1">
-            <ChevronLeft size={18} color="#0B6EF3" />
+            <ChevronLeft size={18} color="#0B4F82" />
             <Text className="text-base font-semibold text-ocean">All locations</Text>
           </Pressable>
           <Text className="text-[28px] font-semibold text-ink" accessibilityRole="header">
@@ -107,8 +107,7 @@ export default function LocationScreen() {
 
           {saved && <Text className="text-sm font-semibold text-success">Saved.</Text>}
           <Button label="Save prices" onPress={save} />
-        </ScrollView>
-      </SafeAreaView>
+      </KeyboardAwareScreen>
     )
   }
 
@@ -116,7 +115,7 @@ export default function LocationScreen() {
     <SafeAreaView className="flex-1 bg-cream" edges={['top']}>
       <ScrollView className="flex-1" contentContainerClassName="gap-3 p-5 pb-10">
         <Pressable accessibilityRole="button" onPress={() => router.back()} className="flex-row items-center gap-1 py-1">
-          <ChevronLeft size={18} color="#0B6EF3" />
+          <ChevronLeft size={18} color="#0B4F82" />
           <Text className="text-base font-semibold text-ocean">Settings</Text>
         </Pressable>
         <Text className="text-[28px] font-semibold text-ink" accessibilityRole="header">
@@ -139,7 +138,7 @@ export default function LocationScreen() {
                   {carriersOn} of {CARRIER_NAMES.length} carriers on{active ? ' · Active' : ''}
                 </Text>
               </View>
-              <ChevronRight size={20} color="#64748B" />
+              <ChevronRight size={20} color="#6B7280" />
             </Pressable>
           )
         })}
