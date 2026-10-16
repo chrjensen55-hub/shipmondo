@@ -3,6 +3,7 @@ import { mockQuotes } from '@/lib/shipping'
 import { getLiveQuotes } from '@/lib/shipmondo/quotes'
 import { createShipment } from '@/lib/shipmondo/shipments'
 import { ShipmondoClient } from '@/lib/shipmondo/client'
+import { registeredLetterError } from '@/lib/registeredLetter'
 import type { ShippingQuote } from '@/lib/types'
 
 const completed = new Map<string, { reference: string; tracking: string; shipmentId?: number }>()
@@ -13,6 +14,8 @@ export async function POST(request: Request) {
     const previous = completed.get(input.idempotencyKey)
     if (previous) return Response.json({ data: previous })
 
+    const letterError = registeredLetterError(input)
+    if (letterError) return Response.json({ error: { code: 'REGISTERED_LETTER_INVALID', message: letterError } }, { status: 400 })
     const client = await ShipmondoClient.create()
     // No credentials at all (no per-tablet override, no server env vars) is never a legitimate
     // state to book a real customer's shipment from — it's a setup problem on this tablet, not

@@ -23,7 +23,7 @@ export default function DeliveryStep() {
   function select(location: DeliveryLocation) {
     setDraft((d) => {
       const brackets = weightBrackets(location, activeLocation.rates)
-      return { ...d, deliveryLocation: location, parcels: d.parcels.map((p) => (brackets.includes(p.weight) ? p : { ...p, ...firstParcelSize(location, activeLocation.rates) })) }
+      return { ...d, deliveryLocation: location, ...(location === 'service_point' ? { registeredLetter: false } : {}), parcels: d.parcels.map((p) => (brackets.includes(p.weight) ? p : { ...p, ...firstParcelSize(location, activeLocation.rates) })) }
     })
   }
 

@@ -120,6 +120,11 @@ const da = {
   reviewHint: 'Tjek, at alle oplysninger er korrekte, før forsendelsen oprettes.',
   cardDelivery: 'Leveringsmetode',
   cityFoundShort: 'By fundet',
+  parcelTypeParcel: 'Pakke',
+  parcelTypeParcelHint: 'Almindelig pakke med vægtklasser',
+  parcelTypeLetter: 'Rekommanderet brev',
+  parcelTypeLetterHint: 'Dokumenter, maks. 2 kg, 295 kr. Kun til udlandet.',
+  letterDenmarkError: 'Du har valgt Rekommanderet brev. PostNord sender ikke rekommanderede breve inden for Danmark. Vælg et andet land.',
 
   kioskActivate: 'Aktivér kioskfunktion',
   kioskDisable: 'Deaktivér kioskfunktion',
@@ -243,6 +248,11 @@ const en: Record<keyof typeof da, string> = {
   reviewHint: 'Check that all details are correct before creating the shipment.',
   cardDelivery: 'Delivery method',
   cityFoundShort: 'City found',
+  parcelTypeParcel: 'Parcel',
+  parcelTypeParcelHint: 'Regular parcel by weight class',
+  parcelTypeLetter: 'Registered letter',
+  parcelTypeLetterHint: 'Documents, max 2 kg, 295 kr. Outside Denmark only.',
+  letterDenmarkError: 'You have chosen Registered Letter. PostNord does not send registered letters within Denmark. Please choose another country.',
 
   kioskActivate: 'Activate Kiosk Mode',
   kioskDisable: 'Disable Kiosk Mode',

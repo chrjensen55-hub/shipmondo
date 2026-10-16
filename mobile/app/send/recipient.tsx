@@ -43,7 +43,8 @@ export default function RecipientStep() {
   }
 
   const a = draft.recipient
-  const valid = [a.fullName, a.address1, a.postalCode, a.city, a.email].every(required) && hasPhoneDigits(a.phone)
+  const letterInDenmark = !!draft.registeredLetter && a.country === 'DK'
+  const valid = [a.fullName, a.address1, a.postalCode, a.city, a.email].every(required) && hasPhoneDigits(a.phone) && !letterInDenmark
 
   async function getQuote() {
     setLoading(true)
@@ -68,7 +69,7 @@ export default function RecipientStep() {
 
   return (
     <WizardScreen title={tr.recipientTitle} subtitle={tr.recipientHint} step={5} icon={recipientImage} onContinue={getQuote} continueLabel={loading ? tr.checkingRate : tr.continueAction} continueDisabled={!valid || loading} continueLoading={loading} error={error}>
-      <AddressForm value={draft.recipient} onChange={onChange} noEmail={noEmail} onToggleNoEmail={toggleNoEmail} noPhone={noPhone} onToggleNoPhone={toggleNoPhone} />
+      <AddressForm value={draft.recipient} onChange={onChange} noEmail={noEmail} onToggleNoEmail={toggleNoEmail} noPhone={noPhone} onToggleNoPhone={toggleNoPhone} countryError={letterInDenmark ? tr.letterDenmarkError : undefined} />
     </WizardScreen>
   )
 }

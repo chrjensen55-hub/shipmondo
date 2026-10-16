@@ -43,6 +43,7 @@ export type ShipmentDraft = {
   exportReason?: string
   selectedQuoteId?: string
   locationRates?: LocationRateBracket[]
+  registeredLetter?: boolean
 }
 
 export type ShippingQuote = {

@@ -21,6 +21,7 @@ export function AddressForm({
   onToggleNoEmail,
   noPhone,
   onToggleNoPhone,
+  countryError,
 }: {
   value: Address
   onChange: (key: keyof Address, v: string) => void
@@ -33,6 +34,7 @@ export function AddressForm({
   onToggleNoEmail?: (checked: boolean) => void
   noPhone?: boolean
   onToggleNoPhone?: (checked: boolean) => void
+  countryError?: string
 }) {
   const tr = useLang()
   const showNoEmailOption = onToggleNoEmail !== undefined
@@ -139,6 +141,7 @@ export function AddressForm({
             ))}
           </Picker>
         </View>
+        {countryError ? <Text className="text-xs text-error" accessibilityRole="alert">{countryError}</Text> : null}
       </View>
       {showNoEmailOption && <ContactCheckbox checked={!!noEmail} onToggle={() => onToggleNoEmail?.(!noEmail)} label={tr.noRecipientEmail} />}
       <TextField

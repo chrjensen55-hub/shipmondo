@@ -12,6 +12,11 @@ import { boxSizeFor, weightBrackets } from '@/lib/carrierRates'
 import { useLang } from '@/lib/i18n'
 import type { Parcel } from '@/lib/types'
 
+// Registered letter (PostNord PDK_RE): documents only, max 2 kg, flat 295 kr, outside Denmark.
+const REGISTERED_LETTER_MAX_KG = 2
+const REGISTERED_LETTER_PRICE = 295
+const LETTER_BOX = { length: 35, width: 25, height: 3 }
+
 /* eslint-disable @typescript-eslint/no-require-imports */
 const boxWeightImage = require('../../assets/images/box-weight.png')
 const boxSizeImage = require('../../assets/images/box-size.png')
@@ -40,9 +45,24 @@ export default function ParcelStep() {
   const [weightChosen, setWeightChosen] = useState<Set<string>>(new Set())
   const brackets = weightBrackets(draft.deliveryLocation, activeLocation.rates)
 
+  const isPostNord = draft.carrierName === 'PostNord'
+  const letter = isPostNord && !!draft.registeredLetter
+  const shownBrackets = letter ? brackets.filter((b) => b <= REGISTERED_LETTER_MAX_KG) : brackets
+
+  function chooseType(asLetter: boolean) {
+    setWeightChosen(new Set())
+    setDraft((d) => ({
+      ...d,
+      registeredLetter: asLetter,
+      contentsType: asLetter ? 'DOCUMENTS' : 'GOODS',
+      deliveryLocation: asLetter ? 'home' : d.deliveryLocation,
+      parcels: asLetter ? d.parcels.slice(0, 1) : d.parcels,
+    }))
+  }
+
   function chooseWeight(id: string, maxWeight: number) {
     setWeightChosen((prev) => new Set(prev).add(id))
-    const box = boxSizeFor(maxWeight)
+    const box = letter ? LETTER_BOX : boxSizeFor(maxWeight)
     setDraft((d) => ({ ...d, parcels: d.parcels.map((p) => (p.id === id ? { ...p, weight: maxWeight, ...box } : p)) }))
   }
 
@@ -92,12 +112,19 @@ export default function ParcelStep() {
           </Text>
           <Text className="text-sm text-muted">{tr.weightHint}</Text>
         </View>
+        {isPostNord && (
+          <View className="flex-row gap-3">
+            <TypeCard selected={!letter} title={tr.parcelTypeParcel} hint={tr.parcelTypeParcelHint} onPress={() => chooseType(false)} />
+            <TypeCard selected={letter} title={tr.parcelTypeLetter} hint={tr.parcelTypeLetterHint} price={`${REGISTERED_LETTER_PRICE} kr`} onPress={() => chooseType(true)} />
+          </View>
+        )}
         {draft.parcels.map((parcel, index) => (
           <ParcelCard
             key={parcel.id}
             parcel={parcel}
             index={index}
-            brackets={brackets}
+            letter={letter}
+            brackets={shownBrackets}
             selectedWeight={weightChosen.has(parcel.id) ? parcel.weight : null}
             canRemove={draft.parcels.length > 1}
             onChooseWeight={(max) => chooseWeight(parcel.id, max)}
@@ -105,6 +132,7 @@ export default function ParcelStep() {
             onRemove={() => removeParcel(parcel.id)}
           />
         ))}
+        {!letter && (
         <Pressable
           accessibilityRole="button"
           onPress={addParcel}
@@ -113,6 +141,7 @@ export default function ParcelStep() {
           <Plus size={18} color="#0B4F82" />
           <Text className="text-base font-medium text-ocean">{tr.addParcel}</Text>
         </Pressable>
+        )}
     </KeyboardAwareScreen>
   )
 }
@@ -120,6 +149,7 @@ export default function ParcelStep() {
 function ParcelCard({
   parcel,
   index,
+  letter,
   brackets,
   selectedWeight,
   canRemove,
@@ -129,6 +159,7 @@ function ParcelCard({
 }: {
   parcel: Parcel
   index: number
+  letter: boolean
   brackets: number[]
   selectedWeight: number | null
   canRemove: boolean
@@ -178,7 +209,7 @@ function ParcelCard({
           )
         })}
       </View>
-      {selectedWeight !== null && (
+      {selectedWeight !== null && !letter && (
         <View className="gap-2.5">
           <View className="flex-row items-center gap-1.5">
             <Ruler size={15} color="#6B7280" />
@@ -198,5 +229,20 @@ function ParcelCard({
         </View>
       )}
     </View>
+  )
+}
+
+function TypeCard({ selected, title, hint, price, onPress }: { selected: boolean; title: string; hint: string; price?: string; onPress: () => void }) {
+  return (
+    <Pressable
+      accessibilityRole="radio"
+      accessibilityState={{ selected }}
+      onPress={onPress}
+      className={`flex-1 gap-1 rounded-md border-2 bg-white p-4 active:bg-cream ${selected ? 'border-ocean' : 'border-line'}`}
+    >
+      <Text className="text-base font-bold text-ink">{title}</Text>
+      <Text className="text-sm text-muted">{hint}</Text>
+      {price ? <Text className="text-sm font-bold text-ocean">{price}</Text> : null}
+    </Pressable>
   )
 }

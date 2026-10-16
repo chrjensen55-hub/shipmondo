@@ -2,10 +2,13 @@ import { fullQuoteRequestSchema } from '@/lib/validation'
 import { mockQuotes } from '@/lib/shipping'
 import { getLiveQuotes } from '@/lib/shipmondo/quotes'
 import { ShipmondoClient } from '@/lib/shipmondo/client'
+import { registeredLetterError } from '@/lib/registeredLetter'
 
 export async function POST(request: Request) {
   try {
     const input = fullQuoteRequestSchema.parse(await request.json())
+    const letterError = registeredLetterError(input)
+    if (letterError) return Response.json({ error: { code: 'REGISTERED_LETTER_INVALID', message: letterError } }, { status: 400 })
     const client = await ShipmondoClient.create()
     // No credentials at all means this tablet was never set up with a Shipmondo account (or its
     // per-tablet override never saved) — surface that clearly right here, at the first step that

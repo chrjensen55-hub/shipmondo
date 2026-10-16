@@ -19,7 +19,7 @@ export default function CarrierStep() {
   const carriers = CARRIERS.filter((c) => activeLocation.carriers[c.name] !== false)
 
   function select(name: string) {
-    setDraft((d) => ({ ...d, carrierName: name }))
+    setDraft((d) => ({ ...d, carrierName: name, ...(name === 'PostNord' ? {} : { registeredLetter: false }) }))
     router.push('/send/delivery')
   }
 

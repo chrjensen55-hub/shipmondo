@@ -3,6 +3,7 @@ import { ShipmondoClient } from './client'
 import { listProducts } from './products'
 import { calculateCustomerPrice, totalChargeableWeight, type PricingRule } from '@/lib/shipping'
 import { isDomestic, rateForWeight } from '@/lib/carrierRates'
+import { REGISTERED_LETTER_PRICE, REGISTERED_LETTER_PRODUCT_CODE, registeredLetterError } from '@/lib/registeredLetter'
 import type { DeliveryLocation, ShipmentDraft, ShippingQuote } from '@/lib/types'
 import type { ShipmondoProduct } from './types'
 
@@ -127,7 +128,7 @@ function matchesCarrierName(productCarrierName: string, wanted?: string): boolea
   return a.includes(b) || b.includes(a)
 }
 
-export async function getLiveQuotes(draft: Pick<ShipmentDraft, 'originCountry' | 'originPostalCode' | 'destinationCountry' | 'destinationPostalCode' | 'parcels' | 'sender' | 'recipient' | 'carrierName' | 'deliveryLocation' | 'locationRates'>): Promise<ShippingQuote[]> {
+export async function getLiveQuotes(draft: Pick<ShipmentDraft, 'originCountry' | 'originPostalCode' | 'destinationCountry' | 'destinationPostalCode' | 'parcels' | 'sender' | 'recipient' | 'carrierName' | 'deliveryLocation' | 'locationRates' | 'registeredLetter'>): Promise<ShippingQuote[]> {
   const [rawProducts, rawQuotes] = await Promise.all([
     listProducts(draft.destinationCountry),
     fetchRealQuotes(draft).catch(() => [] as RawQuote[]),
@@ -137,6 +138,27 @@ export async function getLiveQuotes(draft: Pick<ShipmentDraft, 'originCountry' |
     .filter((p) => !(p.carrier.code === 'dao' && (p.code === 'DAO_H' || p.code === 'DAO_P')))
     .concat(domesticDaoRoute ? DAO_DOMESTIC_DROPOFF_PRODUCTS : [])
   const weight = totalChargeableWeight(draft.parcels)
+  if (draft.registeredLetter) {
+    const invalid = registeredLetterError(draft)
+    if (invalid) throw new Error(invalid)
+    // PDK_RE is documents-only, so no customs declaration is ever required or sent for it.
+    const letter = products.find((p) => p.code === REGISTERED_LETTER_PRODUCT_CODE && p.available)
+    if (!letter) return []
+    return [
+      {
+        id: `${letter.carrier.code}-${letter.code}`,
+        carrier: letter.carrier.name,
+        serviceName: letter.name,
+        productCode: letter.code,
+        serviceCodes: requiredServiceCodes(letter, draft),
+        purchasePrice: REGISTERED_LETTER_PRICE,
+        customerPrice: REGISTERED_LETTER_PRICE,
+        currency: 'DKK',
+        estimatedDelivery: letter.expected_transit_time ?? 'Contact us for delivery time',
+        metadata: { source: 'shipmondo', chargeableWeight: weight, requiresCustoms: false, estimated: false, ownAgreement: letter.own_agreement_available },
+      },
+    ]
+  }
   const intl = draft.destinationCountry !== draft.originCountry
   const carrierCodes = [...new Set(products.map((p) => p.carrier.code))].filter((c) => c !== 'unspecified')
   const quotedCodes = new Set(rawQuotes.map((q) => q.product_code))
