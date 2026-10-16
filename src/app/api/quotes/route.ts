@@ -25,9 +25,6 @@ export async function POST(request: Request) {
       const live = await getLiveQuotes(input)
       // An empty result with working credentials means this destination genuinely isn't served
       // live (not a connection problem), so an estimated mock price is still the right fallback.
-      if (input.registeredLetter && !live.length) {
-        return Response.json({ error: { code: 'REGISTERED_LETTER_UNAVAILABLE', message: 'PostNord does not offer registered letters to this country.' } }, { status: 404 })
-      }
       return Response.json({ data: live.length ? live : mockQuotes(input) })
     } catch (err) {
       const message = err instanceof Error ? err.message : 'Could not reach Shipmondo.'

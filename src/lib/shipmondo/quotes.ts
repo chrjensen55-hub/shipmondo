@@ -131,21 +131,24 @@ function matchesCarrierName(productCarrierName: string, wanted?: string): boolea
 // Registered letter: Shipmondo prices and books PDK_RE itself, so we only pass the product on. The
 // customer-facing price is the flat registered-letter price.
 async function registeredLetterQuote(draft: Pick<ShipmentDraft, 'destinationCountry' | 'parcels' | 'recipient'>): Promise<ShippingQuote[]> {
-  const letter = (await listProducts(draft.destinationCountry, REGISTERED_LETTER_PRODUCT_CODE)).find((p) => p.code === REGISTERED_LETTER_PRODUCT_CODE && p.available)
-  if (!letter) return []
+  // The product list is only used for details; Shipmondo itself decides whether the letter can be
+  // booked, and its own error is shown if it refuses, so a missing/odd list entry never blocks it.
+  const letter = await listProducts(draft.destinationCountry, REGISTERED_LETTER_PRODUCT_CODE)
+    .then((products) => products.find((p) => p.code === REGISTERED_LETTER_PRODUCT_CODE))
+    .catch(() => undefined)
   return [
     {
-      id: `${letter.carrier.code}-${letter.code}`,
-      carrier: letter.carrier.name,
-      serviceName: letter.name,
-      productCode: letter.code,
-      serviceCodes: requiredServiceCodes(letter, draft),
+      id: `pdk-${REGISTERED_LETTER_PRODUCT_CODE}`,
+      carrier: letter?.carrier.name ?? 'PostNord (DK)',
+      serviceName: letter?.name ?? 'Registered',
+      productCode: REGISTERED_LETTER_PRODUCT_CODE,
+      serviceCodes: letter ? requiredServiceCodes(letter, draft) : [],
       purchasePrice: REGISTERED_LETTER_PRICE,
       customerPrice: REGISTERED_LETTER_PRICE,
       currency: 'DKK',
-      estimatedDelivery: letter.expected_transit_time ?? 'Contact us for delivery time',
+      estimatedDelivery: letter?.expected_transit_time ?? 'Contact us for delivery time',
       // PDK_RE is documents-only: no customs declaration is required or sent.
-      metadata: { source: 'shipmondo', chargeableWeight: draft.parcels.reduce((n, p) => n + p.weight, 0), requiresCustoms: false, estimated: false, ownAgreement: letter.own_agreement_available },
+      metadata: { source: 'shipmondo', chargeableWeight: draft.parcels.reduce((n, p) => n + p.weight, 0), requiresCustoms: false, estimated: false, ownAgreement: letter?.own_agreement_available ?? true },
     },
   ]
 }
