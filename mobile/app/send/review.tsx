@@ -60,7 +60,7 @@ export default function ReviewStep() {
       <View className="rounded-md border border-line bg-white px-4">
         <View className="flex-row items-center justify-between gap-3 border-b border-line py-3.5">
           <View className="flex-shrink flex-row items-center gap-2.5">
-            <CarrierLogo name={quote?.carrier ?? draft.carrierName ?? ''} size={36} />
+            <CarrierLogo name={draft.carrierName ?? quote?.carrier ?? ''} size={36} />
             <Text className="flex-shrink text-sm font-bold text-ink">{quote?.serviceName}</Text>
           </View>
           <Text className="text-lg font-bold text-ocean">{quote?.customerPrice} DKK</Text>

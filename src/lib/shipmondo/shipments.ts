@@ -66,8 +66,18 @@ export function mapShipmentToShipmondo(draft: ShipmentDraft, options: { productC
 export async function createShipment(draft: ShipmentDraft, options: { productCode: string; serviceCodes: string[]; reference: string; requiresCustoms: boolean; ownAgreement?: boolean }): Promise<ShipmondoShipment> {
   const client = await ShipmondoClient.create()
   if (!client.isConfigured()) throw new Error('Shipmondo is not configured')
-  const body = mapShipmentToShipmondo(draft, options)
-  return client.post<ShipmondoShipment>('/shipments', body)
+  try {
+    return await client.post<ShipmondoShipment>('/shipments', mapShipmentToShipmondo(draft, options))
+  } catch (err) {
+    // The account's own PostNord agreement may not cover the registered letter (PDK_RE) for this
+    // route. Shipmondo then reports that no customer number was found, so book it on Shipmondo's own
+    // agreement instead and let Shipmondo handle pricing and checks.
+    const missingAgreement = err instanceof Error && /customer number has not been found/i.test(err.message)
+    if (options.productCode === REGISTERED_LETTER_PRODUCT_CODE && options.ownAgreement && missingAgreement) {
+      return client.post<ShipmondoShipment>('/shipments', mapShipmentToShipmondo(draft, { ...options, ownAgreement: false }))
+    }
+    throw err
+  }
 }
 
 export async function getShipment(id: number): Promise<ShipmondoShipment> {
