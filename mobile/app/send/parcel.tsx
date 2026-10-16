@@ -47,7 +47,7 @@ export default function ParcelStep() {
 
   const isPostNord = draft.carrierName === 'PostNord'
   const letter = isPostNord && !!draft.registeredLetter
-  const shownBrackets = letter ? brackets.filter((b) => b <= REGISTERED_LETTER_MAX_KG) : brackets
+  const shownBrackets = letter ? [REGISTERED_LETTER_MAX_KG] : brackets
 
   function chooseType(asLetter: boolean) {
     setWeightChosen(new Set())

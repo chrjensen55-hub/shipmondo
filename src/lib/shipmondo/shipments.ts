@@ -1,6 +1,7 @@
 import 'server-only'
 import { ShipmondoClient } from './client'
 import type { ShipmentDraft } from '@/lib/types'
+import { REGISTERED_LETTER_PRODUCT_CODE } from '@/lib/registeredLetter'
 import type { CreateShipmentRequest, ShipmondoCustoms, ShipmondoLabel, ShipmondoParty, ShipmondoShipment } from './types'
 
 function toParty(type: 'sender' | 'receiver', address: ShipmentDraft['sender']): ShipmondoParty {
@@ -53,7 +54,10 @@ export function mapShipmentToShipmondo(draft: ShipmentDraft, options: { productC
     reference: options.reference,
     contents,
     parties: [toParty('sender', draft.sender), toParty('receiver', draft.recipient)],
-    parcels: draft.parcels.map((p) => ({ weight: Math.round(p.weight * 1000), quantity: 1, length: p.length, width: p.width, height: p.height })),
+    // PDK_RE only takes quantity and weight; Shipmondo does the pricing and checks.
+    parcels: draft.parcels.map((p) =>
+      options.productCode === REGISTERED_LETTER_PRODUCT_CODE ? { weight: Math.round(p.weight * 1000), quantity: 1 } : { weight: Math.round(p.weight * 1000), quantity: 1, length: p.length, width: p.width, height: p.height },
+    ),
     customs: buildCustoms(draft, options.requiresCustoms),
     ...(draft.deliveryLocation === 'service_point' ? { automatic_select_service_point: true } : {}),
   }
