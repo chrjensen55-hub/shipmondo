@@ -79,6 +79,7 @@ For an **ad hoc install link** instead: register each iPad with `npx eas-cli dev
 
 ## Builds
 
+- First iOS build (10 Nov 2026, Simulator, built successfully): https://expo.dev/accounts/pakogsend/projects/pak-and-send/builds/231e4079-37ae-4782-be99-57fbdca69126
 - iOS Simulator test build (no Apple account needed): `npx eas-cli build --platform ios --profile ios-simulator`. It runs only in Xcode's Simulator on a Mac (download it from the Expo build page, unpack, drag the `.app` onto the Simulator). It's useful for App Store screenshots.
 - Android builds and the APK download page are unchanged.
 
