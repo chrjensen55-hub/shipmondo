@@ -72,3 +72,42 @@ remove it from inside the app before uninstalling or handing the tablet back.
 - Restart and power off/on with *Start in Kiosk Mode after restart* ON (app opens locked) and OFF
   (normal launcher).
 - Leave a half-filled form for 3 minutes: prompt, then reset to step 1.
+
+## 7. iPad and iPhone (Guided Access)
+
+iOS has no Device Owner. The app uses Apple's **Guided Access** instead, which locks the device into
+one app until a passcode is entered. The app follows it: while Guided Access is on, the screen stays
+on and the "Are you still there?" reset works as on Android. (How to install the iOS app:
+`docs/IOS_APP_STORE.md`.)
+
+### Set up once per iPad
+
+1. Pair the Zebra printer in the app (menu → Settings → settings code → **Printer** tab) and allow
+   Bluetooth when iOS asks.
+   Set up Wi-Fi too. Both are hard to reach once the iPad is locked.
+2. iPad Settings → **Accessibility → Guided Access** → turn it on. Under **Passcode Settings** choose a
+   Guided Access passcode (staff only). Optionally turn off **Display Auto-Lock** there, or set
+   Settings → Display & Brightness → Auto-Lock to Never.
+3. Settings → Accessibility → **Accessibility Shortcut** → tick **Guided Access** (so a triple-click
+   always starts it).
+
+### Lock and unlock
+
+- **Lock:** open the app's booking screen, **triple-click the side button** (the Home button on iPads
+  that have one) and tap **Start**. The app's menu item *Activate Kiosk Mode* shows these steps.
+- **Unlock:** triple-click again, enter the Guided Access passcode and end it.
+- Settings → Kiosk Mode in the app shows *Guided Access active now: Yes/No*.
+
+### Supervised iPads (optional, with Apple Configurator or an MDM)
+
+On a supervised iPad whose profile allows **Autonomous Single App Mode** for `dk.pakogsend.app`, the
+app locks and unlocks itself from the menu (unlock with the exit code `0088`, same as Android). With
+**Single App Mode** pushed from Apple Configurator or an MDM, the iPad also starts straight into the app
+after a restart. Without supervision, iOS can't open an app by itself after a restart.
+
+### Test checklist (iPad)
+
+- Triple-click → Start: Home gesture, Control Center and notifications do nothing.
+- Settings → Kiosk Mode shows *Guided Access active now: Yes* within a couple of seconds.
+- Leave a half-filled form for 3 minutes while locked: prompt, then reset to step 1.
+- Print a label (Bluetooth printer) while locked.
