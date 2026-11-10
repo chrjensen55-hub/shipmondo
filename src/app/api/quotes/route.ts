@@ -23,9 +23,11 @@ export async function POST(request: Request) {
     }
     try {
       const live = await getLiveQuotes(input)
-      // An empty result with working credentials means this destination genuinely isn't served
-      // live (not a connection problem), so an estimated mock price is still the right fallback.
-      return Response.json({ data: live.length ? live : mockQuotes(input) })
+      // An empty result with working credentials means the carrier has no product for this route
+      // and delivery choice (e.g. GLS home delivery to Norway). /api/shipments never books a mock
+      // quote on a live account, so return the empty list: the app then tells the customer right
+      // away that this carrier doesn't deliver on this route, instead of failing at the last step.
+      return Response.json({ data: live })
     } catch (err) {
       const message = err instanceof Error ? err.message : 'Could not reach Shipmondo.'
       return Response.json({ error: { code: 'SHIPMONDO_CONNECTION_FAILED', message } }, { status: 502 })
