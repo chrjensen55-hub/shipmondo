@@ -67,7 +67,7 @@
         "react-native-ble-plx",
         {
           "isBackgroundEnabled": false,
-          "bluetoothAlwaysPermission": "Allow $(PRODUCT_NAME) to connect to the Zebra label printer."
+          "bluetoothAlwaysPermission": "Allow Pak & Send to connect to the Zebra label printer."
         }
       ],
       "expo-secure-store"
