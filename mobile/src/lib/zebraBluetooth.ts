@@ -28,7 +28,41 @@ const manager = new BleManager()
 
 export type ScannedDevice = { id: string; name: string }
 
+// Shown when Bluetooth can't be used on iPhone/iPad (turned off, or not allowed for this app).
+export const IOS_BLUETOOTH_MESSAGE = 'Turn on Bluetooth and allow Pak & Send to use it (Settings → Pak & Send → Bluetooth).'
+
+// iOS has no permission call: the system asks once by itself, and the manager's state then says
+// whether Bluetooth is allowed and switched on. The state starts as "Unknown" right after launch,
+// so wait briefly for a real one before scanning or connecting.
+function waitForBluetoothOn(timeoutMs = 5000): Promise<boolean> {
+  return new Promise((resolve) => {
+    let settled = false
+    let sub: { remove: () => void } | null = null
+    const finish = (ok: boolean) => {
+      if (settled) return
+      settled = true
+      clearTimeout(timer)
+      // The listener can fire before onStateChange has returned it, so remove it on the next tick.
+      setTimeout(() => sub?.remove(), 0)
+      resolve(ok)
+    }
+    const timer = setTimeout(() => finish(false), timeoutMs)
+    sub = manager.onStateChange((state) => {
+      if (state === 'PoweredOn') finish(true)
+      else if (state === 'PoweredOff' || state === 'Unauthorized' || state === 'Unsupported') finish(false)
+    }, true)
+  })
+}
+
+// iOS often only knows a printer by the name in its Bluetooth advertisement until it has
+// connected once, so fall back to that there.
+function deviceName(device: Device | null): string | null {
+  if (!device) return null
+  return device.name ?? (Platform.OS === 'ios' ? device.localName : null)
+}
+
 export async function requestBlePermissions(): Promise<boolean> {
+  if (Platform.OS === 'ios') return waitForBluetoothOn()
   if (Platform.OS !== 'android') return true
   const results = await PermissionsAndroid.requestMultiple([
     PermissionsAndroid.PERMISSIONS.BLUETOOTH_SCAN,
@@ -48,7 +82,8 @@ export function scanForPrinters(onFound: (device: ScannedDevice) => void, onErro
       onError(error.message)
       return
     }
-    if (device?.name) onFound({ id: device.id, name: device.name })
+    const name = deviceName(device)
+    if (device && name) onFound({ id: device.id, name })
   })
   return () => manager.stopDeviceScan()
 }
@@ -102,7 +137,7 @@ async function findByName(name: string, timeoutMs = 4000): Promise<string | null
   return new Promise((resolve) => {
     let found: string | null = null
     manager.startDeviceScan(null, { allowDuplicates: false }, (error, device) => {
-      if (!error && device?.name === name) found = device.id
+      if (!error && device && deviceName(device) === name) found = device.id
     })
     setTimeout(() => {
       manager.stopDeviceScan()
@@ -148,7 +183,7 @@ export async function printZplViaBluetooth(zpl: string, onProgress?: (fraction: 
   const paired = await getPairedPrinter()
   if (!paired) throw new Error('No printer paired yet. Go to Admin → Printer to pair one.')
   const granted = await requestBlePermissions()
-  if (!granted) throw new Error('Bluetooth permission is required to print.')
+  if (!granted) throw new Error(Platform.OS === 'ios' ? IOS_BLUETOOTH_MESSAGE : 'Bluetooth permission is required to print.')
 
   let device: Device
   try {

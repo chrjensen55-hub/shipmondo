@@ -1,5 +1,5 @@
 import { useCallback, useState } from 'react'
-import { useFocusEffect, useLocalSearchParams, useRouter } from 'expo-router'
+import { Stack, useFocusEffect, useLocalSearchParams, useRouter } from 'expo-router'
 import { ActivityIndicator, BackHandler, Image, ScrollView, Text, View } from 'react-native'
 import { SafeAreaView } from 'react-native-safe-area-context'
 import { CircleCheck, CheckCircle2 } from 'lucide-react-native'
@@ -70,6 +70,8 @@ export default function Confirmation() {
 
   return (
     <SafeAreaView className="flex-1 bg-cream" edges={['top', 'bottom']}>
+      {/* iOS has no Back button to block, but a swipe from the left edge would go back the same way. */}
+      <Stack.Screen options={{ gestureEnabled: false }} />
       <ScrollView contentContainerClassName="gap-6 px-6 pb-10 pt-20" className="flex-1">
         <View className="items-center gap-3">
           <CircleCheck color="#22A05B" size={72} strokeWidth={1.5} />

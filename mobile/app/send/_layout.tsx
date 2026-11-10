@@ -11,6 +11,7 @@ import { LangContext, DEFAULT_LANG, LANG_STORAGE_KEY, useLang, type Lang } from 
 import { LanguageSwitch } from '@/components/LanguageSwitch'
 import { ConfirmDialog } from '@/components/ConfirmDialog'
 import { KioskCodeDialog } from '@/components/KioskCodeDialog'
+import { InfoDialog } from '@/components/InfoDialog'
 import { Button } from '@/components/Button'
 
 // Floating controls rather than a native header: each wizard screen already manages its own
@@ -27,6 +28,8 @@ function HamburgerMenu() {
   const [refreshConfirmOpen, setRefreshConfirmOpen] = useState(false)
   const [pin, setPin] = useState('')
   const [pinError, setPinError] = useState(false)
+  // iPhone/iPad: how to start or end Guided Access when the app can't do it itself.
+  const [guidedHelp, setGuidedHelp] = useState<'start' | 'end' | null>(null)
 
   function closeAll() {
     setMenuOpen(false)
@@ -67,7 +70,11 @@ function HamburgerMenu() {
   function toggleKiosk() {
     setMenuOpen(false)
     if (kiosk.active) setKioskCodeOpen(true)
-    else kiosk.activate()
+    else {
+      kiosk.activate()
+      // Only a supervised iPad can be locked by the app itself; otherwise explain Guided Access.
+      if (kiosk.guidedAccess) setTimeout(() => !kiosk.isLockedNow() && setGuidedHelp('start'), 1200)
+    }
   }
 
   async function submitPin() {
@@ -121,7 +128,17 @@ function HamburgerMenu() {
         onSuccess={() => {
           setKioskCodeOpen(false)
           kiosk.deactivate()
+          // Guided Access started with a triple-click can only be ended the same way.
+          if (kiosk.guidedAccess) setTimeout(() => kiosk.isLockedNow() && setGuidedHelp('end'), 1200)
         }}
+      />
+
+      <InfoDialog
+        visible={guidedHelp !== null}
+        title={guidedHelp === 'end' ? tr.guidedAccessEndTitle : tr.guidedAccessStartTitle}
+        message={guidedHelp === 'end' ? tr.guidedAccessEndMessage : tr.guidedAccessStartMessage}
+        okLabel={tr.okAction}
+        onClose={() => setGuidedHelp(null)}
       />
 
       <Modal visible={pinPromptOpen} transparent animationType="fade" onRequestClose={closeAll}>

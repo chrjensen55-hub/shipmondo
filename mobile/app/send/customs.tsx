@@ -1,10 +1,10 @@
 import { useRouter } from 'expo-router'
 import { useEffect } from 'react'
 import { Pressable, Text, View } from 'react-native'
-import { Picker } from '@react-native-picker/picker'
 import { Plus, Trash2 } from 'lucide-react-native'
 import { WizardScreen } from '@/components/WizardScreen'
 import { TextField } from '@/components/TextField'
+import { SelectField } from '@/components/SelectField'
 import { useWizard, HS_CODE_RE } from '@/lib/wizard-context'
 import { useLang } from '@/lib/i18n'
 import type { ShipmentItem } from '@/lib/types'
@@ -47,15 +47,19 @@ export default function CustomsStep() {
     <WizardScreen title={tr.customsHeading} subtitle={tr.customsSubtitle} step={6} icon={customsImage} onContinue={() => router.push('/send/review')} continueDisabled={!valid}>
       <View className="gap-1.5">
         <Text className="text-[13px] font-medium text-ink">{tr.exportReasonLabel}</Text>
-        <View className="overflow-hidden rounded-sm border-[1.5px] border-line bg-white">
-          <Picker selectedValue={draft.exportReason ?? 'sale_of_goods'} onValueChange={(v) => setDraft((d) => ({ ...d, exportReason: v }))}>
-            <Picker.Item label={tr.exportReasonSale} value="sale_of_goods" />
-            <Picker.Item label={tr.exportReasonGift} value="gift" />
-            <Picker.Item label={tr.exportReasonSample} value="commercial_samples" />
-            <Picker.Item label={tr.exportReasonReturn} value="returned_goods" />
-            <Picker.Item label={tr.exportReasonOther} value="other" />
-          </Picker>
-        </View>
+        <SelectField
+          value={draft.exportReason ?? 'sale_of_goods'}
+          options={[
+            { label: tr.exportReasonSale, value: 'sale_of_goods' },
+            { label: tr.exportReasonGift, value: 'gift' },
+            { label: tr.exportReasonSample, value: 'commercial_samples' },
+            { label: tr.exportReasonReturn, value: 'returned_goods' },
+            { label: tr.exportReasonOther, value: 'other' },
+          ]}
+          onChange={(v) => setDraft((d) => ({ ...d, exportReason: v }))}
+          title={tr.exportReasonLabel}
+          radiusClassName="rounded-sm"
+        />
       </View>
 
       {draft.items.map((item, index) => (

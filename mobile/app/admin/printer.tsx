@@ -1,9 +1,9 @@
 import { useEffect, useState } from 'react'
-import { FlatList, Text, View } from 'react-native'
+import { FlatList, Platform, Text, View } from 'react-native'
 import { Bluetooth } from 'lucide-react-native'
 import { SafeAreaView } from 'react-native-safe-area-context'
 import { Button } from '@/components/Button'
-import { clearPairedPrinter, getPairedPrinter, pairPrinter, requestBlePermissions, scanForPrinters, type ScannedDevice } from '@/lib/zebraBluetooth'
+import { clearPairedPrinter, getPairedPrinter, IOS_BLUETOOTH_MESSAGE, pairPrinter, requestBlePermissions, scanForPrinters, type ScannedDevice } from '@/lib/zebraBluetooth'
 
 export default function PrinterSettings() {
   const [paired, setPaired] = useState<ScannedDevice | null>(null)
@@ -20,7 +20,7 @@ export default function PrinterSettings() {
     setFound([])
     const granted = await requestBlePermissions()
     if (!granted) {
-      setError('Bluetooth permission is required to scan for the printer.')
+      setError(Platform.OS === 'ios' ? IOS_BLUETOOTH_MESSAGE : 'Bluetooth permission is required to scan for the printer.')
       return
     }
     setScanning(true)

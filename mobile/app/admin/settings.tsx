@@ -182,8 +182,15 @@ export default function SettingsScreen() {
             <Lock size={20} color="#0B4F82" />
             <Text className="text-lg font-bold text-ink">Kiosk Mode</Text>
           </View>
-          <Text className="text-sm text-muted">Locks this tablet into the app so customers cannot reach the home screen, other apps, settings or the notification bar. Switch it on or off from the menu on the booking screen; leaving it needs the exit code.</Text>
-          {!kiosk.deviceOwner && (
+          {kiosk.guidedAccess ? (
+            <>
+              <Text className="text-sm text-muted">On iPad and iPhone, Apple&apos;s Guided Access locks the device into this app. Set it up once: Settings → Accessibility → Guided Access → turn it on and choose a passcode. Then, on the booking screen, triple-click the side button (Home button on older iPads) and tap Start. To leave, triple-click again and enter the passcode.</Text>
+              <Text className="text-sm text-muted">A supervised iPad (Apple Configurator or an MDM) that allows Autonomous Single App Mode for this app is locked straight from the menu, and unlocked there with the exit code.</Text>
+            </>
+          ) : (
+            <Text className="text-sm text-muted">Locks this tablet into the app so customers cannot reach the home screen, other apps, settings or the notification bar. Switch it on or off from the menu on the booking screen; leaving it needs the exit code.</Text>
+          )}
+          {!kiosk.guidedAccess && !kiosk.deviceOwner && (
             <View className="rounded-sm bg-error-bg p-3">
               <Text className="text-sm font-semibold text-error" accessibilityRole="alert">
                 Not Device Owner – kiosk mode is not secure
@@ -197,6 +204,7 @@ export default function SettingsScreen() {
             </View>
             <Switch value={kiosk.featureEnabled} onValueChange={(v) => kiosk.setFeatureEnabled(v)} trackColor={{ false: '#CBD5E1', true: '#0B4F82' }} thumbColor="#ffffff" />
           </View>
+          {!kiosk.guidedAccess && (
           <View className="flex-row items-center justify-between gap-3">
             <View className="flex-1">
               <Text className="text-base font-semibold text-ink">Start in Kiosk Mode after restart</Text>
@@ -204,12 +212,13 @@ export default function SettingsScreen() {
             </View>
             <Switch value={kiosk.autoStart} onValueChange={(v) => kiosk.setAutoStart(v)} disabled={!kiosk.featureEnabled} trackColor={{ false: '#CBD5E1', true: '#0B4F82' }} thumbColor="#ffffff" />
           </View>
+          )}
           <View className="gap-1 rounded-sm border border-line bg-cream p-3">
-            <Text className="text-sm text-ink">Device Owner: <Text className="font-bold">{kiosk.deviceOwner ? 'Yes' : 'No'}</Text></Text>
-            <Text className="text-sm text-ink">Kiosk Mode active now: <Text className="font-bold">{kiosk.active ? 'Yes' : 'No'}</Text></Text>
+            {!kiosk.guidedAccess && <Text className="text-sm text-ink">Device Owner: <Text className="font-bold">{kiosk.deviceOwner ? 'Yes' : 'No'}</Text></Text>}
+            <Text className="text-sm text-ink">{kiosk.guidedAccess ? 'Guided Access' : 'Kiosk Mode'} active now: <Text className="font-bold">{kiosk.active ? 'Yes' : 'No'}</Text></Text>
           </View>
           {removeResult ? <Text className="text-sm font-semibold text-ink">{removeResult}</Text> : null}
-          {kiosk.deviceOwner && <Button label="Remove Device Owner" variant="destructive" onPress={() => setRemoveCodeOpen(true)} />}
+          {!kiosk.guidedAccess && kiosk.deviceOwner && <Button label="Remove Device Owner" variant="destructive" onPress={() => setRemoveCodeOpen(true)} />}
         </View>
 
         <View className="gap-3 rounded-md border border-line bg-white p-4">

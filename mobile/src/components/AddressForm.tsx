@@ -1,9 +1,9 @@
 import { useEffect, useRef, useState } from 'react'
 import { ActivityIndicator, Keyboard, Pressable, Text, TextInput, View } from 'react-native'
-import { Picker } from '@react-native-picker/picker'
 import { Check } from 'lucide-react-native'
 import { TextField } from './TextField'
 import { PhoneField } from './PhoneField'
+import { SelectField } from './SelectField'
 import { countries } from '@/lib/countries'
 import { api, ApiError } from '@/lib/api'
 import { useLang } from '@/lib/i18n'
@@ -137,13 +137,7 @@ export function AddressForm({
       </View>
       <View className="gap-1.5">
         <Text className="text-[13px] font-medium text-ink">{tr.country}</Text>
-        <View className="overflow-hidden rounded-[8px] border-[1.5px] border-line bg-white">
-          <Picker selectedValue={value.country} onValueChange={(v) => onChange('country', v)}>
-            {countries.map((c) => (
-              <Picker.Item key={c.code} label={c.name} value={c.code} />
-            ))}
-          </Picker>
-        </View>
+        <SelectField value={value.country} options={countries.map((c) => ({ label: c.name, value: c.code }))} onChange={(v) => onChange('country', v)} title={tr.country} />
         {countryError ? <Text className="text-xs text-error" accessibilityRole="alert">{countryError}</Text> : null}
       </View>
       {showNoEmailOption && <ContactCheckbox checked={!!noEmail} onToggle={() => onToggleNoEmail?.(!noEmail)} label={tr.noRecipientEmail} />}

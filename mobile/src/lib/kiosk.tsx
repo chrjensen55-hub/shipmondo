@@ -1,5 +1,5 @@
 import { createContext, useCallback, useContext, useEffect, useRef, useState, type ReactNode } from 'react'
-import { AppState, BackHandler } from 'react-native'
+import { AppState, BackHandler, Platform } from 'react-native'
 import { useRouter } from 'expo-router'
 import AsyncStorage from '@react-native-async-storage/async-storage'
 import { Kiosk } from '../../modules/kiosk'
@@ -46,7 +46,13 @@ const KEY_FEATURE = 'pak-send-kiosk-enabled'
 const KEY_AUTO_START = 'pak-send-kiosk-autostart'
 const KEY_WAS_ACTIVE = 'pak-send-kiosk-active'
 
+// On iPhone/iPad the lock is Apple's Guided Access (see modules/kiosk/ios): staff usually start it
+// with a triple-click, so the app follows its state instead of switching it like on Android.
+const GUIDED_ACCESS = Platform.OS === 'ios'
+
 type KioskContextValue = {
+  // True on iPhone/iPad, where kiosk mode is Guided Access rather than Android's lock task.
+  guidedAccess: boolean
   loaded: boolean
   featureEnabled: boolean
   autoStart: boolean
@@ -57,6 +63,8 @@ type KioskContextValue = {
   activate: () => void
   deactivate: () => void
   removeDeviceOwner: () => boolean
+  // Reads the lock state straight from the device (not the last rendered value).
+  isLockedNow: () => boolean
 }
 
 const KioskContext = createContext<KioskContextValue | null>(null)
@@ -77,7 +85,8 @@ export function KioskProvider({ children }: { children: ReactNode }) {
   const activate = useCallback(() => {
     Kiosk.enable()
     AsyncStorage.setItem(KEY_WAS_ACTIVE, '1').catch(() => {})
-    setActive(true)
+    // Guided Access only counts once iOS has actually started it.
+    if (!GUIDED_ACCESS) setActive(true)
     // Screen pinning (not device owner) can still be declined by the user, so confirm the real state.
     setTimeout(refreshStatus, 800)
   }, [refreshStatus])
@@ -122,6 +131,13 @@ export function KioskProvider({ children }: { children: ReactNode }) {
     return () => sub.remove()
   }, [refreshStatus])
 
+  // Guided Access is switched on and off with a triple-click, outside the app's own controls.
+  useEffect(() => {
+    if (!GUIDED_ACCESS) return
+    const id = setInterval(refreshStatus, 2000)
+    return () => clearInterval(id)
+  }, [refreshStatus])
+
   async function setFeatureEnabled(value: boolean) {
     setFeatureEnabledState(value)
     await AsyncStorage.setItem(KEY_FEATURE, value ? '1' : '0')
@@ -148,7 +164,7 @@ export function KioskProvider({ children }: { children: ReactNode }) {
   }
 
   return (
-    <KioskContext.Provider value={{ loaded, featureEnabled, autoStart, deviceOwner, active, setFeatureEnabled, setAutoStart, activate, deactivate, removeDeviceOwner }}>
+    <KioskContext.Provider value={{ guidedAccess: GUIDED_ACCESS, loaded, featureEnabled, autoStart, deviceOwner, active, setFeatureEnabled, setAutoStart, activate, deactivate, removeDeviceOwner, isLockedNow: Kiosk.isLockTaskActive }}>
       {children}
     </KioskContext.Provider>
   )
