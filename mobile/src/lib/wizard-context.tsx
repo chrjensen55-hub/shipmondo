@@ -12,6 +12,20 @@ export const CARRIERS = [
 ] as const
 
 export const SERVICE_POINT_LABEL: Record<string, string> = { GLS: 'GLS PakkeShop', DAO: 'daoSHOP', PostNord: 'PostNord Service Point', Bring: 'Bring pickup point' }
+
+// Delivery choices each carrier offers, in the order shown on the delivery step. The server books
+// the matching Shipmondo product for each (see PRODUCTS_BY_DELIVERY in the web app's
+// src/lib/shipmondo/quotes.ts): Bring and DAO have no business (erhverv) product.
+const DELIVERY_OPTIONS: Record<string, DeliveryLocation[]> = {
+  PostNord: ['service_point', 'home', 'business'],
+  GLS: ['service_point', 'home', 'business'],
+  Bring: ['service_point', 'home'],
+  DAO: ['service_point', 'home'],
+}
+
+export function deliveryOptionsFor(carrierName?: string): DeliveryLocation[] {
+  return (carrierName && DELIVERY_OPTIONS[carrierName]) || ['service_point', 'home']
+}
 export const HS_CODE_RE = /^\d{6}(\d{2}){0,3}$/
 
 const blankAddress = (country = 'DK'): Address => ({ fullName: '', company: '', address1: '', address2: '', postalCode: '', city: '', country, email: '', phone: '' })

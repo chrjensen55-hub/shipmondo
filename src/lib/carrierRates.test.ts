@@ -17,6 +17,13 @@ describe('domestic price list (POSTPAKKER DANMARK) — applied the same regardle
   it('exposes the right max weight per location', () => {
     expect(maxWeightFor('home')).toBe(35)
   })
+
+  it('prices business (erhverv) parcels like Home, up to 35 kg', () => {
+    expect(rateForWeight('DK', 'DK', 'business', 1)).toBe(119)
+    expect(rateForWeight('DK', 'DK', 'business', 35)).toBe(379)
+    expect(rateForWeight('DK', 'DK', 'business', 5, [{ maxWeight: 5, service_point: 98, home: 129 }])).toBe(129)
+    expect(maxWeightFor('business')).toBe(35)
+  })
 })
 
 describe('international price list (POSTPAKKER UDLAND) — zone-based, same for every carrier', () => {

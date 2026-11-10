@@ -1,7 +1,7 @@
 import { useRouter } from 'expo-router'
 import { Pressable, View } from 'react-native'
 import { Check } from 'lucide-react-native'
-import { useWizard, CARRIERS } from '@/lib/wizard-context'
+import { useWizard, CARRIERS, deliveryOptionsFor } from '@/lib/wizard-context'
 import { useLocations } from '@/lib/location-context'
 import { CarrierLogo } from '@/components/CarrierLogo'
 import { WizardScreen } from '@/components/WizardScreen'
@@ -19,7 +19,13 @@ export default function CarrierStep() {
   const carriers = CARRIERS.filter((c) => activeLocation.carriers[c.name] !== false)
 
   function select(name: string) {
-    setDraft((d) => ({ ...d, carrierName: name, ...(name === 'PostNord' ? {} : { registeredLetter: false }) }))
+    // Switching to a carrier without the current delivery choice (e.g. Business → Bring) falls back to Home.
+    setDraft((d) => ({
+      ...d,
+      carrierName: name,
+      ...(name === 'PostNord' ? {} : { registeredLetter: false }),
+      ...(deliveryOptionsFor(name).includes(d.deliveryLocation) ? {} : { deliveryLocation: 'home' as const }),
+    }))
     router.push('/send/delivery')
   }
 

@@ -25,7 +25,9 @@ const da = {
   servicePointFallback: 'Afhentningssted',
   servicePointSubtitle: 'Modtageren henter selv pakken i nærheden',
   homeDelivery: 'Levering til døren',
-  homeDeliverySubtitle: 'Bliver leveret direkte til modtagerens hjemmeadresse — eller virksomhedens adresse, hvis det er en erhvervskunde',
+  homeDeliverySubtitle: 'Bliver leveret direkte til modtagerens hjemmeadresse',
+  businessDelivery: 'Erhverv',
+  businessDeliverySubtitle: 'Leveres til en virksomhed på hverdage — skriv firmanavnet på modtageren',
 
   weightHeading: 'Hvor meget vejer den?',
   parcelLabel: 'Pakke',
@@ -153,7 +155,9 @@ const en: Record<keyof typeof da, string> = {
   servicePointFallback: 'Service point',
   servicePointSubtitle: 'The recipient picks it up nearby',
   homeDelivery: 'Home delivery',
-  homeDeliverySubtitle: "Delivered directly to the recipient's home address — or the company address if it's a business",
+  homeDeliverySubtitle: "Delivered directly to the recipient's home address",
+  businessDelivery: 'Business',
+  businessDeliverySubtitle: "Delivered to a company on weekdays — add the recipient's company name",
 
   weightHeading: 'How much does it weigh?',
   parcelLabel: 'Parcel',

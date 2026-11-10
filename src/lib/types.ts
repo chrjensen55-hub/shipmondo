@@ -1,6 +1,6 @@
 export type Address = { fullName: string; company?: string; address1: string; address2?: string; postalCode: string; city: string; country: string; state?: string; email: string; phone: string; instructions?: string }
 export type Parcel = { id: string; weight: number; length: number; width: number; height: number }
-export type DeliveryLocation = 'home' | 'service_point'
+export type DeliveryLocation = 'home' | 'service_point' | 'business'
 export type ShipmentItem = { id: string; description: string; quantity: number; unitValue: number; currency: string; weight: number; originCountry: string; hsCode?: string }
 export type ShippingQuote = { id: string; carrier: string; serviceName: string; productCode: string; serviceCodes: string[]; purchasePrice: number; customerPrice: number; currency: string; estimatedDelivery: string; metadata: { source: 'mock' | 'shipmondo'; chargeableWeight: number; requiresCustoms?: boolean; estimated?: boolean; ownAgreement?: boolean } }
 // Sent by the native app for the tablet's active shop location — its own published domestic price

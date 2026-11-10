@@ -22,6 +22,7 @@ export function AddressForm({
   noPhone,
   onToggleNoPhone,
   countryError,
+  companyRequired = false,
 }: {
   value: Address
   onChange: (key: keyof Address, v: string) => void
@@ -35,6 +36,8 @@ export function AddressForm({
   noPhone?: boolean
   onToggleNoPhone?: (checked: boolean) => void
   countryError?: string
+  // Business (erhverv) parcels go to a company, so the recipient's company name is required.
+  companyRequired?: boolean
 }) {
   const tr = useLang()
   const showNoEmailOption = onToggleNoEmail !== undefined
@@ -94,7 +97,7 @@ export function AddressForm({
     <View className="gap-3">
       <TextField inputRef={fullNameRef} label={tr.fullName} value={value.fullName} onChangeText={(v) => onChange('fullName', v)} autoCapitalize="words" textContentType="name" returnKeyType="next" submitBehavior="submit" onSubmitEditing={() => next('fullName')} />
       {!minimal && (
-        <TextField inputRef={companyRef} label={`${tr.company} (${tr.optional})`} value={value.company ?? ''} onChangeText={(v) => onChange('company', v)} autoCapitalize="words" returnKeyType="next" submitBehavior="submit" onSubmitEditing={() => next('company')} />
+        <TextField inputRef={companyRef} label={companyRequired ? tr.company : `${tr.company} (${tr.optional})`} value={value.company ?? ''} onChangeText={(v) => onChange('company', v)} autoCapitalize="words" returnKeyType="next" submitBehavior="submit" onSubmitEditing={() => next('company')} />
       )}
       <TextField inputRef={address1Ref} label={tr.addressLine1} value={value.address1} onChangeText={(v) => onChange('address1', v)} autoCapitalize="words" returnKeyType="next" submitBehavior="submit" onSubmitEditing={() => next('address1')} />
       {!minimal && (

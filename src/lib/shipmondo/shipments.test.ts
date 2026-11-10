@@ -114,4 +114,9 @@ describe('service point selection', () => {
     const req = mapShipmentToShipmondo(draft({ deliveryLocation: 'home' }), { ...options, requiresCustoms: false })
     expect(req.automatic_select_service_point).toBeUndefined()
   })
+
+  it('omits automatic service point selection for business delivery', () => {
+    const req = mapShipmentToShipmondo(draft({ deliveryLocation: 'business' }), { ...options, requiresCustoms: false })
+    expect(req.automatic_select_service_point).toBeUndefined()
+  })
 })

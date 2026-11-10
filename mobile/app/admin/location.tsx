@@ -97,7 +97,7 @@ export default function LocationScreen() {
                       />
                     </View>
                     <View className="flex-1">
-                      <TextField label="Home delivery" keyboardType="decimal-pad" value={String(bracket.home)} onChangeText={(v) => updateRate(i, 'home', v)} />
+                      <TextField label="Home & Business" keyboardType="decimal-pad" value={String(bracket.home)} onChangeText={(v) => updateRate(i, 'home', v)} />
                     </View>
                   </View>
                 </View>

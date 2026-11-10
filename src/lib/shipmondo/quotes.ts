@@ -15,12 +15,19 @@ const PER_KG_DOMESTIC = 7
 const PER_KG_INTERNATIONAL = 14
 
 const PREFERRED_PRODUCTS: Record<string, string[]> = {
-  gls: ['GLSDK_HD', 'GLSDK_BP', 'GLSDK_EBP', 'GLSDK_GBP', 'GLSDK_SD'],
-  pdk: ['PDK_MH', 'PDK_BP'],
   dhl_express: ['DHLE_EW', 'DHLE_ES'],
   ups: ['UPS_STANDARD', 'UPS_SAVER', 'UPS_EXPRESS'],
-  bring: ['BRI_HDP', 'BRI_BP'],
-  dao: ['DAO_STH', 'DAO_STS'],
+}
+
+// The exact Shipmondo product for each delivery choice in the wizard (codes from Shipmondo's
+// /products list): Service point books the service point product, Home the home product and
+// Business (erhverv) the business product, never one in place of another. GLS business abroad is
+// EuroBusinessParcel (GLSDK_EBP); GLSDK_BP is Denmark only. Bring and DAO have no business choice.
+export const PRODUCTS_BY_DELIVERY: Record<string, Partial<Record<DeliveryLocation, string[]>>> = {
+  pdk: { service_point: ['PDK_MC'], home: ['PDK_MH'], business: ['PDK_BP'] },
+  gls: { service_point: ['GLSDK_SD'], home: ['GLSDK_HD'], business: ['GLSDK_BP', 'GLSDK_EBP'] },
+  bring: { service_point: ['BRI_PP'], home: ['BRI_HDP'] },
+  dao: { service_point: ['DAO_STS'], home: ['DAO_STH'] },
 }
 
 // DAO_H and DAO_P (the "(pickup)" products the regular /products endpoint returns) are never
@@ -94,9 +101,24 @@ async function fetchRealQuotes(draft: Pick<ShipmentDraft, 'originCountry' | 'ori
   })
 }
 
-function pickProductForCarrier(products: ShipmondoProduct[], carrierCode: string, quotedCodes: Set<string>, location: DeliveryLocation): ShipmondoProduct | undefined {
-  const eligible = products.filter((p) => p.carrier.code === carrierCode && p.available)
-  const candidates = location === 'service_point' ? eligible.filter((p) => p.service_point_available) : eligible.filter((p) => !p.service_point_required)
+export function pickProductForCarrier(products: ShipmondoProduct[], carrierCode: string, quotedCodes: Set<string>, location: DeliveryLocation, originCountry?: string): ShipmondoProduct | undefined {
+  // /products also lists products that start abroad (e.g. returns into Denmark); only ones sent from the sender's country count.
+  const eligible = products.filter((p) => p.carrier.code === carrierCode && p.available && (!originCountry || !p.sender_country_code || p.sender_country_code === originCountry))
+  const mapped = PRODUCTS_BY_DELIVERY[carrierCode]
+  if (mapped) {
+    for (const code of mapped[location] ?? []) {
+      const match = eligible.find((p) => p.code === code)
+      if (match) return match
+    }
+    // A carrier with no product for this choice (e.g. Bring/DAO business) gets no quote, and
+    // Business only ever books a real business product.
+    if (!mapped[location] || location === 'business') return undefined
+  }
+  // Route without the usual product (e.g. some countries abroad): fall back to a matching product,
+  // but never one that belongs to another delivery choice, so Home never books a business parcel.
+  const otherChoiceCodes = new Set(Object.entries(mapped ?? {}).filter(([key]) => key !== location).flatMap(([, codes]) => codes ?? []))
+  const pool = eligible.filter((p) => !otherChoiceCodes.has(p.code))
+  const candidates = location === 'service_point' ? pool.filter((p) => p.service_point_available) : pool.filter((p) => !p.service_point_required)
   if (!candidates.length) return undefined
   const quoted = candidates.find((c) => quotedCodes.has(c.code))
   if (quoted) return quoted
@@ -107,10 +129,13 @@ function pickProductForCarrier(products: ShipmondoProduct[], carrierCode: string
   return candidates[0]
 }
 
-function requiredServiceCodes(product: ShipmondoProduct, draft: Pick<ShipmentDraft, 'recipient'>): string[] {
+export function requiredServiceCodes(product: ShipmondoProduct, draft: Pick<ShipmentDraft, 'recipient'>): string[] {
   const required = product.required_services
   if (!required.length) return []
-  const isChoiceGroup = required.some((s) => Boolean(s.note))
+  // Shipmondo marks a pick-one group with the note "One type of notification must be selected".
+  // Other notes (e.g. GLS "E-mail notification is required") mean every listed service is needed:
+  // GLS PrivateDelivery (GLSDK_HD) needs both SMS_NT and EMAIL_NT.
+  const isChoiceGroup = required.some((s) => /one type/i.test(s.note ?? ''))
   if (isChoiceGroup) {
     const emailOption = required.find((s) => s.required_fields?.includes('receiver_email'))
     if (emailOption && draft.recipient.email) return [emailOption.code]
@@ -174,7 +199,7 @@ export async function getLiveQuotes(draft: Pick<ShipmentDraft, 'originCountry' |
 
   const quotes: ShippingQuote[] = []
   for (const carrierCode of carrierCodes) {
-    const product = pickProductForCarrier(products, carrierCode, quotedCodes, draft.deliveryLocation)
+    const product = pickProductForCarrier(products, carrierCode, quotedCodes, draft.deliveryLocation, draft.originCountry)
     if (!product) continue
     if (!matchesCarrierName(product.carrier.name, draft.carrierName)) continue
     const realQuote = rawQuotes.find((q) => q.product_code === product.code)

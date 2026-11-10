@@ -71,11 +71,16 @@ ${draft.sender.address1}, ${draft.sender.postalCode} ${draft.sender.city}`} />
         <Row
           icon={MapPin}
           label={tr.cardRecipient}
-          value={`${draft.recipient.fullName}
+          value={`${draft.recipient.company ? `${draft.recipient.company}\n` : ''}${draft.recipient.fullName}
 ${draft.recipient.address1}, ${draft.recipient.postalCode} ${draft.recipient.city}
 ${countryName(draft.originCountry)} → ${countryName(draft.destinationCountry)}`}
         />
-        <Row icon={Truck} label={tr.cardDelivery} value={draft.deliveryLocation === 'service_point' ? (draft.carrierName && SERVICE_POINT_LABEL[draft.carrierName]) || tr.servicePointFallback : tr.homeDelivery} last />
+        <Row
+          icon={Truck}
+          label={tr.cardDelivery}
+          value={draft.deliveryLocation === 'service_point' ? (draft.carrierName && SERVICE_POINT_LABEL[draft.carrierName]) || tr.servicePointFallback : draft.deliveryLocation === 'business' ? tr.businessDelivery : tr.homeDelivery}
+          last
+        />
       </View>
 
       {missingHsCode && (

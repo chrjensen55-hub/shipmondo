@@ -1,4 +1,4 @@
-export type DeliveryLocation = 'home' | 'service_point'
+export type DeliveryLocation = 'home' | 'service_point' | 'business'
 export type BoxSize = { length: number; width: number; height: number }
 
 // Pak & Send's own published price list (DKK, incl. VAT) — applied the same regardless of which
@@ -57,6 +57,7 @@ export function rateForWeight(originCountry: string, destinationCountry: string,
     const brackets = overrideBrackets ?? DOMESTIC_BRACKETS
     const bracket = brackets.find((b) => weightKg <= b.maxWeight)
     if (!bracket) return undefined
+    // Business (erhverv) parcels go to an address like Home, so they use the Home price.
     return location === 'service_point' ? (bracket.service_point ?? undefined) : bracket.home
   }
   const zone = intlZoneFor(destinationCountry)

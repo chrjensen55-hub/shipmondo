@@ -23,7 +23,7 @@ export type ShipmondoShipment = {
 
 export type Address = { fullName: string; company?: string; address1: string; address2?: string; postalCode: string; city: string; country: string; state?: string; email: string; phone: string; instructions?: string }
 export type Parcel = { id: string; weight: number; length: number; width: number; height: number }
-export type DeliveryLocation = 'home' | 'service_point'
+export type DeliveryLocation = 'home' | 'service_point' | 'business'
 export type ShipmentItem = { id: string; description: string; quantity: number; unitValue: number; currency: string; weight: number; originCountry: string; hsCode?: string }
 // Sent to the server so /api/quotes and /api/shipments price using this tablet's active shop
 // location — see src/lib/locations.ts.

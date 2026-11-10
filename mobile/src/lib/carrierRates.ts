@@ -1,7 +1,7 @@
 // Ported from the web app's src/lib/carrierRates.ts — only the client-side UX defaults (weight
 // bracket choices, a reasonable box size per bracket). Actual pricing is computed server-side by
 // /api/quotes; this app never prices anything itself.
-export type DeliveryLocation = 'home' | 'service_point'
+export type DeliveryLocation = 'home' | 'service_point' | 'business'
 export type BoxSize = { length: number; width: number; height: number }
 
 // Fallback domestic brackets, used before the active shop location's own rates have loaded.

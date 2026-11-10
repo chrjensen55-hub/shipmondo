@@ -1,7 +1,7 @@
 import { useRouter } from 'expo-router'
 import { Image, Pressable, Text, View } from 'react-native'
 import { WizardScreen } from '@/components/WizardScreen'
-import { useWizard, SERVICE_POINT_LABEL, firstParcelSize } from '@/lib/wizard-context'
+import { useWizard, SERVICE_POINT_LABEL, firstParcelSize, deliveryOptionsFor } from '@/lib/wizard-context'
 import { useLocations } from '@/lib/location-context'
 import { weightBrackets } from '@/lib/carrierRates'
 import { useLang } from '@/lib/i18n'
@@ -12,6 +12,7 @@ import type { DeliveryLocation } from '@/lib/types'
 /* eslint-disable @typescript-eslint/no-require-imports */
 const servicePointImage = require('../../assets/images/service-point.png')
 const homeDeliveryImage = require('../../assets/images/home-delivery.png')
+const businessDeliveryImage = require('../../assets/images/business-delivery.png')
 /* eslint-enable @typescript-eslint/no-require-imports */
 
 export default function DeliveryStep() {
@@ -28,11 +29,17 @@ export default function DeliveryStep() {
   }
 
   const servicePointLabel = draft.carrierName ? (SERVICE_POINT_LABEL[draft.carrierName] ?? tr.servicePointFallback) : tr.servicePointFallback
+  const cards: Record<DeliveryLocation, { image: number; title: string; subtitle: string }> = {
+    service_point: { image: servicePointImage, title: servicePointLabel, subtitle: tr.servicePointSubtitle },
+    home: { image: homeDeliveryImage, title: tr.homeDelivery, subtitle: tr.homeDeliverySubtitle },
+    business: { image: businessDeliveryImage, title: tr.businessDelivery, subtitle: tr.businessDeliverySubtitle },
+  }
 
   return (
     <WizardScreen title={tr.deliveryHeading} subtitle={tr.deliveryHint} step={2} onContinue={() => router.push('/send/parcel')}>
-      <DeliveryCard selected={draft.deliveryLocation === 'service_point'} onPress={() => select('service_point')} image={servicePointImage} title={servicePointLabel} subtitle={tr.servicePointSubtitle} />
-      <DeliveryCard selected={draft.deliveryLocation === 'home'} onPress={() => select('home')} image={homeDeliveryImage} title={tr.homeDelivery} subtitle={tr.homeDeliverySubtitle} />
+      {deliveryOptionsFor(draft.carrierName).map((location) => (
+        <DeliveryCard key={location} selected={draft.deliveryLocation === location} onPress={() => select(location)} {...cards[location]} />
+      ))}
     </WizardScreen>
   )
 }
