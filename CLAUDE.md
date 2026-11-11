@@ -1,5 +1,7 @@
 @AGENTS.md
 
+Accounts, secrets, setup on a new computer, deploying and publishing app versions: @docs/DEVELOPMENT.md
+
 # Permanent App Development Rules
 
 These are standing project rules. Read them before any change, and treat them as unchanged unless the user explicitly changes them. Do not remove working functionality unless a rule below requires it.

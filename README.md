@@ -2,6 +2,8 @@
 
 A tablet-first customer shipping flow and staff operations dashboard for Pak & Send / Courier Copenhagen. The app is deliberately independent of the existing WordPress site and is ready to deploy to Vercel under `app.pakogsend.dk`.
 
+**Continuing the work on another computer, or as a new person?** Start with [docs/DEVELOPMENT.md](docs/DEVELOPMENT.md): accounts, setup, and how changes and new app versions go live.
+
 ## What is included
 
 - Seven-step guest shipment wizard with refresh-safe non-sensitive progress, multi-parcel calculations, customs-aware contents, live carrier quotes, review, booking, and confirmation.
