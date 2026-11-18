@@ -2,6 +2,7 @@
 import { useEffect, useState } from 'react'
 import Link from 'next/link'
 import type { ShipmondoShipment } from '@/lib/shipmondo/types'
+import { formatDateTime, formatPrice } from '@/lib/format'
 import { ReprintButton } from './shipments/[id]/reprint-button'
 
 type ListState = { status: 'loading' | 'ready' | 'error'; shipments: ShipmondoShipment[]; message?: string }
@@ -39,11 +40,11 @@ export function RecentShipments() {
         <tbody>
           {list.shipments.map((s) => (
             <tr key={s.id}>
-              <td><Link href={`/admin/shipments/${s.id}`}>{s.reference || `#${s.id}`}<small>{new Date(s.created_at).toLocaleString()}</small></Link></td>
+              <td><Link href={`/admin/shipments/${s.id}`}>{s.reference || `#${s.id}`}<small>{formatDateTime(s.created_at)}</small></Link></td>
               <td>{recipientName(s)}</td>
               <td>{destination(s)}</td>
               <td><b>{s.carrier_code}</b><small>{s.description}</small></td>
-              <td>{s.price} DKK</td>
+              <td>{formatPrice(s.price)} DKK</td>
               <td><ReprintButton shipmentId={s.id} compact /></td>
             </tr>
           ))}

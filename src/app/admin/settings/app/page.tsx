@@ -60,12 +60,12 @@ export default async function AppDownloadPage() {
         <section className="setup-card">
           <h2>All versions</h2>
           <p className="hs-help">Every version stays available. Older versions are kept here in case one is needed again.</p>
-          <ul>
+          <ul className="version-list">
             {versions.map((v, i) => (
-              <li key={v.tag} className="flex flex-wrap items-center justify-between gap-3 border-b py-3">
+              <li key={v.tag}>
                 <div>
                   <strong>{v.tag.replace('mobile-v', 'Version ')}</strong>
-                  {i === 0 && <span className="ml-2 rounded bg-green-100 px-2 py-0.5 text-xs font-semibold text-green-800">Latest Version</span>}
+                  {i === 0 && <span className="badge-latest">Latest Version</span>}
                   <div className="hs-help">
                     Published {formatDate(v.publishedAt)} &middot; {Math.round(v.sizeBytes / 1024 / 1024)} MB
                   </div>

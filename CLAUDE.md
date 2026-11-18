@@ -29,6 +29,13 @@ These are standing project rules. Read them before any change, and treat them as
 - While the lookup runs, show "Finding city…". An invalid code shows a plain-language message ("We could not find a Danish city for this postal code…"). Never show raw API errors.
 - Must not break existing carriers, existing shipment creation, or international shipments.
 
+## 2a. Address steps: country first, phone code follows the country
+
+- On the sender and recipient steps the country is the first field. Name, address, e-mail and phone come after it.
+- Choosing a country sets the phone's country code to that country (United Kingdom → +44). Denmark (+45) is the default.
+- The customer can still change the phone's country code by hand. It only changes by itself again when the country is changed again.
+- This works the same in the tablet app (`mobile/src/components/AddressForm.tsx`) and in the web wizard (`AddressStep` in `src/components/customer/send-wizard.tsx`).
+
 ## 3. Final flow: Create → Print Label → Exit → New shipment
 
 - Do not show **Done** before printing.
@@ -50,6 +57,9 @@ These are standing project rules. Read them before any change, and treat them as
 - Keep fonts, spacing, buttons, inputs, cards, radii, shadows, colours, loading states, error states, success states, and confirmation dialogs consistent across all screens.
 - Button hierarchy: primary (main action, e.g. Continue, Create shipment, Print label), secondary (Back, Edit), neutral (Exit, Refresh), destructive (only for permanently deleting or cancelling something). Every button needs default, pressed, disabled, and loading states, and must be easy to tap on a touchscreen.
 - The step bar shows the active step clearly and marks completed steps.
+- When Continue is disabled, one short line above the buttons says what is still needed (for example which fields are empty).
+- Page content stays in one centered column (`CONTENT_MAX_WIDTH` in `mobile/src/lib/layout.ts`), and form fields sit two per row on tablets (`sm:` classes), so the same screens work on phones, tablets and large iPads.
+- The web app (`src/app/globals.css`) uses the same colours as the tablet app (`mobile/tailwind.config.js`). Change both together.
 
 ## 6. Tailwind styling
 
@@ -75,3 +85,4 @@ These are standing project rules. Read them before any change, and treat them as
 7. Exactly the 5 most recent app versions are listed on the download page — no more, no fewer.
 8. Switching the active location changes the prices and carriers customers see, and prices sent to the server match what was shown.
 9. Email and Phone fields stay visible above the keyboard with kiosk mode on and off; kiosk exit code works and blocks after 5 wrong tries.
+10. On the recipient step, choosing another country (e.g. United Kingdom) changes the phone code to that country (+44), and the code can still be changed by hand afterwards.

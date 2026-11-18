@@ -100,6 +100,12 @@ const da = {
   doesNotDeliverSuffix: 'leverer ikke på denne rute. Gå tilbage, og vælg et andet fragtfirma.',
   quoteFetchError: 'Vi kunne ikke hente en fragtpris. Kontakt venligst en medarbejder for hjælp.',
   bookingError: 'Vi kunne ikke oprette forsendelsen. Kontakt venligst en medarbejder for hjælp.',
+  countryFirstHint: 'Vælg først landet, og udfyld derefter resten.',
+  senderCountryLabel: 'Hvilket land sender du fra?',
+  recipientCountryLabel: 'Hvilket land skal pakken sendes til?',
+  countryCodeLabel: 'Landekode',
+  popularCountries: 'Mest brugte',
+  allCountries: 'Alle lande',
 }
 
 const en: Record<keyof typeof da, string> = {
@@ -198,6 +204,12 @@ const en: Record<keyof typeof da, string> = {
   doesNotDeliverSuffix: "doesn't deliver on this route. Please go back and choose a different carrier.",
   quoteFetchError: 'We could not fetch a shipping rate. Please ask a staff member for assistance.',
   bookingError: "We couldn't create the shipment. Please ask a staff member for assistance.",
+  countryFirstHint: 'Choose the country first, then fill in the rest.',
+  senderCountryLabel: 'Which country are you sending from?',
+  recipientCountryLabel: 'Which country is the parcel going to?',
+  countryCodeLabel: 'Country code',
+  popularCountries: 'Most used',
+  allCountries: 'All countries',
 }
 
 export const translations: Record<Lang, typeof da> = { da, en }
@@ -210,7 +222,30 @@ export function useLangCode() {
   return useContext(LangContext)
 }
 
-const countryNamesDa: Record<string, string> = { DK: 'Danmark', SE: 'Sverige', NO: 'Norge', DE: 'Tyskland', NL: 'Holland', FR: 'Frankrig', GB: 'Storbritannien', US: 'USA', CA: 'Canada', AU: 'Australien' }
+// Same Danish names as the tablet app (mobile/src/lib/countryNames.ts).
+const countryNamesDa: Record<string, string> = {
+  DK: 'Danmark', SE: 'Sverige', NO: 'Norge', FI: 'Finland', IS: 'Island', DE: 'Tyskland', NL: 'Holland',
+  BE: 'Belgien', LU: 'Luxembourg', FR: 'Frankrig', ES: 'Spanien', PT: 'Portugal', IT: 'Italien',
+  AT: 'Østrig', CH: 'Schweiz', LI: 'Liechtenstein', PL: 'Polen', CZ: 'Tjekkiet', SK: 'Slovakiet',
+  HU: 'Ungarn', SI: 'Slovenien', HR: 'Kroatien', BA: 'Bosnien-Hercegovina', RS: 'Serbien',
+  ME: 'Montenegro', MK: 'Nordmakedonien', AL: 'Albanien', GR: 'Grækenland', BG: 'Bulgarien',
+  RO: 'Rumænien', MD: 'Moldova', UA: 'Ukraine', BY: 'Hviderusland', RU: 'Rusland', EE: 'Estland',
+  LV: 'Letland', LT: 'Litauen', IE: 'Irland', GB: 'Storbritannien', MT: 'Malta', CY: 'Cypern',
+  TR: 'Tyrkiet', US: 'USA', CA: 'Canada', AU: 'Australien', NZ: 'New Zealand', CN: 'Kina',
+  JP: 'Japan', KR: 'Sydkorea', IN: 'Indien', TH: 'Thailand', VN: 'Vietnam', PH: 'Filippinerne',
+  PK: 'Pakistan', IR: 'Iran', IQ: 'Irak', SY: 'Syrien', LB: 'Libanon', IL: 'Israel', EG: 'Egypten',
+  MA: 'Marokko', TN: 'Tunesien', DZ: 'Algeriet', ZA: 'Sydafrika', BR: 'Brasilien', AR: 'Argentina',
+  MX: 'Mexico', AE: 'Forenede Arabiske Emirater', SA: 'Saudi-Arabien', SO: 'Somalia',
+  AF: 'Afghanistan', NG: 'Nigeria', KE: 'Kenya', ET: 'Etiopien', GH: 'Ghana', ID: 'Indonesien',
+  MY: 'Malaysia', SG: 'Singapore', HK: 'Hongkong', TW: 'Taiwan', LK: 'Sri Lanka', BD: 'Bangladesh',
+  NP: 'Nepal', CL: 'Chile', CO: 'Colombia', PE: 'Peru', CU: 'Cuba', VA: 'Vatikanstaten',
+  MC: 'Monaco', SM: 'San Marino', AD: 'Andorra', GE: 'Georgien', AM: 'Armenien', AZ: 'Aserbajdsjan',
+  KZ: 'Kasakhstan', JO: 'Jordan', KW: 'Kuwait', QA: 'Qatar', BH: 'Bahrain', OM: 'Oman', YE: 'Yemen',
+  ER: 'Eritrea', SD: 'Sudan', LY: 'Libyen',
+}
+
+// Listed first in the country pickers, so the usual destinations are one tap away.
+export const POPULAR_COUNTRIES = ['DK', 'SE', 'NO', 'DE', 'GB', 'NL', 'FR', 'ES', 'IT', 'PL', 'US']
 export function countryName(code: string, fallbackName: string, lang: Lang): string {
   return lang === 'da' ? (countryNamesDa[code] ?? fallbackName) : fallbackName
 }

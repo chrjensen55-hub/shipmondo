@@ -2,6 +2,7 @@ import { AdminShell, Status } from '@/components/admin/admin-shell'
 import { getShipment } from '@/lib/shipmondo/shipments'
 import type { ShipmondoShipment } from '@/lib/shipmondo/types'
 import { ReprintButton } from './reprint-button'
+import { formatDateTime, formatPrice } from '@/lib/format'
 export const dynamic = 'force-dynamic'
 
 async function loadShipment(shipmentId: number): Promise<ShipmondoShipment | null> {
@@ -24,7 +25,7 @@ export default async function Shipment({ params }: { params: Promise<{ id: strin
   const sender = s.parties.find((p) => p.type === 'sender')
   const receiver = s.parties.find((p) => p.type === 'receiver')
   return (
-    <AdminShell title={s.reference || `#${s.id}`} subtitle={new Date(s.created_at).toLocaleString()} active="Shipments">
+    <AdminShell title={s.reference || `#${s.id}`} subtitle={formatDateTime(s.created_at)} active="Shipments">
       <div className="admin-content detail-grid">
         <section className="table-card detail">
           <header>
@@ -34,7 +35,7 @@ export default async function Shipment({ params }: { params: Promise<{ id: strin
           <dl>
             <dt>Carrier</dt><dd>{s.carrier_code} {s.description}</dd>
             <dt>Tracking</dt><dd>{s.external_pkg_no || s.pkg_no}</dd>
-            <dt>Price</dt><dd>{s.price} DKK</dd>
+            <dt>Price</dt><dd>{formatPrice(s.price)} DKK</dd>
             <dt>Recipient</dt><dd>{receiver?.name}<br />{receiver?.address1}, {receiver?.postal_code} {receiver?.city}, {receiver?.country_code}</dd>
             <dt>Sender</dt><dd>{sender?.name}<br />{sender?.address1}, {sender?.postal_code} {sender?.city}, {sender?.country_code}</dd>
             {s.customs && <><dt>Customs</dt><dd>{s.customs.goods.map((g) => g.content).join(', ')}</dd></>}

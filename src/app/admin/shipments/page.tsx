@@ -4,6 +4,7 @@ import Link from 'next/link'
 import { Search } from 'lucide-react'
 import { AdminShell, Status } from '@/components/admin/admin-shell'
 import type { ShipmondoShipment } from '@/lib/shipmondo/types'
+import { formatDateTime, formatPrice } from '@/lib/format'
 export const dynamic = 'force-dynamic'
 
 type ListState = { status: 'loading' | 'ready' | 'error'; shipments: ShipmondoShipment[]; message?: string }
@@ -61,11 +62,11 @@ export default function Shipments() {
                 <tbody>
                   {filtered.map((s) => (
                     <tr key={s.id}>
-                      <td><Link href={`/admin/shipments/${s.id}`}>{s.reference || `#${s.id}`}<small>{new Date(s.created_at).toLocaleString()}</small></Link></td>
+                      <td><Link href={`/admin/shipments/${s.id}`}>{s.reference || `#${s.id}`}<small>{formatDateTime(s.created_at)}</small></Link></td>
                       <td>{recipientName(s)}</td>
                       <td>{destination(s)}</td>
                       <td><b>{s.carrier_code}</b><small>{s.description}</small></td>
-                      <td>{s.price} DKK</td>
+                      <td>{formatPrice(s.price)} DKK</td>
                       <td><Status value="BOOKED" /></td>
                     </tr>
                   ))}
