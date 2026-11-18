@@ -74,6 +74,17 @@ These are standing project rules. Read them before any change, and treat them as
 - Every screen with text fields uses `KeyboardAwareScreen` so the focused field and the Back/Continue bar stay above the keyboard (edge-to-edge and immersive mode do not resize the window).
 - Design reference: `docs/design-reference.png`. Tokens live in `mobile/tailwind.config.js` / `mobile/src/lib/theme.ts`.
 
+## 8. Message Center
+
+- Head office writes to the locations from the website (Admin → Message Center). Each location reads and answers in the tablet app's admin area (Messages tab). There is one thread per location.
+- A message can carry one link. It is shown as a button in the app and in the e-mail, for example to download a new app version.
+- "Also send as e-mail" sends the same message to the location's saved e-mail address. Every e-mail explains where to sign in, and an update message also explains how to install. Never put a password, the settings code or the kiosk exit code in a message template or an e-mail.
+- Tablets report in every 3 minutes. A location counts as online when one of its tablets reported within the last 8 minutes.
+- The statistics are numbers only: shipments, parcels and carrier per location and day. Never store customer names, addresses, e-mail addresses or phone numbers in the Message Center.
+- Counting a booking must never be able to fail or slow down the booking itself.
+- Without the database or the mailbox the pages say "not set up yet". They must not fail.
+- Code: `src/lib/center/` and `src/app/api/center/` (server), `src/app/admin/messages/` (website), `mobile/src/lib/center.ts`, `mobile/src/lib/center-context.tsx` and `mobile/app/admin/messages.tsx` (app).
+
 ## Testing checklist before every release
 
 1. Denmark → Denmark postal code auto-fills the city for several valid codes (e.g. 2730, 2000, 2100, 2800, 8000, 9000). An invalid code shows the friendly message.
@@ -86,3 +97,5 @@ These are standing project rules. Read them before any change, and treat them as
 8. Switching the active location changes the prices and carriers customers see, and prices sent to the server match what was shown.
 9. Email and Phone fields stay visible above the keyboard with kiosk mode on and off; kiosk exit code works and blocks after 5 wrong tries.
 10. On the recipient step, choosing another country (e.g. United Kingdom) changes the phone code to that country (+44), and the code can still be changed by hand afterwards.
+11. A message sent from the website's Message Center shows in the app's Messages tab with its button; the unread count clears after it is opened; an answer from the app shows on the website.
+12. A booking adds to that location's numbers in the Message Center, and the booking works the same when the Message Center database is unreachable.

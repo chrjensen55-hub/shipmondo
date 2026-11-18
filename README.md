@@ -35,7 +35,10 @@ Open `http://localhost:3000` for the customer app or `/admin` for the developmen
 | `SHIPMONDO_API_BASE_URL` | Verified API v3 base URL |
 | `SHIPMONDO_MOCK_MODE` | Set `true` until live integration is configured |
 | `APP_URL` | Public application URL |
-| `AUTH_SECRET` | Future server-side Auth.js secret |
+| `AUTH_SECRET` | Signs the staff login session |
+| `ADMIN_USERNAME`, `ADMIN_EMAIL`, `ADMIN_PASSWORD` | The staff login |
+| `KV_REST_API_URL`, `KV_REST_API_TOKEN` | Message Center database (Upstash Redis, added by Vercel Storage) |
+| `SMTP_HOST`, `SMTP_PORT`, `SMTP_USER`, `SMTP_PASS`, `MAIL_FROM` | Mailbox that sends the Message Center e-mails |
 
 Never prefix credentials with `NEXT_PUBLIC_`. `.env` files are ignored; `.env.example` is intentionally tracked.
 
