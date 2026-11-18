@@ -1,39 +1,14 @@
 import { Download, Smartphone } from 'lucide-react'
 import { AdminShell } from '@/components/admin/admin-shell'
+import { RELEASES_PAGE_URL, getAppVersions } from '@/lib/appVersions'
 export const dynamic = 'force-dynamic'
-
-// Every published mobile release stays listed here: a new version is ADDED to this page and older
-// versions are never removed or replaced (see CLAUDE.md, rule 1). The newest one is marked Latest.
-const RELEASES_API_URL = 'https://api.github.com/repos/chrjensen55-hub/shipmondo/releases?per_page=100'
-const RELEASES_PAGE_URL = 'https://github.com/chrjensen55-hub/shipmondo/releases'
-
-type GitHubAsset = { name: string; browser_download_url: string; size: number }
-type GitHubRelease = { tag_name: string; name: string | null; published_at: string; draft: boolean; prerelease: boolean; assets: GitHubAsset[] }
-
-type AppVersion = { tag: string; title: string; publishedAt: string; downloadUrl: string; sizeBytes: number }
-
-async function getAppVersions(): Promise<AppVersion[]> {
-  try {
-    const res = await fetch(RELEASES_API_URL, { next: { revalidate: 300 } })
-    if (!res.ok) return []
-    const releases = (await res.json()) as GitHubRelease[]
-    return releases
-      .filter((r) => !r.draft && r.tag_name.startsWith('mobile-v'))
-      .map((r) => {
-        const apk = r.assets.find((a) => a.name.endsWith('.apk'))
-        return apk ? { tag: r.tag_name, title: r.name ?? r.tag_name, publishedAt: r.published_at, downloadUrl: apk.browser_download_url, sizeBytes: apk.size } : null
-      })
-      .filter((v): v is AppVersion => v !== null)
-      .sort((a, b) => Date.parse(b.publishedAt) - Date.parse(a.publishedAt))
-  } catch {
-    return []
-  }
-}
 
 function formatDate(iso: string) {
   return new Date(iso).toLocaleString('en-GB', { dateStyle: 'long', timeStyle: 'short' })
 }
 
+// Lists every published app version that still exists as a GitHub release (see CLAUDE.md, rule 1).
+// The newest one is marked Latest.
 export default async function AppDownloadPage() {
   const versions = await getAppVersions()
   const latest = versions[0]

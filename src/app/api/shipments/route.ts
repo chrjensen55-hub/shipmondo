@@ -5,8 +5,20 @@ import { createShipment } from '@/lib/shipmondo/shipments'
 import { ShipmondoClient } from '@/lib/shipmondo/client'
 import { registeredLetterError } from '@/lib/registeredLetter'
 import type { ShippingQuote } from '@/lib/types'
+import { after } from 'next/server'
+import { getKv } from '@/lib/center/kv'
+import { LOCATION_ID_RE, UNKNOWN_LOCATION_ID, WEB_LOCATION_ID, recordShipment } from '@/lib/center/center'
 
 const completed = new Map<string, { reference: string; tracking: string; shipmentId?: number }>()
+
+// Which location's counters a booking belongs to. Tablets from app version 1.10.0 name their
+// location in a header; the website's own wizard signs in with a cookie; anything else is an
+// older app version.
+function bookingLocation(request: Request): string {
+  const header = request.headers.get('x-location-id') ?? ''
+  if (LOCATION_ID_RE.test(header)) return header
+  return request.headers.get('cookie') ? WEB_LOCATION_ID : UNKNOWN_LOCATION_ID
+}
 
 export async function POST(request: Request) {
   try {
@@ -64,6 +76,14 @@ export async function POST(request: Request) {
     }
 
     completed.set(input.idempotencyKey, result)
+    // Numbers for the Message Center (parcels per location and day, carrier used). Runs after the
+    // answer is sent and can never fail the booking. Only real bookings are counted.
+    if (live) {
+      const kv = getKv()
+      // The carrier as the customer chose it (GLS, PostNord, DAO, Bring), not Shipmondo's longer name.
+      const counted = { locationId: bookingLocation(request), carrier: input.carrierName || quote.carrier, parcels: input.parcels.length }
+      if (kv) after(() => recordShipment(kv, counted).catch((err) => console.error('Could not count the shipment', err)))
+    }
     return Response.json({ data: result }, { status: 201 })
   } catch {
     return Response.json({ error: { code: 'INVALID_REQUEST', message: 'Please check the shipment details.' } }, { status: 400 })
