@@ -14,6 +14,7 @@ import { getSettingsPin, setSettingsPin } from '@/lib/settingsPin'
 import { getDanadresseKey, setDanadresseKey, clearDanadresseKey } from '@/lib/danadresseConfig'
 import { applyTextSize, loadTextSize, saveTextSize, TEXT_SIZES, type TextSize } from '@/lib/textSize'
 import { useLocations } from '@/lib/location-context'
+import { APP_VERSION } from '@/lib/center'
 import { CONTENT_MAX_WIDTH } from '@/lib/layout'
 import { api } from '@/lib/api'
 
@@ -325,6 +326,8 @@ export default function SettingsScreen() {
           {pinSaved && <Text className="text-sm font-semibold text-success">Code updated.</Text>}
           <Button label="Update code" onPress={savePin} disabled={currentPin.length !== 4 || newPin.length !== 4} />
         </View>
+
+        <Text className="text-center text-sm text-muted">Pak &amp; Send app version {APP_VERSION || 'unknown'}</Text>
       </View>
       <LangContext.Provider value="en">
       <KioskCodeDialog

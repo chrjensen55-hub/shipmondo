@@ -7,6 +7,7 @@ import { Menu, Home, RotateCcw, Lock, Settings as SettingsIcon } from 'lucide-re
 import { WizardProvider, useWizard, hasActiveShipmentData } from '@/lib/wizard-context'
 import { getSettingsPin } from '@/lib/settingsPin'
 import { markTouch, msSinceTouch, nowMs, useKiosk } from '@/lib/kiosk'
+import { useCenter } from '@/lib/center-context'
 import { LangContext, DEFAULT_LANG, LANG_STORAGE_KEY, useLang, type Lang } from '@/lib/i18n'
 import { LanguageSwitch } from '@/components/LanguageSwitch'
 import { ConfirmDialog } from '@/components/ConfirmDialog'
@@ -22,6 +23,7 @@ function HamburgerMenu() {
   const tr = useLang()
   const { draft, reset } = useWizard()
   const kiosk = useKiosk()
+  const { unread } = useCenter()
   const [kioskCodeOpen, setKioskCodeOpen] = useState(false)
   const [menuOpen, setMenuOpen] = useState(false)
   const [pinPromptOpen, setPinPromptOpen] = useState(false)
@@ -98,6 +100,8 @@ function HamburgerMenu() {
         style={{ top: insets.top + 20 }}
       >
         <Menu size={22} color="#0F1E33" />
+        {/* Staff see at a glance that head office has written; it means nothing to a customer. */}
+        {unread > 0 && <View className="absolute right-0.5 top-0.5 h-3 w-3 rounded-full border-2 border-white bg-orange" />}
       </Pressable>
 
       <Modal visible={menuOpen} transparent animationType="fade" onRequestClose={closeAll}>
@@ -105,7 +109,7 @@ function HamburgerMenu() {
           <View className="absolute left-3 min-w-[200px] rounded-md border border-line bg-white py-1.5 shadow-lg" style={{ top: insets.top + 72 }}>
             <MenuItem icon={<Home size={18} color="#0F1E33" />} label={tr.menuHome} onPress={goHome} />
             <MenuItem icon={<RotateCcw size={18} color="#0F1E33" />} label={tr.menuRefresh} onPress={requestRefresh} />
-            <MenuItem icon={<SettingsIcon size={18} color="#0F1E33" />} label={tr.menuSettings} onPress={openSettings} />
+            <MenuItem icon={<SettingsIcon size={18} color="#0F1E33" />} label={tr.menuSettings} onPress={openSettings} badge={unread} />
             {kiosk.featureEnabled && <MenuItem icon={<Lock size={18} color="#0F1E33" />} label={kiosk.active ? tr.kioskDisable : tr.kioskActivate} onPress={toggleKiosk} />}
           </View>
         </Pressable>
@@ -175,11 +179,16 @@ function TopBarBackdrop() {
   return <View className="absolute left-0 right-0 top-0 z-40 bg-cream" style={{ height: insets.top + 64 }} />
 }
 
-function MenuItem({ icon, label, onPress }: { icon: React.ReactNode; label: string; onPress: () => void }) {
+function MenuItem({ icon, label, onPress, badge = 0 }: { icon: React.ReactNode; label: string; onPress: () => void; badge?: number }) {
   return (
     <Pressable onPress={onPress} accessibilityRole="menuitem" className="min-h-[48px] flex-row items-center gap-3 px-4 py-3.5 active:bg-cream">
       {icon}
-      <Text className="text-base font-semibold text-ink">{label}</Text>
+      <Text className="flex-1 text-base font-semibold text-ink">{label}</Text>
+      {badge > 0 && (
+        <View className="h-5 min-w-[20px] items-center justify-center rounded-full bg-orange px-1.5">
+          <Text className="text-xs font-bold text-white">{badge}</Text>
+        </View>
+      )}
     </Pressable>
   )
 }

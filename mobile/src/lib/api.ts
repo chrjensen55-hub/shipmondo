@@ -1,4 +1,5 @@
 import * as SecureStore from 'expo-secure-store'
+import Constants from 'expo-constants'
 import { getShipmondoConfig } from './shipmondoConfig'
 import { getDanadresseKey } from './danadresseConfig'
 
@@ -36,6 +37,13 @@ export function registerUnauthorizedHandler(handler: () => void) {
   onUnauthorized = handler
 }
 
+// The active shop location, set by CenterProvider. Sent with every request so the server can count
+// bookings for the right location (numbers only, see the Message Center).
+let requestLocation: { id: string; name: string } | null = null
+export function setRequestLocation(id: string, name: string) {
+  requestLocation = { id, name }
+}
+
 type ApiResult<T> = { data: T } | { error: { code?: string; message: string } }
 
 export async function api<T>(path: string, init?: RequestInit): Promise<T> {
@@ -49,6 +57,12 @@ export async function api<T>(path: string, init?: RequestInit): Promise<T> {
     headers.set('x-shipmondo-api-key', shipmondoConfig.apiKey)
   }
   if (danadresseKey) headers.set('x-danadresse-api-key', danadresseKey)
+  if (requestLocation) {
+    headers.set('x-location-id', requestLocation.id)
+    // Header values must be plain ASCII, and names such as "Borups Allé" are not.
+    headers.set('x-location-name', encodeURIComponent(requestLocation.name))
+  }
+  headers.set('x-app-version', Constants.expoConfig?.version ?? '')
 
   const res = await fetch(`${API_BASE_URL}${path}`, { ...init, headers })
   const body = (await res.json().catch(() => null)) as ApiResult<T> | null
