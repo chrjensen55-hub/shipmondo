@@ -168,9 +168,16 @@ function HamburgerMenu() {
   )
 }
 
+// A plain strip behind the floating menu and language buttons, so page content scrolls out of
+// sight under them instead of showing through between the buttons.
+function TopBarBackdrop() {
+  const insets = useSafeAreaInsets()
+  return <View className="absolute left-0 right-0 top-0 z-40 bg-cream" style={{ height: insets.top + 64 }} />
+}
+
 function MenuItem({ icon, label, onPress }: { icon: React.ReactNode; label: string; onPress: () => void }) {
   return (
-    <Pressable onPress={onPress} accessibilityRole="menuitem" className="flex-row items-center gap-3 px-4 py-3.5 active:bg-cream">
+    <Pressable onPress={onPress} accessibilityRole="menuitem" className="min-h-[48px] flex-row items-center gap-3 px-4 py-3.5 active:bg-cream">
       {icon}
       <Text className="text-base font-semibold text-ink">{label}</Text>
     </Pressable>
@@ -264,6 +271,7 @@ export default function SendLayout() {
       <WizardProvider>
         <View className="flex-1" onTouchStart={markTouch}>
           <Stack screenOptions={{ headerShown: false, animation: 'slide_from_right' }} />
+          <TopBarBackdrop />
           <HamburgerMenu />
           <LanguageSwitch lang={lang} onChange={changeLang} />
         </View>

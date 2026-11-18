@@ -3,6 +3,7 @@ import type { Address, DeliveryLocation, ShipmentDraft, ShippingQuote } from './
 import { boxSizeFor, weightBrackets, type DomesticBracket } from './carrierRates'
 import { useLocations } from './location-context'
 import { defaultLocations } from './locations'
+import { hasPhoneDigits } from './dialCodes'
 
 export const CARRIERS = [
   { name: 'DAO', tagline: 'Fast Danish parcel delivery' },
@@ -101,7 +102,8 @@ export function hasActiveShipmentData(draft: ShipmentDraft): boolean {
       draft.sender.address1.trim() ||
       draft.recipient.fullName.trim() ||
       draft.recipient.address1.trim() ||
-      draft.recipient.phone.trim() ||
+      // The country code alone (set when a country is chosen) is not something the customer typed.
+      hasPhoneDigits(draft.recipient.phone) ||
       draft.recipient.email.trim() ||
       draft.items.length > 0,
   )

@@ -46,6 +46,16 @@ export default function RecipientStep() {
   const letterInDenmark = !!draft.registeredLetter && a.country === 'DK'
   const business = draft.deliveryLocation === 'business'
   const valid = [a.fullName, a.address1, a.postalCode, a.city, a.email, ...(business ? [a.company ?? ''] : [])].every(required) && hasPhoneDigits(a.phone) && !letterInDenmark
+  // Names the fields that are still empty, so a greyed-out Continue is never a puzzle.
+  const missing = [
+    !required(a.fullName) && tr.fullName,
+    business && !required(a.company ?? '') && tr.company,
+    !required(a.address1) && tr.addressLine1,
+    !required(a.postalCode) && tr.postalCode,
+    !required(a.city) && tr.city,
+    !required(a.email) && tr.email,
+    !hasPhoneDigits(a.phone) && tr.mobilePhone,
+  ].filter(Boolean)
 
   async function getQuote() {
     setLoading(true)
@@ -69,8 +79,29 @@ export default function RecipientStep() {
   }
 
   return (
-    <WizardScreen title={tr.recipientTitle} subtitle={tr.recipientHint} step={5} icon={recipientImage} onContinue={getQuote} continueLabel={loading ? tr.checkingRate : tr.continueAction} continueDisabled={!valid || loading} continueLoading={loading} error={error}>
-      <AddressForm value={draft.recipient} onChange={onChange} noEmail={noEmail} onToggleNoEmail={toggleNoEmail} noPhone={noPhone} onToggleNoPhone={toggleNoPhone} countryError={letterInDenmark ? tr.letterDenmarkError : undefined} companyRequired={business} />
+    <WizardScreen
+      title={tr.recipientTitle}
+      subtitle={tr.recipientHint}
+      step={5}
+      icon={recipientImage}
+      onContinue={getQuote}
+      continueLabel={loading ? tr.checkingRate : tr.continueAction}
+      continueDisabled={!valid || loading}
+      continueLoading={loading}
+      continueHint={missing.length ? `${tr.missingPrefix} ${missing.join(', ')}` : undefined}
+      error={error}
+    >
+      <AddressForm
+        value={draft.recipient}
+        onChange={onChange}
+        noEmail={noEmail}
+        onToggleNoEmail={toggleNoEmail}
+        noPhone={noPhone}
+        onToggleNoPhone={toggleNoPhone}
+        countryError={letterInDenmark ? tr.letterDenmarkError : undefined}
+        countryLabel={tr.recipientCountryLabel}
+        companyRequired={business}
+      />
     </WizardScreen>
   )
 }

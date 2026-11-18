@@ -1,9 +1,11 @@
-import { useState, type Ref } from 'react'
-import { FlatList, Modal, Pressable, Text, TextInput, View } from 'react-native'
+import { useMemo, useState, type Ref } from 'react'
+import { Pressable, Text, TextInput, View } from 'react-native'
 import { ChevronDown } from 'lucide-react-native'
 import { useEnsureVisible } from './KeyboardAwareScreen'
+import { ListSheet, type ListSheetItem } from './ListSheet'
 import { dialCodes, joinPhone, splitPhone, DEFAULT_DIAL_CODE } from '@/lib/dialCodes'
-import { useLang } from '@/lib/i18n'
+import { POPULAR_COUNTRIES, countrySearchText, localCountryName } from '@/lib/countryNames'
+import { useLang, useLangCode } from '@/lib/i18n'
 
 export function PhoneField({
   label,
@@ -13,6 +15,7 @@ export function PhoneField({
   inputRef,
   returnKeyType,
   onSubmitEditing,
+  countryHint,
 }: {
   label: string
   value: string
@@ -21,13 +24,27 @@ export function PhoneField({
   inputRef?: Ref<TextInput>
   returnKeyType?: 'next' | 'done'
   onSubmitEditing?: () => void
+  // The address country. Several countries share one code (+1, +7); when the number's code matches
+  // this country, its flag is shown instead of the first country with that code.
+  countryHint?: string
 }) {
   const tr = useLang()
+  const lang = useLangCode()
   const ensureVisible = useEnsureVisible()
   const [pickerOpen, setPickerOpen] = useState(false)
   const [focused, setFocused] = useState(false)
   const { countryCode, local } = splitPhone(value)
-  const current = dialCodes.find((d) => d.code === countryCode) ?? dialCodes.find((d) => d.code === DEFAULT_DIAL_CODE)!
+  const parsed = dialCodes.find((d) => d.code === countryCode) ?? dialCodes.find((d) => d.code === DEFAULT_DIAL_CODE)!
+  const hinted = countryHint ? dialCodes.find((d) => d.code === countryHint) : undefined
+  const current = hinted && hinted.dial === parsed.dial ? hinted : parsed
+
+  const items = useMemo<ListSheetItem[]>(
+    () =>
+      dialCodes
+        .map((d) => ({ value: d.code, label: localCountryName(d.code, lang), leading: d.flag, trailing: d.dial, searchText: countrySearchText(d.code) }))
+        .sort((a, b) => a.label.localeCompare(b.label, lang)),
+    [lang],
+  )
 
   return (
     <View className="gap-1.5">
@@ -35,10 +52,10 @@ export function PhoneField({
       <View className="flex-row gap-2">
         <Pressable
           accessibilityRole="button"
-          accessibilityLabel={tr.countryCodeSheetTitle}
+          accessibilityLabel={`${tr.countryCodeSheetTitle}: ${current.dial}`}
           disabled={!editable}
           onPress={() => setPickerOpen(true)}
-          className={`min-h-[48px] flex-row items-center gap-1 rounded-[8px] border-[1.5px] border-line px-3 ${editable ? 'bg-white' : 'bg-[#EEF2F6] opacity-60'}`}
+          className={`min-h-[48px] flex-row items-center gap-1 rounded-[8px] border-[1.5px] border-line px-3 ${editable ? 'bg-white active:bg-cream' : 'bg-[#EEF2F6] opacity-60'}`}
         >
           <Text className="text-lg">{current.flag}</Text>
           <Text className="text-[15px] font-semibold text-ink">{current.dial}</Text>
@@ -48,7 +65,7 @@ export function PhoneField({
           ref={inputRef}
           className={`min-h-[48px] flex-1 rounded-[8px] border-[1.5px] px-3.5 text-[15px] text-ink ${focused ? 'border-ocean' : 'border-line'} ${editable ? 'bg-white' : 'bg-[#EEF2F6] opacity-60'}`}
           value={local}
-          onChangeText={(v) => onChange(joinPhone(countryCode, v))}
+          onChangeText={(v) => onChange(joinPhone(current.code, v))}
           keyboardType="phone-pad"
           returnKeyType={returnKeyType ?? 'done'}
           onSubmitEditing={onSubmitEditing}
@@ -65,34 +82,18 @@ export function PhoneField({
         />
       </View>
 
-      <Modal visible={pickerOpen} transparent animationType="slide" onRequestClose={() => setPickerOpen(false)}>
-        <Pressable className="flex-1 justify-end bg-ink/40" onPress={() => setPickerOpen(false)}>
-          <Pressable className="max-h-[70%] rounded-t-lg bg-white pt-4" onPress={(e) => e.stopPropagation()}>
-            <Text className="px-5 pb-2 text-lg font-bold text-ink">{tr.countryCodeSheetTitle}</Text>
-            <FlatList
-              data={dialCodes}
-              keyExtractor={(d) => d.code}
-              className="px-2"
-              renderItem={({ item }) => (
-                <Pressable
-                  accessibilityRole="button"
-                  className="flex-row items-center justify-between border-b border-line px-3 py-3.5 active:bg-cream"
-                  onPress={() => {
-                    onChange(joinPhone(item.code, local))
-                    setPickerOpen(false)
-                  }}
-                >
-                  <View className="flex-shrink flex-row items-center gap-2">
-                    <Text className="text-lg">{item.flag}</Text>
-                    <Text className="flex-shrink text-base text-ink">{item.name}</Text>
-                  </View>
-                  <Text className="font-bold text-muted">{item.dial}</Text>
-                </Pressable>
-              )}
-            />
-          </Pressable>
-        </Pressable>
-      </Modal>
+      <ListSheet
+        visible={pickerOpen}
+        title={tr.countryCodeSheetTitle}
+        items={items}
+        selectedValue={current.code}
+        onSelect={(code) => onChange(joinPhone(code, local))}
+        onClose={() => setPickerOpen(false)}
+        searchable
+        pinnedValues={POPULAR_COUNTRIES}
+        pinnedTitle={tr.popularCountries}
+        restTitle={tr.allCountries}
+      />
     </View>
   )
 }

@@ -7,6 +7,7 @@ import { ChevronLeft, ChevronRight, Check } from 'lucide-react-native'
 import { Button } from '@/components/Button'
 import { TextField } from '@/components/TextField'
 import { useLocations } from '@/lib/location-context'
+import { CONTENT_MAX_WIDTH } from '@/lib/layout'
 import type { CarrierName, LocationConfig, RateBracket } from '@/lib/locations'
 
 const CARRIER_NAMES: CarrierName[] = ['DAO', 'Bring', 'PostNord', 'GLS']
@@ -44,8 +45,9 @@ export default function LocationScreen() {
 
   if (editingId && draft) {
     return (
-      <KeyboardAwareScreen contentContainerClassName="gap-4 p-5 pb-10">
-          <Pressable accessibilityRole="button" onPress={() => setEditingId(null)} className="flex-row items-center gap-1 py-1">
+      <KeyboardAwareScreen contentContainerClassName="p-5 pb-10">
+        <View className={`w-full ${CONTENT_MAX_WIDTH} gap-4 self-center`}>
+          <Pressable accessibilityRole="button" onPress={() => setEditingId(null)} hitSlop={8} className="flex-row items-center gap-1 self-start py-1 active:opacity-60">
             <ChevronLeft size={18} color="#0B4F82" />
             <Text className="text-base font-semibold text-ocean">All locations</Text>
           </Pressable>
@@ -105,16 +107,24 @@ export default function LocationScreen() {
             })}
           </View>
 
-          {saved && <Text className="text-sm font-semibold text-success">Saved.</Text>}
-          <Button label="Save prices" onPress={save} />
+          {saved && (
+            <View className="rounded-sm bg-success-bg p-3">
+              <Text className="text-center text-sm font-semibold text-success" accessibilityRole="alert">
+                Saved.
+              </Text>
+            </View>
+          )}
+          <Button label="Save prices" size="lg" onPress={save} />
+        </View>
       </KeyboardAwareScreen>
     )
   }
 
   return (
     <SafeAreaView className="flex-1 bg-cream" edges={['top']}>
-      <ScrollView className="flex-1" contentContainerClassName="gap-3 p-5 pb-10">
-        <Pressable accessibilityRole="button" onPress={() => router.back()} className="flex-row items-center gap-1 py-1">
+      <ScrollView className="flex-1" contentContainerClassName="p-5 pb-10">
+       <View className={`w-full ${CONTENT_MAX_WIDTH} gap-3 self-center`}>
+        <Pressable accessibilityRole="button" onPress={() => router.back()} hitSlop={8} className="flex-row items-center gap-1 self-start py-1 active:opacity-60">
           <ChevronLeft size={18} color="#0B4F82" />
           <Text className="text-base font-semibold text-ocean">Settings</Text>
         </Pressable>
@@ -130,18 +140,24 @@ export default function LocationScreen() {
               key={location.id}
               accessibilityRole="button"
               onPress={() => openLocation(location)}
-              className={`flex-row items-center justify-between rounded-md border-2 bg-white p-4 active:bg-cream ${active ? 'border-ocean bg-mint' : 'border-line'}`}
+              className={`min-h-[64px] flex-row items-center justify-between gap-3 rounded-md border-2 p-4 active:bg-cream ${active ? 'border-ocean bg-mint' : 'border-line bg-white'}`}
             >
-              <View className="gap-0.5">
+              <View className="flex-1 gap-0.5">
                 <Text className="text-base font-bold text-ink">{location.name}</Text>
                 <Text className="text-sm text-muted">
-                  {carriersOn} of {CARRIER_NAMES.length} carriers on{active ? ' · Active' : ''}
+                  {carriersOn} of {CARRIER_NAMES.length} carriers on
                 </Text>
               </View>
+              {active && (
+                <View className="rounded-full bg-ocean px-2.5 py-1">
+                  <Text className="text-xs font-bold text-white">Active</Text>
+                </View>
+              )}
               <ChevronRight size={20} color="#6B7280" />
             </Pressable>
           )
         })}
+       </View>
       </ScrollView>
     </SafeAreaView>
   )

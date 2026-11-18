@@ -14,6 +14,7 @@ import { getSettingsPin, setSettingsPin } from '@/lib/settingsPin'
 import { getDanadresseKey, setDanadresseKey, clearDanadresseKey } from '@/lib/danadresseConfig'
 import { applyTextSize, loadTextSize, saveTextSize, TEXT_SIZES, type TextSize } from '@/lib/textSize'
 import { useLocations } from '@/lib/location-context'
+import { CONTENT_MAX_WIDTH } from '@/lib/layout'
 import { api } from '@/lib/api'
 
 type TestState = { status: 'idle' | 'testing' | 'ok' | 'error'; message?: string }
@@ -162,10 +163,14 @@ export default function SettingsScreen() {
   const shipmondoValid = baseUrl.trim().length > 0 && username.trim().length > 0 && apiKey.trim().length > 0
 
   return (
-    <KeyboardAwareScreen contentContainerClassName="gap-4 p-5 pb-10">
-        <Text className="text-[28px] font-semibold text-ink" accessibilityRole="header">
-          Settings
-        </Text>
+    <KeyboardAwareScreen contentContainerClassName="p-5 pb-10">
+      <View className={`w-full ${CONTENT_MAX_WIDTH} gap-4 self-center`}>
+        <View className="gap-0.5">
+          <Text className="text-[28px] font-semibold text-ink" accessibilityRole="header">
+            Settings
+          </Text>
+          <Text className="text-sm text-muted">Set up this tablet: location, kiosk lock, text size and accounts.</Text>
+        </View>
 
         <View className="gap-3 rounded-md border border-line bg-white p-4">
           <View className="flex-row items-center gap-2">
@@ -320,6 +325,7 @@ export default function SettingsScreen() {
           {pinSaved && <Text className="text-sm font-semibold text-success">Code updated.</Text>}
           <Button label="Update code" onPress={savePin} disabled={currentPin.length !== 4 || newPin.length !== 4} />
         </View>
+      </View>
       <LangContext.Provider value="en">
       <KioskCodeDialog
         visible={removeCodeOpen}

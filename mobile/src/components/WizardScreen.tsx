@@ -4,16 +4,21 @@ import { Button } from './Button'
 import { KeyboardAwareScreen } from './KeyboardAwareScreen'
 import { StepProgress } from './StepProgress'
 import { useLang } from '@/lib/i18n'
+import { CONTENT_MAX_WIDTH } from '@/lib/layout'
 
 type Props = ScrollViewProps & {
   title: string
   subtitle?: string
   step?: number
   icon?: ImageSourcePropType
+  // More than one picture beside the heading (the parcel step shows weight and size).
+  icons?: ImageSourcePropType[]
   onContinue?: () => void
   continueLabel?: string
   continueDisabled?: boolean
   continueLoading?: boolean
+  // One short line above the buttons that says what is still needed while Continue is disabled.
+  continueHint?: string
   error?: string
   hideBack?: boolean
   children: React.ReactNode
@@ -22,38 +27,54 @@ type Props = ScrollViewProps & {
 // Shared frame for every wizard step: progress at the top, one clear heading with a grey subtitle,
 // the step's content, and a fixed action bar with Back (secondary) and a wider Continue (primary).
 // The frame keeps the action bar and the focused field above the on-screen keyboard.
-export function WizardScreen({ title, subtitle, step, icon, onContinue, continueLabel, continueDisabled, continueLoading, error, hideBack, children, ...scrollProps }: Props) {
+export function WizardScreen({ title, subtitle, step, icon, icons, onContinue, continueLabel, continueDisabled, continueLoading, continueHint, error, hideBack, children, ...scrollProps }: Props) {
   const router = useRouter()
   const tr = useLang()
   const showBack = !hideBack && router.canGoBack()
+  const pictures = icons ?? (icon ? [icon] : [])
   const footer =
     showBack || onContinue ? (
-      <View className="flex-row items-center gap-3 border-t border-line bg-white px-6 py-4">
-        <View className="flex-[2]">{showBack ? <Button label={tr.backAction} variant="secondary" onPress={() => router.back()} /> : null}</View>
-        <View className="flex-[3]">
-          {onContinue ? <Button label={continueLabel ?? tr.continueAction} onPress={onContinue} disabled={continueDisabled} loading={continueLoading} /> : null}
+      <View className="border-t border-line bg-white px-6 pb-4 pt-3">
+        <View className={`w-full ${CONTENT_MAX_WIDTH} gap-2 self-center`}>
+          {continueDisabled && !continueLoading && continueHint ? <Text className="text-center text-sm text-muted">{continueHint}</Text> : null}
+          <View className="flex-row items-center gap-3">
+            <View className="flex-[2]">{showBack ? <Button label={tr.backAction} variant="secondary" size="lg" onPress={() => router.back()} /> : null}</View>
+            <View className="flex-[3]">
+              {onContinue ? <Button label={continueLabel ?? tr.continueAction} size="lg" onPress={onContinue} disabled={continueDisabled} loading={continueLoading} /> : null}
+            </View>
+          </View>
         </View>
       </View>
     ) : null
 
   return (
-    <KeyboardAwareScreen footer={footer} contentContainerClassName="gap-4 px-6 pb-8 pt-20" {...scrollProps}>
-      {step ? <StepProgress step={step} /> : null}
-      {icon ? <Image source={icon} resizeMode="contain" className="h-20 w-20 self-center" alt="" /> : null}
-      <View className="gap-1">
-        <Text className="text-2xl font-bold text-ink" accessibilityRole="header">
-          {title}
-        </Text>
-        {subtitle ? <Text className="text-sm text-muted">{subtitle}</Text> : null}
-      </View>
-      {children}
-      {error ? (
-        <View className="rounded-sm bg-error-bg p-3.5">
-          <Text className="text-sm font-medium text-error" accessibilityRole="alert">
-            {error}
-          </Text>
+    <KeyboardAwareScreen footer={footer} contentContainerClassName="px-6 pb-8 pt-20" {...scrollProps}>
+      <View className={`w-full ${CONTENT_MAX_WIDTH} gap-4 self-center`}>
+        {step ? <StepProgress step={step} /> : null}
+        <View className="gap-3 sm:flex-row sm:items-center sm:gap-4">
+          {pictures.length > 0 && (
+            <View className="flex-row justify-center gap-3">
+              {pictures.map((source, i) => (
+                <Image key={i} source={source} resizeMode="contain" className="h-16 w-16" alt="" />
+              ))}
+            </View>
+          )}
+          <View className="gap-1 sm:flex-1">
+            <Text className="text-2xl font-bold text-ink sm:text-3xl" accessibilityRole="header">
+              {title}
+            </Text>
+            {subtitle ? <Text className="text-sm text-muted sm:text-base">{subtitle}</Text> : null}
+          </View>
         </View>
-      ) : null}
+        {children}
+        {error ? (
+          <View className="rounded-sm bg-error-bg p-3.5">
+            <Text className="text-sm font-medium text-error" accessibilityRole="alert">
+              {error}
+            </Text>
+          </View>
+        ) : null}
+      </View>
     </KeyboardAwareScreen>
   )
 }

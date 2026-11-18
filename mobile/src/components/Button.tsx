@@ -1,10 +1,13 @@
 import { ActivityIndicator, Pressable, Text, type PressableProps } from 'react-native'
 
 type Variant = 'primary' | 'secondary' | 'neutral' | 'destructive'
+type Size = 'md' | 'lg'
 
 type Props = PressableProps & {
   label: string
   variant?: Variant
+  // lg is for the main action bar and other single, important actions on a counter tablet.
+  size?: Size
   loading?: boolean
 }
 
@@ -25,11 +28,22 @@ const labelClass: Record<Variant, string> = {
   destructive: 'text-error',
 }
 
-export function Button({ label, variant = 'primary', loading, disabled, accessibilityLabel, ...rest }: Props) {
+const sizeClass: Record<Size, string> = {
+  md: 'min-h-[48px] px-6',
+  lg: 'min-h-[54px] px-6',
+}
+
+const labelSizeClass: Record<Size, string> = {
+  md: 'text-base font-medium',
+  lg: 'text-lg font-semibold',
+}
+
+export function Button({ label, variant = 'primary', size = 'md', loading, disabled, accessibilityLabel, ...rest }: Props) {
   const inactive = disabled || loading
+  const base = `${sizeClass[size]} flex-row items-center justify-center rounded-[10px]`
   // Disabled uses a solid, deliberately muted fill rather than a translucent variant color — reads
   // clearly as "not available right now" instead of a dimmed version of the action.
-  const className = disabled && !loading ? 'min-h-[48px] flex-row items-center justify-center rounded-[10px] px-6 bg-disabled' : `min-h-[48px] flex-row items-center justify-center rounded-[10px] px-6 ${containerClass[variant]} ${loading ? 'opacity-70' : ''}`
+  const className = disabled && !loading ? `${base} bg-disabled` : `${base} ${containerClass[variant]} ${loading ? 'opacity-70' : ''}`
   return (
     <Pressable
       disabled={inactive}
@@ -42,7 +56,7 @@ export function Button({ label, variant = 'primary', loading, disabled, accessib
       {loading ? (
         <ActivityIndicator color={variant === 'primary' ? '#ffffff' : '#0B4F82'} />
       ) : (
-        <Text className={`text-base font-medium ${disabled ? 'text-white' : labelClass[variant]}`}>{label}</Text>
+        <Text className={`text-center ${labelSizeClass[size]} ${disabled ? 'text-white' : labelClass[variant]}`}>{label}</Text>
       )}
     </Pressable>
   )

@@ -51,15 +51,15 @@ function DeliveryCard({ selected, onPress, image, title, subtitle }: { selected:
       accessibilityState={{ selected }}
       accessibilityLabel={`${title}. ${subtitle}`}
       onPress={onPress}
-      className={`flex-row items-center gap-4 rounded-md border-2 bg-white p-4 active:bg-cream ${selected ? 'border-ocean' : 'border-line'}`}
+      className={`flex-row items-center gap-4 rounded-md border-2 bg-white p-4 active:bg-cream sm:gap-5 sm:p-5 ${selected ? 'border-ocean' : 'border-line'}`}
     >
-      <Image source={image} className="h-[72px] w-[72px]" resizeMode="contain" alt="" />
+      <Image source={image} className="h-[72px] w-[72px] sm:h-[104px] sm:w-[104px]" resizeMode="contain" alt="" />
       <View className="flex-1 gap-1">
-        <Text className="text-base font-bold text-ink">{title}</Text>
-        <Text className="text-sm text-muted">{subtitle}</Text>
+        <Text className="text-base font-bold text-ink sm:text-xl">{title}</Text>
+        <Text className="text-sm text-muted sm:text-base">{subtitle}</Text>
       </View>
-      <View className={`h-6 w-6 items-center justify-center rounded-full border-2 ${selected ? 'border-ocean' : 'border-line'}`}>
-        {selected && <View className="h-3 w-3 rounded-full bg-ocean" />}
+      <View className={`h-7 w-7 items-center justify-center rounded-full border-2 ${selected ? 'border-ocean' : 'border-disabled'}`}>
+        {selected && <View className="h-3.5 w-3.5 rounded-full bg-ocean" />}
       </View>
     </Pressable>
   )

@@ -7,21 +7,24 @@ import { useLang } from '@/lib/i18n'
 const TOTAL_STEPS = 7
 
 // Completed steps show a check, the current step is filled and ringed, upcoming steps stay grey.
-// The "Step X of Y" line keeps the position readable even when the dots are small on a phone.
+// The "Step X of Y" line names the step, so the position reads at a glance even when the dots are
+// small on a phone.
 export function StepProgress({ step }: { step: number }) {
   const tr = useLang()
+  const names = [tr.stepNameCarrier, tr.stepNameDelivery, tr.stepNameParcel, tr.stepNameSender, tr.stepNameRecipient, tr.stepNameCustoms, tr.stepNameReview]
+  const name = names[step - 1]
   return (
-    <View className="gap-2" accessibilityRole="progressbar" accessibilityLabel={`${tr.stepLabel} ${step} ${tr.stepOf} ${TOTAL_STEPS}`}>
+    <View className="gap-2" accessibilityRole="progressbar" accessibilityLabel={`${tr.stepLabel} ${step} ${tr.stepOf} ${TOTAL_STEPS}${name ? `, ${name}` : ''}`}>
       <View className="flex-row items-center">
         {Array.from({ length: TOTAL_STEPS }).map((_, i) => {
           const n = i + 1
           const done = n < step
           const current = n === step
           return (
-            <View key={n} className="flex-1 flex-row items-center">
+            <View key={n} className={n < TOTAL_STEPS ? 'flex-1 flex-row items-center' : 'flex-row items-center'}>
               <View
                 className={`${current ? 'h-9 w-9' : 'h-8 w-8'} items-center justify-center rounded-full border-2 ${
-                  done ? 'border-ocean bg-ocean' : current ? 'border-ocean bg-white' : 'border-line bg-white'
+                  done ? 'border-ocean bg-ocean' : current ? 'border-ocean bg-mint' : 'border-line bg-white'
                 }`}
               >
                 {done ? (
@@ -35,8 +38,9 @@ export function StepProgress({ step }: { step: number }) {
           )
         })}
       </View>
-      <Text className="text-xs text-muted">
+      <Text className="text-sm text-muted">
         {tr.stepLabel} {step} {tr.stepOf} {TOTAL_STEPS}
+        {name ? <Text className="font-semibold text-ink"> · {name}</Text> : null}
       </Text>
     </View>
   )

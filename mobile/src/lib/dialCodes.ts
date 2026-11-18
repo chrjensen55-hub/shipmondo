@@ -34,7 +34,7 @@ export type DialCode = { code: string; name: string; dial: string; flag: string 
 // Regional indicator flag emoji built from the ISO code itself — Android's system emoji font
 // renders these natively, so no bundled flag images are needed (same approach as the language
 // switch's 🇩🇰/🇬🇧).
-function flagEmoji(isoCode: string): string {
+export function flagEmoji(isoCode: string): string {
   return isoCode
     .toUpperCase()
     .replace(/./g, (char) => String.fromCodePoint(127397 + char.charCodeAt(0)))

@@ -1,11 +1,9 @@
 import { useRouter } from 'expo-router'
 import { useState } from 'react'
-import { Image, Pressable, Text, View } from 'react-native'
+import { Pressable, Text, View } from 'react-native'
 import { Package, Plus, Ruler, Trash2, CheckCircle2 } from 'lucide-react-native'
-import { Button } from '@/components/Button'
 import { TextField } from '@/components/TextField'
-import { StepProgress } from '@/components/StepProgress'
-import { KeyboardAwareScreen } from '@/components/KeyboardAwareScreen'
+import { WizardScreen } from '@/components/WizardScreen'
 import { useWizard, firstParcelSize } from '@/lib/wizard-context'
 import { useLocations } from '@/lib/location-context'
 import { boxSizeFor, weightBrackets } from '@/lib/carrierRates'
@@ -88,51 +86,36 @@ export default function ParcelStep() {
   const canContinue = draft.parcels.every((p) => weightChosen.has(p.id) && p.weight > 0 && p.length > 0 && p.width > 0 && p.height > 0)
 
   return (
-    <KeyboardAwareScreen
-      contentContainerClassName="gap-4 px-6 pb-8 pt-20"
-      footer={
-        <View className="flex-row items-center gap-3 border-t border-line bg-white px-6 py-4">
-          <View className="flex-[2]">
-            <Button label={tr.backAction} variant="secondary" onPress={() => router.back()} />
-          </View>
-          <View className="flex-[3]">
-            <Button label={tr.continueAction} onPress={() => router.push('/send/sender')} disabled={!canContinue} />
-          </View>
-        </View>
-      }
+    <WizardScreen
+      title={tr.weightHeading}
+      subtitle={tr.weightHint}
+      step={3}
+      icons={[boxWeightImage, boxSizeImage]}
+      onContinue={() => router.push('/send/sender')}
+      continueDisabled={!canContinue}
+      continueHint={tr.weightMissingHint}
     >
-        <StepProgress step={3} />
-        <View className="flex-row justify-center gap-3">
-          <Image source={boxWeightImage} resizeMode="contain" className="h-16 w-16" alt="" />
-          <Image source={boxSizeImage} resizeMode="contain" className="h-16 w-16" alt="" />
+      {isPostNord && (
+        <View className="flex-row gap-3">
+          <TypeCard selected={!letter} title={tr.parcelTypeParcel} hint={tr.parcelTypeParcelHint} onPress={() => chooseType(false)} />
+          <TypeCard selected={letter} title={tr.parcelTypeLetter} hint={tr.parcelTypeLetterHint} price={`${REGISTERED_LETTER_PRICE} kr`} onPress={() => chooseType(true)} />
         </View>
-        <View className="gap-1">
-          <Text className="text-2xl font-bold text-ink" accessibilityRole="header">
-            {tr.weightHeading}
-          </Text>
-          <Text className="text-sm text-muted">{tr.weightHint}</Text>
-        </View>
-        {isPostNord && (
-          <View className="flex-row gap-3">
-            <TypeCard selected={!letter} title={tr.parcelTypeParcel} hint={tr.parcelTypeParcelHint} onPress={() => chooseType(false)} />
-            <TypeCard selected={letter} title={tr.parcelTypeLetter} hint={tr.parcelTypeLetterHint} price={`${REGISTERED_LETTER_PRICE} kr`} onPress={() => chooseType(true)} />
-          </View>
-        )}
-        {draft.parcels.map((parcel, index) => (
-          <ParcelCard
-            key={parcel.id}
-            parcel={parcel}
-            index={index}
-            letter={letter}
-            brackets={shownBrackets}
-            selectedWeight={weightChosen.has(parcel.id) ? parcel.weight : null}
-            canRemove={draft.parcels.length > 1}
-            onChooseWeight={(max) => chooseWeight(parcel.id, max)}
-            onUpdateDimension={(key, value) => updateDimension(parcel.id, key, value)}
-            onRemove={() => removeParcel(parcel.id)}
-          />
-        ))}
-        {!letter && (
+      )}
+      {draft.parcels.map((parcel, index) => (
+        <ParcelCard
+          key={parcel.id}
+          parcel={parcel}
+          index={index}
+          letter={letter}
+          brackets={shownBrackets}
+          selectedWeight={weightChosen.has(parcel.id) ? parcel.weight : null}
+          canRemove={draft.parcels.length > 1}
+          onChooseWeight={(max) => chooseWeight(parcel.id, max)}
+          onUpdateDimension={(key, value) => updateDimension(parcel.id, key, value)}
+          onRemove={() => removeParcel(parcel.id)}
+        />
+      ))}
+      {!letter && (
         <Pressable
           accessibilityRole="button"
           onPress={addParcel}
@@ -141,8 +124,8 @@ export default function ParcelStep() {
           <Plus size={18} color="#0B4F82" />
           <Text className="text-base font-medium text-ocean">{tr.addParcel}</Text>
         </Pressable>
-        )}
-    </KeyboardAwareScreen>
+      )}
+    </WizardScreen>
   )
 }
 
@@ -193,7 +176,7 @@ function ParcelCard({
               accessibilityState={{ selected }}
               accessibilityLabel={`${formatWeightRange(lower, max)}, ${tr.maxSizeLabel} ${box.length}×${box.width}×${box.height} cm`}
               onPress={() => onChooseWeight(max)}
-              className={`min-h-[104px] w-[31%] items-center justify-center gap-1 rounded-md border-2 px-1 py-2.5 active:bg-line ${selected ? 'border-ocean bg-white' : 'border-line bg-white'}`}
+              className={`min-h-[104px] w-[31%] items-center justify-center gap-1 rounded-md border-2 px-1 py-2.5 active:bg-line sm:min-h-[124px] ${selected ? 'border-ocean bg-mint' : 'border-line bg-white'}`}
             >
               {selected && (
                 <View className="absolute right-1.5 top-1.5">
@@ -201,8 +184,8 @@ function ParcelCard({
                 </View>
               )}
               <Package size={iconSizeFor(i, brackets.length)} color={selected ? '#0B4F82' : '#6B7280'} strokeWidth={1.75} />
-              <Text className={`text-center text-sm font-bold ${selected ? 'text-ocean' : 'text-ink'}`}>{formatWeightRange(lower, max)}</Text>
-              <Text className="text-center text-xs text-muted">
+              <Text className={`text-center text-sm font-bold sm:text-lg ${selected ? 'text-ocean' : 'text-ink'}`}>{formatWeightRange(lower, max)}</Text>
+              <Text className="text-center text-xs text-muted sm:text-sm">
                 {tr.maxSizeLabel} {box.length}×{box.width}×{box.height} cm
               </Text>
             </Pressable>
@@ -238,11 +221,11 @@ function TypeCard({ selected, title, hint, price, onPress }: { selected: boolean
       accessibilityRole="radio"
       accessibilityState={{ selected }}
       onPress={onPress}
-      className={`flex-1 gap-1 rounded-md border-2 bg-white p-4 active:bg-cream ${selected ? 'border-ocean' : 'border-line'}`}
+      className={`flex-1 gap-1 rounded-md border-2 p-4 active:bg-cream ${selected ? 'border-ocean bg-mint' : 'border-line bg-white'}`}
     >
-      <Text className="text-base font-bold text-ink">{title}</Text>
+      <Text className="text-base font-bold text-ink sm:text-lg">{title}</Text>
       <Text className="text-sm text-muted">{hint}</Text>
-      {price ? <Text className="text-sm font-bold text-ocean">{price}</Text> : null}
+      {price ? <Text className="text-sm font-bold text-ocean sm:text-base">{price}</Text> : null}
     </Pressable>
   )
 }

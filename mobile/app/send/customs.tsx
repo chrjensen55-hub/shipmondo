@@ -44,7 +44,7 @@ export default function CustomsStep() {
   const valid = draft.items.length > 0 && draft.items.every((i) => i.description.trim().length > 1 && HS_CODE_RE.test(i.hsCode ?? '') && i.unitValue > 0)
 
   return (
-    <WizardScreen title={tr.customsHeading} subtitle={tr.customsSubtitle} step={6} icon={customsImage} onContinue={() => router.push('/send/review')} continueDisabled={!valid}>
+    <WizardScreen title={tr.customsHeading} subtitle={tr.customsSubtitle} step={6} icon={customsImage} onContinue={() => router.push('/send/review')} continueDisabled={!valid} continueHint={tr.customsMissingHint}>
       <View className="gap-1.5">
         <Text className="text-[13px] font-medium text-ink">{tr.exportReasonLabel}</Text>
         <SelectField

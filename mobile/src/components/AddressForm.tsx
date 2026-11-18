@@ -3,8 +3,8 @@ import { ActivityIndicator, Keyboard, Pressable, Text, TextInput, View } from 'r
 import { Check } from 'lucide-react-native'
 import { TextField } from './TextField'
 import { PhoneField } from './PhoneField'
-import { SelectField } from './SelectField'
-import { countries } from '@/lib/countries'
+import { CountryField } from './CountryField'
+import { dialCodes, joinPhone, splitPhone } from '@/lib/dialCodes'
 import { api, ApiError } from '@/lib/api'
 import { useLang } from '@/lib/i18n'
 import type { Address } from '@/lib/types'
@@ -22,6 +22,7 @@ export function AddressForm({
   noPhone,
   onToggleNoPhone,
   countryError,
+  countryLabel,
   companyRequired = false,
 }: {
   value: Address
@@ -36,6 +37,8 @@ export function AddressForm({
   noPhone?: boolean
   onToggleNoPhone?: (checked: boolean) => void
   countryError?: string
+  // Wording of the country question, e.g. "Which country is the parcel going to?".
+  countryLabel?: string
   // Business (erhverv) parcels go to a company, so the recipient's company name is required.
   companyRequired?: boolean
 }) {
@@ -93,16 +96,40 @@ export function AddressForm({
   }
   const isDenmark = value.country === 'DK'
 
+  // The phone's country code follows the chosen country, so a number for the United Kingdom starts
+  // with +44 without the customer picking it. The code can still be changed by hand afterwards.
+  function changeCountry(code: string) {
+    onChange('country', code)
+    if (!noPhone && dialCodes.some((d) => d.code === code)) onChange('phone', joinPhone(code, splitPhone(value.phone).local))
+  }
+
   return (
     <View className="gap-3">
-      <TextField inputRef={fullNameRef} label={tr.fullName} value={value.fullName} onChangeText={(v) => onChange('fullName', v)} autoCapitalize="words" textContentType="name" returnKeyType="next" submitBehavior="submit" onSubmitEditing={() => next('fullName')} />
-      {!minimal && (
-        <TextField inputRef={companyRef} label={companyRequired ? tr.company : `${tr.company} (${tr.optional})`} value={value.company ?? ''} onChangeText={(v) => onChange('company', v)} autoCapitalize="words" returnKeyType="next" submitBehavior="submit" onSubmitEditing={() => next('company')} />
-      )}
-      <TextField inputRef={address1Ref} label={tr.addressLine1} value={value.address1} onChangeText={(v) => onChange('address1', v)} autoCapitalize="words" returnKeyType="next" submitBehavior="submit" onSubmitEditing={() => next('address1')} />
-      {!minimal && (
-        <TextField inputRef={address2Ref} label={`${tr.addressLine2} (${tr.optional})`} value={value.address2 ?? ''} onChangeText={(v) => onChange('address2', v)} autoCapitalize="words" returnKeyType="next" submitBehavior="submit" onSubmitEditing={() => next('address2')} />
-      )}
+      {/* Country first: it decides the postal code format, the city lookup and the phone code. */}
+      <CountryField label={countryLabel ?? tr.country} value={value.country} onChange={changeCountry} error={countryError} />
+
+      <View className="gap-3 sm:flex-row">
+        <View className="sm:flex-1">
+          <TextField inputRef={fullNameRef} label={tr.fullName} value={value.fullName} onChangeText={(v) => onChange('fullName', v)} autoCapitalize="words" textContentType="name" returnKeyType="next" submitBehavior="submit" onSubmitEditing={() => next('fullName')} />
+        </View>
+        {!minimal && (
+          <View className="sm:flex-1">
+            <TextField inputRef={companyRef} label={companyRequired ? tr.company : `${tr.company} (${tr.optional})`} value={value.company ?? ''} onChangeText={(v) => onChange('company', v)} autoCapitalize="words" returnKeyType="next" submitBehavior="submit" onSubmitEditing={() => next('company')} />
+          </View>
+        )}
+      </View>
+
+      <View className="gap-3 sm:flex-row">
+        <View className="sm:flex-1">
+          <TextField inputRef={address1Ref} label={tr.addressLine1} value={value.address1} onChangeText={(v) => onChange('address1', v)} autoCapitalize="words" returnKeyType="next" submitBehavior="submit" onSubmitEditing={() => next('address1')} />
+        </View>
+        {!minimal && (
+          <View className="sm:flex-1">
+            <TextField inputRef={address2Ref} label={`${tr.addressLine2} (${tr.optional})`} value={value.address2 ?? ''} onChangeText={(v) => onChange('address2', v)} autoCapitalize="words" returnKeyType="next" submitBehavior="submit" onSubmitEditing={() => next('address2')} />
+          </View>
+        )}
+      </View>
+
       <View className="flex-row gap-3">
         <View className="flex-1">
           <TextField
@@ -115,7 +142,7 @@ export function AddressForm({
             returnKeyType="next"
             submitBehavior="submit"
             onSubmitEditing={() => next('postalCode')}
-            placeholder="2730"
+            placeholder={isDenmark ? '2730' : undefined}
             error={status === 'notFound' ? tr.cityNotFound : undefined}
           />
         </View>
@@ -135,31 +162,32 @@ export function AddressForm({
           )}
         </View>
       </View>
-      <View className="gap-1.5">
-        <Text className="text-[13px] font-medium text-ink">{tr.country}</Text>
-        <SelectField value={value.country} options={countries.map((c) => ({ label: c.name, value: c.code }))} onChange={(v) => onChange('country', v)} title={tr.country} />
-        {countryError ? <Text className="text-xs text-error" accessibilityRole="alert">{countryError}</Text> : null}
-      </View>
-      {showNoEmailOption && <ContactCheckbox checked={!!noEmail} onToggle={() => onToggleNoEmail?.(!noEmail)} label={tr.noRecipientEmail} />}
-      <TextField
-        inputRef={emailRef}
-        label={noEmail ? `${tr.email} (${tr.optional})` : tr.email}
-        value={value.email}
-        onChangeText={(v) => onChange('email', v)}
-        keyboardType="email-address"
-        autoCapitalize="none"
-        autoCorrect={false}
-        textContentType="emailAddress"
-        returnKeyType="next"
-        submitBehavior="submit"
-        onSubmitEditing={() => next('email')}
-        editable={!noEmail}
-      />
-      {noEmail && <Text className="-mt-1.5 text-xs text-muted">{tr.noRecipientContactNote}</Text>}
 
-      {showNoPhoneOption && <ContactCheckbox checked={!!noPhone} onToggle={() => onToggleNoPhone?.(!noPhone)} label={tr.noRecipientPhone} />}
-      <PhoneField inputRef={phoneRef} label={tr.mobilePhone} value={value.phone} onChange={(v) => onChange('phone', v)} editable={!noPhone} returnKeyType="done" />
-      {noPhone && <Text className="-mt-1.5 text-xs text-muted">{tr.noRecipientContactNote}</Text>}
+      <View className="gap-3 sm:flex-row sm:items-start">
+        <View className="gap-3 sm:flex-1">
+          {showNoEmailOption && <ContactCheckbox checked={!!noEmail} onToggle={() => onToggleNoEmail?.(!noEmail)} label={tr.noRecipientEmail} />}
+          <TextField
+            inputRef={emailRef}
+            label={noEmail ? `${tr.email} (${tr.optional})` : tr.email}
+            value={value.email}
+            onChangeText={(v) => onChange('email', v)}
+            keyboardType="email-address"
+            autoCapitalize="none"
+            autoCorrect={false}
+            textContentType="emailAddress"
+            returnKeyType="next"
+            submitBehavior="submit"
+            onSubmitEditing={() => next('email')}
+            editable={!noEmail}
+          />
+          {noEmail && <Text className="-mt-1.5 text-xs text-muted">{tr.noRecipientContactNote}</Text>}
+        </View>
+        <View className="gap-3 sm:flex-1">
+          {showNoPhoneOption && <ContactCheckbox checked={!!noPhone} onToggle={() => onToggleNoPhone?.(!noPhone)} label={tr.noRecipientPhone} />}
+          <PhoneField inputRef={phoneRef} label={tr.mobilePhone} value={value.phone} onChange={(v) => onChange('phone', v)} editable={!noPhone} returnKeyType="done" countryHint={value.country} />
+          {noPhone && <Text className="-mt-1.5 text-xs text-muted">{tr.noRecipientContactNote}</Text>}
+        </View>
+      </View>
     </View>
   )
 }

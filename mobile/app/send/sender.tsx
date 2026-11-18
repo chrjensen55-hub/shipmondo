@@ -26,10 +26,27 @@ export default function SenderStep() {
 
   const a = draft.sender
   const valid = [a.fullName, a.address1, a.postalCode, a.city, a.email].every(required) && hasPhoneDigits(a.phone)
+  // Names the fields that are still empty, so a greyed-out Continue is never a puzzle.
+  const missing = [
+    !required(a.fullName) && tr.fullName,
+    !required(a.address1) && tr.addressLine1,
+    !required(a.postalCode) && tr.postalCode,
+    !required(a.city) && tr.city,
+    !required(a.email) && tr.email,
+    !hasPhoneDigits(a.phone) && tr.mobilePhone,
+  ].filter(Boolean)
 
   return (
-    <WizardScreen title={tr.senderTitle} subtitle={tr.senderHint} step={4} icon={senderImage} onContinue={() => router.push('/send/recipient')} continueDisabled={!valid}>
-      <AddressForm value={draft.sender} onChange={onChange} minimal />
+    <WizardScreen
+      title={tr.senderTitle}
+      subtitle={tr.senderHint}
+      step={4}
+      icon={senderImage}
+      onContinue={() => router.push('/send/recipient')}
+      continueDisabled={!valid}
+      continueHint={missing.length ? `${tr.missingPrefix} ${missing.join(', ')}` : undefined}
+    >
+      <AddressForm value={draft.sender} onChange={onChange} minimal countryLabel={tr.senderCountryLabel} />
     </WizardScreen>
   )
 }
