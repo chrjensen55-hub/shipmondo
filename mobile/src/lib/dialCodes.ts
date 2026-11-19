@@ -46,14 +46,16 @@ export const dialCodes: DialCode[] = countries
 
 export const DEFAULT_DIAL_CODE = 'DK'
 
+// Longest codes first. Sorted once here, because splitPhone runs several times on every key press.
+const DIAL_CODES_LONGEST_FIRST = [...dialCodes].sort((a, b) => b.dial.length - a.dial.length)
+
 // Longest-prefix match against known dial codes so "+1868…" resolves to Trinidad rather than the
 // shared NANP "+1" — falls back to Denmark with the whole value treated as the local number when
 // nothing matches, which also covers old phone numbers saved before this picker existed.
 export function splitPhone(phone: string): { countryCode: string; local: string } {
   const trimmed = phone.trim()
   if (!trimmed.startsWith('+')) return { countryCode: DEFAULT_DIAL_CODE, local: trimmed }
-  const sorted = [...dialCodes].sort((a, b) => b.dial.length - a.dial.length)
-  for (const entry of sorted) {
+  for (const entry of DIAL_CODES_LONGEST_FIRST) {
     if (trimmed === entry.dial || trimmed.startsWith(`${entry.dial} `) || trimmed.startsWith(entry.dial)) {
       return { countryCode: entry.code, local: trimmed.slice(entry.dial.length).trim() }
     }

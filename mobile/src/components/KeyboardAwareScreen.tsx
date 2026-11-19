@@ -1,6 +1,7 @@
 import { createContext, useCallback, useContext, useEffect, useRef, useState, type ReactNode } from 'react'
 import { Dimensions, Keyboard, ScrollView, TextInput, View, type NativeScrollEvent, type NativeSyntheticEvent, type ScrollViewProps } from 'react-native'
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context'
+import { useIsFocused } from 'expo-router'
 
 // Under Android's edge-to-edge window (and in immersive/kiosk mode) the system no longer resizes
 // the window for the keyboard, so the keyboard simply covers whatever is low on the screen. This
@@ -26,6 +27,13 @@ export function KeyboardAwareScreen({ footer, topEdge = true, children, onScroll
   const scrollY = useRef(0)
   const [overlap, setOverlap] = useState(0)
   const [keyboardOpen, setKeyboardOpen] = useState(false)
+  // Only the page on screen makes room for the keyboard. The pages open behind it (earlier wizard
+  // steps) used to move their buttons too, each time the keyboard came up.
+  const onScreen = useIsFocused()
+  const onScreenRef = useRef(onScreen)
+  useEffect(() => {
+    onScreenRef.current = onScreen
+  }, [onScreen])
 
   const ensureVisible = useCallback(() => {
     setTimeout(() => {
@@ -48,6 +56,7 @@ export function KeyboardAwareScreen({ footer, topEdge = true, children, onScroll
 
   useEffect(() => {
     const show = Keyboard.addListener('keyboardDidShow', (e) => {
+      if (!onScreenRef.current) return
       rootRef.current?.measureInWindow((_x, y, _w, h) => {
         const rootBottom = y + h
         const windowHeight = Dimensions.get('window').height

@@ -1,10 +1,11 @@
-import { useMemo, useState, type Ref } from 'react'
+import { useState, type Ref } from 'react'
 import { Pressable, Text, TextInput, View } from 'react-native'
 import { ChevronDown } from 'lucide-react-native'
 import { useEnsureVisible } from './KeyboardAwareScreen'
-import { ListSheet, type ListSheetItem } from './ListSheet'
+import { ListSheet } from './ListSheet'
 import { dialCodes, joinPhone, splitPhone, DEFAULT_DIAL_CODE } from '@/lib/dialCodes'
-import { POPULAR_COUNTRIES, countrySearchText, localCountryName } from '@/lib/countryNames'
+import { POPULAR_COUNTRIES } from '@/lib/countryNames'
+import { dialCodeItems } from '@/lib/pickerItems'
 import { useLang, useLangCode } from '@/lib/i18n'
 
 export function PhoneField({
@@ -38,13 +39,7 @@ export function PhoneField({
   const hinted = countryHint ? dialCodes.find((d) => d.code === countryHint) : undefined
   const current = hinted && hinted.dial === parsed.dial ? hinted : parsed
 
-  const items = useMemo<ListSheetItem[]>(
-    () =>
-      dialCodes
-        .map((d) => ({ value: d.code, label: localCountryName(d.code, lang), leading: d.flag, trailing: d.dial, searchText: countrySearchText(d.code) }))
-        .sort((a, b) => a.label.localeCompare(b.label, lang)),
-    [lang],
-  )
+  const items = dialCodeItems(lang)
 
   return (
     <View className="gap-1.5">

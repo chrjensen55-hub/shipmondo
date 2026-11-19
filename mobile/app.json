@@ -3,7 +3,7 @@
     "name": "Pak & Send",
     "slug": "pak-and-send",
     "scheme": "pakogsend",
-    "version": "1.10.0",
+    "version": "1.11.0",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
     "userInterfaceStyle": "light",

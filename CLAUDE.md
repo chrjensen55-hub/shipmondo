@@ -85,6 +85,14 @@ These are standing project rules. Read them before any change, and treat them as
 - Without the database or the mailbox the pages say "not set up yet". They must not fail.
 - Code: `src/lib/center/` and `src/app/api/center/` (server), `src/app/admin/messages/` (website), `mobile/src/lib/center.ts`, `mobile/src/lib/center-context.tsx` and `mobile/app/admin/messages.tsx` (app).
 
+## 9. Every tap answers at once
+
+- A button that opens another page shows a spinner the moment it is tapped, keeps its label, and ignores further taps until the page has changed. Use `useTapOnce` (`mobile/src/lib/useTapOnce.ts`). `WizardScreen` already does this for Back and Continue; the carrier logos and Exit use it too.
+- One tap is one action: several quick taps must never open a page twice, go back two steps, ask for the price twice, create two shipments or print two labels.
+- Steps that lie behind the current step are not redrawn while they are out of sight (`WizardScreen`), and only the page on screen makes room for the keyboard (`KeyboardAwareScreen`).
+- Nothing slow may run when a page opens. Long lists are sorted once and kept: the country and phone-code lists come from `mobile/src/lib/pickerItems.ts`. Do not sort with `localeCompare` in the app; it is very slow on Android.
+- Pictures are saved at about the size they are shown, never wider than about 1000 pixels.
+
 ## Testing checklist before every release
 
 1. Denmark → Denmark postal code auto-fills the city for several valid codes (e.g. 2730, 2000, 2100, 2800, 8000, 9000). An invalid code shows the friendly message.
@@ -99,3 +107,4 @@ These are standing project rules. Read them before any change, and treat them as
 10. On the recipient step, choosing another country (e.g. United Kingdom) changes the phone code to that country (+44), and the code can still be changed by hand afterwards.
 11. A message sent from the website's Message Center shows in the app's Messages tab with its button; the unread count clears after it is opened; an answer from the app shows on the website.
 12. A booking adds to that location's numbers in the Message Center, and the booking works the same when the Message Center database is unreachable.
+13. On every step, tapping Back, Continue or a carrier logo several times quickly shows a spinner at once and moves exactly one step. The country lists are still in alphabetical order, in Danish and in English.

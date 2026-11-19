@@ -1,4 +1,4 @@
-import { useCallback, useState } from 'react'
+import { useCallback, useRef, useState } from 'react'
 import { Stack, useFocusEffect, useLocalSearchParams, useRouter } from 'expo-router'
 import { ActivityIndicator, BackHandler, Image, ScrollView, Text, View } from 'react-native'
 import { SafeAreaView } from 'react-native-safe-area-context'
@@ -10,6 +10,7 @@ import { api, ApiError } from '@/lib/api'
 import { printZplViaBluetooth } from '@/lib/zebraBluetooth'
 import { useLang } from '@/lib/i18n'
 import { base64ToUtf8 } from '@/lib/base64'
+import { useTapOnce } from '@/lib/useTapOnce'
 
 /* eslint-disable @typescript-eslint/no-require-imports */
 const printImage = require('../../assets/images/print-step.png')
@@ -29,14 +30,19 @@ export default function Confirmation() {
   const [state, setState] = useState<PrintState>('ready')
   const [printProgress, setPrintProgress] = useState(0)
   const [error, setError] = useState('')
+  // Exit shows a spinner at once and counts only one tap.
+  const tap = useTapOnce()
+  // Set the moment Print is tapped, so two quick taps can never print two labels.
+  const printStarted = useRef(false)
 
   async function printLabel() {
-    if (state === 'preparing' || state === 'printing') return
+    if (printStarted.current) return
     if (!shipmentId) {
       setError(tr.labelNotAvailable)
       setState('failed')
       return
     }
+    printStarted.current = true
     setError('')
     setPrintProgress(0)
     setState('preparing')
@@ -50,6 +56,8 @@ export default function Confirmation() {
     } catch (err) {
       setError(err instanceof ApiError || err instanceof Error ? err.message : tr.printError)
       setState('failed')
+    } finally {
+      printStarted.current = false
     }
   }
 
@@ -96,7 +104,7 @@ export default function Confirmation() {
                   {tr.labelPrintedSuccess}
                 </Text>
               </View>
-              <Button label={tr.exitAction} variant="neutral" size="lg" onPress={exit} />
+              <Button label={tr.exitAction} variant="neutral" size="lg" onPress={() => tap.run('exit', exit)} loading={tap.busy === 'exit'} />
             </View>
           ) : state === 'printing' ? (
             <PrintProgressBar progress={printProgress} />

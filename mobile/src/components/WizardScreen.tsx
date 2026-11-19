@@ -1,10 +1,12 @@
+import { memo, type ReactNode } from 'react'
 import { Image, Text, View, type ImageSourcePropType, type ScrollViewProps } from 'react-native'
-import { useRouter } from 'expo-router'
+import { useIsFocused, useRouter } from 'expo-router'
 import { Button } from './Button'
 import { KeyboardAwareScreen } from './KeyboardAwareScreen'
 import { StepProgress } from './StepProgress'
 import { useLang } from '@/lib/i18n'
 import { CONTENT_MAX_WIDTH } from '@/lib/layout'
+import { useTapOnce } from '@/lib/useTapOnce'
 
 type Props = ScrollViewProps & {
   title: string
@@ -24,23 +26,50 @@ type Props = ScrollViewProps & {
   children: React.ReactNode
 }
 
+// Keeps what it last drew while its page is out of sight, and draws again when the page is shown.
+const WhileOnScreen = memo(
+  function WhileOnScreen({ children }: { onScreen: boolean; children: ReactNode }) {
+    return children
+  },
+  (before, after) => !before.onScreen && !after.onScreen,
+)
+
 // Shared frame for every wizard step: progress at the top, one clear heading with a grey subtitle,
 // the step's content, and a fixed action bar with Back (secondary) and a wider Continue (primary).
 // The frame keeps the action bar and the focused field above the on-screen keyboard.
-export function WizardScreen({ title, subtitle, step, icon, icons, onContinue, continueLabel, continueDisabled, continueLoading, continueHint, error, hideBack, children, ...scrollProps }: Props) {
+//
+// The earlier steps stay open behind the current one and share its data. Without the wrapper here
+// every letter typed on step 5 also redrew steps 1-4, which made typing and step changes slow.
+export function WizardScreen(props: Props) {
+  const onScreen = useIsFocused()
+  return (
+    <WhileOnScreen onScreen={onScreen}>
+      <WizardFrame {...props} />
+    </WhileOnScreen>
+  )
+}
+
+function WizardFrame({ title, subtitle, step, icon, icons, onContinue, continueLabel, continueDisabled, continueLoading, continueHint, error, hideBack, children, ...scrollProps }: Props) {
   const router = useRouter()
   const tr = useLang()
+  // Back and Continue show a spinner the moment they are tapped, and a second tap does nothing.
+  const tap = useTapOnce()
   const showBack = !hideBack && router.canGoBack()
+  const continuing = tap.busy === 'continue' || !!continueLoading
   const pictures = icons ?? (icon ? [icon] : [])
   const footer =
     showBack || onContinue ? (
       <View className="border-t border-line bg-white px-6 pb-4 pt-3">
         <View className={`w-full ${CONTENT_MAX_WIDTH} gap-2 self-center`}>
-          {continueDisabled && !continueLoading && continueHint ? <Text className="text-center text-sm text-muted">{continueHint}</Text> : null}
+          {continueDisabled && !continuing && continueHint ? <Text className="text-center text-sm text-muted">{continueHint}</Text> : null}
           <View className="flex-row items-center gap-3">
-            <View className="flex-[2]">{showBack ? <Button label={tr.backAction} variant="secondary" size="lg" onPress={() => router.back()} /> : null}</View>
+            <View className="flex-[2]">
+              {showBack ? <Button label={tr.backAction} variant="secondary" size="lg" onPress={() => tap.run('back', () => router.back())} loading={tap.busy === 'back'} /> : null}
+            </View>
             <View className="flex-[3]">
-              {onContinue ? <Button label={continueLabel ?? tr.continueAction} size="lg" onPress={onContinue} disabled={continueDisabled} loading={continueLoading} /> : null}
+              {onContinue ? (
+                <Button label={continueLabel ?? tr.continueAction} size="lg" onPress={() => tap.run('continue', onContinue)} disabled={continueDisabled} loading={continuing} />
+              ) : null}
             </View>
           </View>
         </View>

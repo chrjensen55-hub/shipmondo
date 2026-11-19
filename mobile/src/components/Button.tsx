@@ -21,6 +21,14 @@ const containerClass: Record<Variant, string> = {
   destructive: 'bg-white border border-error active:bg-error-bg',
 }
 
+// While a button is working it keeps its pressed colour, so it reads as "tapped, please wait".
+const busyClass: Record<Variant, string> = {
+  primary: 'bg-green-dark',
+  secondary: 'bg-cream border border-line',
+  neutral: 'bg-line border border-line',
+  destructive: 'bg-error-bg border border-error',
+}
+
 const labelClass: Record<Variant, string> = {
   primary: 'text-white',
   secondary: 'text-ink',
@@ -40,10 +48,10 @@ const labelSizeClass: Record<Size, string> = {
 
 export function Button({ label, variant = 'primary', size = 'md', loading, disabled, accessibilityLabel, ...rest }: Props) {
   const inactive = disabled || loading
-  const base = `${sizeClass[size]} flex-row items-center justify-center rounded-[10px]`
+  const base = `${sizeClass[size]} flex-row items-center justify-center gap-2.5 rounded-[10px]`
   // Disabled uses a solid, deliberately muted fill rather than a translucent variant color — reads
   // clearly as "not available right now" instead of a dimmed version of the action.
-  const className = disabled && !loading ? `${base} bg-disabled` : `${base} ${containerClass[variant]} ${loading ? 'opacity-70' : ''}`
+  const className = loading ? `${base} ${busyClass[variant]}` : disabled ? `${base} bg-disabled` : `${base} ${containerClass[variant]}`
   return (
     <Pressable
       disabled={inactive}
@@ -53,11 +61,9 @@ export function Button({ label, variant = 'primary', size = 'md', loading, disab
       className={className}
       {...rest}
     >
-      {loading ? (
-        <ActivityIndicator color={variant === 'primary' ? '#ffffff' : '#0B4F82'} />
-      ) : (
-        <Text className={`text-center ${labelSizeClass[size]} ${disabled ? 'text-white' : labelClass[variant]}`}>{label}</Text>
-      )}
+      {/* The spinner sits beside the label, so the button still says what it is doing. */}
+      {loading ? <ActivityIndicator size="small" color={variant === 'primary' ? '#ffffff' : '#0B4F82'} /> : null}
+      <Text className={`flex-shrink text-center ${labelSizeClass[size]} ${disabled && !loading ? 'text-white' : labelClass[variant]}`}>{label}</Text>
     </Pressable>
   )
 }

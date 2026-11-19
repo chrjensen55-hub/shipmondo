@@ -1,10 +1,10 @@
-import { useMemo, useState } from 'react'
+import { useState } from 'react'
 import { Pressable, Text, View } from 'react-native'
 import { ChevronDown } from 'lucide-react-native'
-import { ListSheet, type ListSheetItem } from './ListSheet'
-import { countries } from '@/lib/countries'
-import { POPULAR_COUNTRIES, countrySearchText, localCountryName } from '@/lib/countryNames'
+import { ListSheet } from './ListSheet'
+import { POPULAR_COUNTRIES, localCountryName } from '@/lib/countryNames'
 import { flagEmoji } from '@/lib/dialCodes'
+import { countryItems } from '@/lib/pickerItems'
 import { useLang, useLangCode } from '@/lib/i18n'
 
 // The country is the first thing chosen on an address, so the field is larger than a normal input
@@ -13,14 +13,7 @@ export function CountryField({ label, value, onChange, error }: { label: string;
   const tr = useLang()
   const lang = useLangCode()
   const [open, setOpen] = useState(false)
-
-  const items = useMemo<ListSheetItem[]>(
-    () =>
-      countries
-        .map((c) => ({ value: c.code, label: localCountryName(c.code, lang), leading: flagEmoji(c.code), searchText: countrySearchText(c.code) }))
-        .sort((a, b) => a.label.localeCompare(b.label, lang)),
-    [lang],
-  )
+  const items = countryItems(lang)
 
   return (
     <View className="gap-1.5">
