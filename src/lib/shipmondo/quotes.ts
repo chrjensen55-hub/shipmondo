@@ -3,7 +3,6 @@ import { ShipmondoClient } from './client'
 import { listProducts } from './products'
 import { calculateCustomerPrice, totalChargeableWeight, type PricingRule } from '@/lib/shipping'
 import { isDomestic, rateForWeight } from '@/lib/carrierRates'
-import { REGISTERED_LETTER_PRICE, REGISTERED_LETTER_PRODUCT_CODE, registeredLetterError } from '@/lib/registeredLetter'
 import type { DeliveryLocation, ShipmentDraft, ShippingQuote } from '@/lib/types'
 import type { ShipmondoProduct } from './types'
 
@@ -153,37 +152,7 @@ function matchesCarrierName(productCarrierName: string, wanted?: string): boolea
   return a.includes(b) || b.includes(a)
 }
 
-// Registered letter: Shipmondo prices and books PDK_RE itself, so we only pass the product on. The
-// customer-facing price is the flat registered-letter price.
-async function registeredLetterQuote(draft: Pick<ShipmentDraft, 'destinationCountry' | 'parcels' | 'recipient'>): Promise<ShippingQuote[]> {
-  // The product list is only used for details; Shipmondo itself decides whether the letter can be
-  // booked, and its own error is shown if it refuses, so a missing/odd list entry never blocks it.
-  const letter = await listProducts(draft.destinationCountry, REGISTERED_LETTER_PRODUCT_CODE)
-    .then((products) => products.find((p) => p.code === REGISTERED_LETTER_PRODUCT_CODE))
-    .catch(() => undefined)
-  return [
-    {
-      id: `pdk-${REGISTERED_LETTER_PRODUCT_CODE}`,
-      carrier: letter?.carrier.name ?? 'PostNord (DK)',
-      serviceName: letter?.name ?? 'Registered',
-      productCode: REGISTERED_LETTER_PRODUCT_CODE,
-      serviceCodes: letter ? requiredServiceCodes(letter, draft) : [],
-      purchasePrice: REGISTERED_LETTER_PRICE,
-      customerPrice: REGISTERED_LETTER_PRICE,
-      currency: 'DKK',
-      estimatedDelivery: letter?.expected_transit_time ?? 'Contact us for delivery time',
-      // PDK_RE is documents-only: no customs declaration is required or sent.
-      metadata: { source: 'shipmondo', chargeableWeight: draft.parcels.reduce((n, p) => n + p.weight, 0), requiresCustoms: false, estimated: false, ownAgreement: letter?.own_agreement_available ?? true },
-    },
-  ]
-}
-
-export async function getLiveQuotes(draft: Pick<ShipmentDraft, 'originCountry' | 'originPostalCode' | 'destinationCountry' | 'destinationPostalCode' | 'parcels' | 'sender' | 'recipient' | 'carrierName' | 'deliveryLocation' | 'locationRates' | 'registeredLetter'>): Promise<ShippingQuote[]> {
-  if (draft.registeredLetter) {
-    const invalid = registeredLetterError(draft)
-    if (invalid) throw new Error(invalid)
-    return registeredLetterQuote(draft)
-  }
+export async function getLiveQuotes(draft: Pick<ShipmentDraft, 'originCountry' | 'originPostalCode' | 'destinationCountry' | 'destinationPostalCode' | 'parcels' | 'sender' | 'recipient' | 'carrierName' | 'deliveryLocation' | 'locationRates'>): Promise<ShippingQuote[]> {
   const [rawProducts, rawQuotes] = await Promise.all([
     listProducts(draft.destinationCountry),
     fetchRealQuotes(draft).catch(() => [] as RawQuote[]),

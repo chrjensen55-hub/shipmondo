@@ -1,14 +1,18 @@
-import { fullQuoteRequestSchema } from '@/lib/validation'
+import { parseQuoteRequest } from '@/lib/validation'
+import { refuseDetails, refuseRegisteredLetter, serverFault } from '@/lib/refusals'
 import { mockQuotes } from '@/lib/shipping'
 import { getLiveQuotes } from '@/lib/shipmondo/quotes'
 import { ShipmondoClient } from '@/lib/shipmondo/client'
-import { registeredLetterError } from '@/lib/registeredLetter'
+
+const ROUTE = '/api/quotes'
 
 export async function POST(request: Request) {
   try {
-    const input = fullQuoteRequestSchema.parse(await request.json())
-    const letterError = registeredLetterError(input)
-    if (letterError) return Response.json({ error: { code: 'REGISTERED_LETTER_INVALID', message: letterError } }, { status: 400 })
+    const parsed = parseQuoteRequest(await request.json().catch(() => undefined))
+    if (!parsed.ok) return refuseDetails(ROUTE, request, parsed.problems)
+    const input = parsed.data
+    if (input.registeredLetter) return refuseRegisteredLetter(ROUTE, request)
+
     const client = await ShipmondoClient.create()
     // No credentials at all means this tablet was never set up with a Shipmondo account (or its
     // per-tablet override never saved) — surface that clearly right here, at the first step that
@@ -30,9 +34,10 @@ export async function POST(request: Request) {
       return Response.json({ data: live })
     } catch (err) {
       const message = err instanceof Error ? err.message : 'Could not reach Shipmondo.'
+      console.warn(`Refused ${ROUTE}: Shipmondo`, message)
       return Response.json({ error: { code: 'SHIPMONDO_CONNECTION_FAILED', message } }, { status: 502 })
     }
-  } catch {
-    return Response.json({ error: { code: 'INVALID_REQUEST', message: 'Please check the shipment details.' } }, { status: 400 })
+  } catch (err) {
+    return serverFault(ROUTE, request, err)
   }
 }

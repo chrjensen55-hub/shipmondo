@@ -93,6 +93,15 @@ These are standing project rules. Read them before any change, and treat them as
 - Nothing slow may run when a page opens. Long lists are sorted once and kept: the country and phone-code lists come from `mobile/src/lib/pickerItems.ts`. Do not sort with `localeCompare` in the app; it is very slow on Android.
 - Pictures are saved at about the size they are shown, never wider than about 1000 pixels.
 
+## 10. A refusal always says why
+
+- The app never shows "please check the details" without a reason. When Continue is greyed out, the line above it names the field. When the server cannot go on, the red box says which field is wrong, or that the server failed, or that there is no connection.
+- The app checks the sender and recipient the same way the server does (`mobile/src/lib/addressRules.ts` and `src/lib/validation.ts`: e-mail shape, shortest lengths). Change both together; `src/lib/validation.test.ts` fails when they differ.
+- Spaces typed before or after a value never count.
+- Only what a request needs is sent (`mobile/src/lib/payload.ts`). A price request carries no customs lines, and a booking carries them only when the destination needs a customs declaration. Nothing left over from an earlier try may stop a parcel.
+- Every refusal is written to the server log with the reason: field names, location and app version, never what the customer typed (`src/lib/refusals.ts`).
+- PostNord's registered letter is no longer sold (removed 26 Nov 2026). The app does not show it, and the server refuses it from older app versions with a clear message.
+
 ## Testing checklist before every release
 
 1. Denmark → Denmark postal code auto-fills the city for several valid codes (e.g. 2730, 2000, 2100, 2800, 8000, 9000). An invalid code shows the friendly message.
@@ -108,3 +117,5 @@ These are standing project rules. Read them before any change, and treat them as
 11. A message sent from the website's Message Center shows in the app's Messages tab with its button; the unread count clears after it is opened; an answer from the app shows on the website.
 12. A booking adds to that location's numbers in the Message Center, and the booking works the same when the Message Center database is unreachable.
 13. On every step, tapping Back, Continue or a carrier logo several times quickly shows a spinner at once and moves exactly one step. The country lists are still in alphabetical order, in Danish and in English.
+14. A wrong e-mail (for example "ingen" or "anna@gmail") on the sender or recipient step greys out Continue and the line above it says the e-mail is not valid. A space after an e-mail does not matter.
+15. Start a parcel to a country outside the EU, open the customs step, go Back, change the country to Denmark and continue: the price comes and the parcel can be booked.

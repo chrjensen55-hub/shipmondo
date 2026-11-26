@@ -1,14 +1,15 @@
-import { shipmentSchema } from '@/lib/validation'
+import { parseCustomsItems, parseShipmentRequest } from '@/lib/validation'
+import { refuseDetails, refuseRegisteredLetter, serverFault } from '@/lib/refusals'
 import { mockQuotes } from '@/lib/shipping'
 import { getLiveQuotes } from '@/lib/shipmondo/quotes'
 import { createShipment } from '@/lib/shipmondo/shipments'
 import { ShipmondoClient } from '@/lib/shipmondo/client'
-import { registeredLetterError } from '@/lib/registeredLetter'
-import type { ShippingQuote } from '@/lib/types'
+import type { ShipmentDraft, ShipmentItem, ShippingQuote } from '@/lib/types'
 import { after } from 'next/server'
 import { getKv } from '@/lib/center/kv'
 import { LOCATION_ID_RE, UNKNOWN_LOCATION_ID, WEB_LOCATION_ID, recordShipment } from '@/lib/center/center'
 
+const ROUTE = '/api/shipments'
 const completed = new Map<string, { reference: string; tracking: string; shipmentId?: number }>()
 
 // Which location's counters a booking belongs to. Tablets from app version 1.10.0 name their
@@ -22,12 +23,13 @@ function bookingLocation(request: Request): string {
 
 export async function POST(request: Request) {
   try {
-    const input = shipmentSchema.parse(await request.json())
+    const parsed = parseShipmentRequest(await request.json().catch(() => undefined))
+    if (!parsed.ok) return refuseDetails(ROUTE, request, parsed.problems)
+    const input = parsed.data
     const previous = completed.get(input.idempotencyKey)
     if (previous) return Response.json({ data: previous })
+    if (input.registeredLetter) return refuseRegisteredLetter(ROUTE, request)
 
-    const letterError = registeredLetterError(input)
-    if (letterError) return Response.json({ error: { code: 'REGISTERED_LETTER_INVALID', message: letterError } }, { status: 400 })
     const client = await ShipmondoClient.create()
     // No credentials at all (no per-tablet override, no server env vars) is never a legitimate
     // state to book a real customer's shipment from — it's a setup problem on this tablet, not
@@ -58,13 +60,24 @@ export async function POST(request: Request) {
       if (!quote) return Response.json({ error: { code: 'QUOTE_EXPIRED', message: 'The selected shipping option is no longer available.' } }, { status: 409 })
     }
 
+    // Customs lines only count when this destination needs a customs declaration. For any other
+    // parcel they are left out, so lines left over from an earlier try can never stop a booking.
+    const requiresCustoms = quote.metadata.requiresCustoms ?? false
+    let items: ShipmentItem[] = []
+    if (requiresCustoms) {
+      const customs = parseCustomsItems(input.items)
+      if (!customs.ok) return refuseDetails(ROUTE, request, customs.problems)
+      items = customs.data
+    }
+    const draft: ShipmentDraft = { ...input, items }
+
     const stamp = Date.now().toString().slice(-7)
     const reference = `PS-${stamp}`
 
     let result: { reference: string; tracking: string; shipmentId?: number }
     if (live) {
       try {
-        const booked = await createShipment(input, { productCode: quote.productCode, serviceCodes: quote.serviceCodes, reference, requiresCustoms: quote.metadata.requiresCustoms ?? false, ownAgreement: quote.metadata.ownAgreement ?? false })
+        const booked = await createShipment(draft, { productCode: quote.productCode, serviceCodes: quote.serviceCodes, reference, requiresCustoms, ownAgreement: quote.metadata.ownAgreement ?? false })
         result = { reference, tracking: booked.external_pkg_no ?? booked.pkg_no, shipmentId: booked.id }
       } catch (err) {
         console.error('Shipmondo booking failed', err)
@@ -78,14 +91,19 @@ export async function POST(request: Request) {
     completed.set(input.idempotencyKey, result)
     // Numbers for the Message Center (parcels per location and day, carrier used). Runs after the
     // answer is sent and can never fail the booking. Only real bookings are counted.
+    // The shipment exists from here on, so nothing below may turn the answer into an error.
     if (live) {
-      const kv = getKv()
-      // The carrier as the customer chose it (GLS, PostNord, DAO, Bring), not Shipmondo's longer name.
-      const counted = { locationId: bookingLocation(request), carrier: input.carrierName || quote.carrier, parcels: input.parcels.length }
-      if (kv) after(() => recordShipment(kv, counted).catch((err) => console.error('Could not count the shipment', err)))
+      try {
+        const kv = getKv()
+        // The carrier as the customer chose it (GLS, PostNord, DAO, Bring), not Shipmondo's longer name.
+        const counted = { locationId: bookingLocation(request), carrier: input.carrierName || quote.carrier, parcels: input.parcels.length }
+        if (kv) after(() => recordShipment(kv, counted).catch((err) => console.error('Could not count the shipment', err)))
+      } catch (err) {
+        console.error('Could not count the shipment', err)
+      }
     }
     return Response.json({ data: result }, { status: 201 })
-  } catch {
-    return Response.json({ error: { code: 'INVALID_REQUEST', message: 'Please check the shipment details.' } }, { status: 400 })
+  } catch (err) {
+    return serverFault(ROUTE, request, err)
   }
 }
