@@ -99,7 +99,7 @@ jobs:
           tools="$(ls -d "$ANDROID_HOME"/build-tools/*/ | sort -V | tail -n 1)"
           signer() { "${tools}apksigner" verify --print-certs "$1" | grep -m1 'certificate SHA-256 digest' | sed 's/.*: //'; }
           badge() { "${tools}aapt2" dump badging "$1" | head -n 1; }
-          field() { echo "$1" | sed -n "s/.*$2='\([^']*\)'.*/\1/p"; }
+          field() { echo "$1" | sed -n "s/.*[ :]$2='\([^']*\)'.*/\1/p"; }
 
           new="$(badge "$APK")"
           echo "Built: package $(field "$new" name), version $(field "$new" versionName), build number $(field "$new" versionCode)"

@@ -18,13 +18,13 @@ Claude Code's memory and chat history stay on the computer they were made on. An
 | --- | --- | --- |
 | GitHub | `chrjensen55-hub`, repo `chrjensen55-hub/shipmondo`, branch `master` | The code, and the app versions the tablets download |
 | Vercel | Team `shipmondo`, project `shipmondo` | Runs the server. Deploys by itself when `master` changes |
-| Expo | Organization `pakogsend` (owner login `shipmondo`), project `pak-and-send` | Building new app versions |
+| Expo | Organization `pakogsend` (owner login `shipmondo`; the login `shipmondoforshop` is Admin since 26 Nov 2026), project `pak-and-send` | Keeps the app's signing key. New app versions are built on GitHub with it |
 | Shipmondo | Sandbox account for tests; each shop's live account is entered on its tablets | Prices, bookings and labels |
 | Upstash Redis | Database `shipmondo-message-center`, made 19 Nov 2026 through Vercel (project `shipmondo` → Storage). Free plan, Frankfurt, automatic upgrade to a paid plan switched off | Database of the Message Center (messages, online status, parcel numbers) |
 | Mailbox (SMTP) | `info@pakogsend.dk` at DanDomain, outgoing server `asmtp.dandomain.dk`, port 587 | Sends the Message Center e-mails |
 | Apple Developer | Not set up yet | iPhone/iPad, see `docs/IOS_APP_STORE.md` |
 
-Always build the app with the Expo organization `pakogsend`, project `pak-and-send`. Its Android signing key is stored at Expo, and a kiosk tablet only accepts updates signed with that same key. A build from another Expo account or project can't update the tablets.
+Always build the app with the Expo organization `pakogsend`, project `pak-and-send`. Its Android signing key is stored at Expo, and a kiosk tablet only accepts updates signed with that same key. A build from another Expo account or project can't update the tablets. The login `shipmondoforshop` also has an empty project of its own (`shipmondoforshop`, in the organization `shipmondoforshops-team`). That is not the app: never build there, and don't connect the GitHub repo to it.
 
 ## Start on a new computer
 
@@ -40,7 +40,7 @@ Always build the app with the Expo organization `pakogsend`, project `pak-and-se
 3. Log in:
    - GitHub: `gh auth login` as `chrjensen55-hub`, or with your own account (see "Another person"). Needed to push changes and publish app versions.
    - Git: set your name and email, `git config user.name "chrjensen55-hub"` and `git config user.email "318182071+chrjensen55-hub@users.noreply.github.com"` (or your own).
-   - Expo: `npx eas-cli login` as `shipmondo`. Only needed to build a new app version.
+   - Expo: `npx eas-cli login` as `shipmondo`. Only needed to look at the Expo project or to build on Expo's own servers. The normal build runs on GitHub and needs no Expo login on the computer.
    - Vercel: no login needed for normal work.
 4. In the root folder, copy `.env.example` to `.env` and fill it in:
    - `SHIPMONDO_API_USERNAME`, `SHIPMONDO_API_KEY`: the Shipmondo **sandbox** API user and key (sandbox → Settings → API access). `SHIPMONDO_API_BASE_URL=https://sandbox.shipmondo.com/api/public/v3`, `SHIPMONDO_MOCK_MODE=false`. Without sandbox keys, keep `SHIPMONDO_MOCK_MODE=true`.
@@ -58,7 +58,7 @@ No computer at hand? Claude Code on the web (claude.ai/code) can also open this 
 ## Another person
 
 - GitHub: repo → Settings → Collaborators → Add people, with write access. Needed to push changes and publish app versions.
-- Expo: expo.dev → organization `pakogsend` → Members → invite. Only needed to build app versions.
+- Expo: expo.dev → organization `pakogsend` → Members → Invite. Only needed to look at the Expo project or its signing key. The owner does this in the browser: Expo asks for the password again for it and refuses it from the command line.
 - Vercel: team `shipmondo` → Members. Needed to change server settings or read server logs, and if Vercel blocks deploys from their commits.
 - Any Claude Code account works. The code, rules and guides all come from GitHub.
 
@@ -71,6 +71,7 @@ No computer at hand? Claude Code on the web (claude.ai/code) can also open this 
 - Message Center e-mail: `SMTP_HOST`, `SMTP_PORT` (587), `SMTP_USER` and `SMTP_PASS` in Vercel are the outgoing-mail settings of the mailbox the e-mails are sent from. `MAIL_FROM` (optional) changes the sender name, for example `Pak & Send <info@pakogsend.dk>`. In Production they are set to DanDomain's server `asmtp.dandomain.dk` (from DanDomain's help pages), port 587, user `info@pakogsend.dk`. `SMTP_PASS` is the mailbox password: only the owner types it, straight into Vercel as a Secret. If the mailbox password is changed at DanDomain, change `SMTP_PASS` too and redeploy.
 - A changed setting in Vercel only counts after a new deploy: `vercel redeploy <newest production address> --target production`, or push a commit.
 - The Android signing key and the iOS certificates are stored at Expo. For an extra backup, download the Android keystore once with `npx eas-cli credentials --platform android` and keep it in a password manager.
+- `EXPO_TOKEN` (GitHub → the repo → Settings → Secrets and variables → Actions): an Expo access token that lets the GitHub build read the signing key. It was made on 26 Nov 2026 under the login `shipmondo`, is named "GitHub Actions: build Android app", and is limited to the organization `pakogsend` with the rights View and Publish. To replace it: expo.dev → Settings → Access tokens → create a new one, save it in the GitHub secret, then delete the old one.
 - The App Store Connect key (`.p8` file) is kept outside the repo, see `docs/IOS_APP_STORE.md`.
 - The `apk/` folder (the old Google Play web-app package `dk.pakogsend.app.twa` and its signing key) exists only on the original Windows PC. If that app is on Google Play, back the folder up somewhere safe.
 - Keep passwords and keys in a password manager, not in code, commits or chat messages.
@@ -84,12 +85,15 @@ No computer at hand? Claude Code on the web (claude.ai/code) can also open this 
 
 **Tablet app** (`mobile/`): needs a new app version.
 1. If the change also needs the server, push that first and wait until it's live.
-2. Raise `expo.version` in `mobile/app.json`, for example `1.8.0` → `1.9.0`. The version and the release tag must match.
-3. Build: `cd mobile`, then `npx eas-cli build --platform android --profile preview --non-interactive`.
-4. Download the APK from the build page, name it `pak-and-send-native.apk`, and publish it:
-   `gh release create mobile-v1.9.0 pak-and-send-native.apk --title "Pak & Send — Native Android App v1.9.0" --notes "<what changed>"`
+2. Raise `expo.version` in `mobile/app.json`, for example `1.11.1` → `1.12.0`, then commit and push. The version and the release tag must match.
+3. Build and publish on GitHub: `gh workflow run build-android.yml -f publish=true -f notes="<what changed>"`, or GitHub → Actions → "Build Android app" → Run workflow. It takes about 30 minutes; `gh run watch` shows when it is done. It publishes the release `mobile-vX.Y.Z` with the APK by itself.
+4. Check that the run is green. It stops without publishing when the APK is signed with another key, or has a lower build number, than the newest published version.
 5. Delete the oldest release so exactly 5 are left (rule 1 in `CLAUDE.md`): `gh release delete mobile-vX.Y.Z --cleanup-tag --yes`.
 6. On each tablet, open the download page https://app.pakogsend.dk/admin/settings/app (staff login) and install the Latest Version.
+
+The build runs on GitHub's machines (`.github/workflows/build-android.yml`, `eas build --local`), not on Expo's build servers. It uses none of Expo's monthly builds and doesn't wait in Expo's queue; the signing key is still read from the Expo project. With `publish=false` it only builds, and the APK can be downloaded from the run's page for 14 days. The repo is public, so the build log is public too: the token is hidden in it and the key's passwords are not printed (checked on the first run, 26 Nov 2026). Keep it that way when the workflow is changed.
+
+Building on Expo's servers still works as a reserve: `cd mobile`, `npx eas-cli build --platform android --profile preview --non-interactive`, download the APK, name it `pak-and-send-native.apk`, and publish it with `gh release create mobile-vX.Y.Z pak-and-send-native.apk --title "Pak & Send — Native Android App vX.Y.Z" --notes "<what changed>"`. Each such build counts against Expo's free builds for the month.
 
 iPhone and iPad get new versions through TestFlight or the App Store instead, see `docs/IOS_APP_STORE.md`.
 
@@ -110,7 +114,7 @@ iPhone and iPad get new versions through TestFlight or the App Store instead, se
 - Message Center on your own computer: without the `KV_REST_API_*` settings the local site keeps its data in memory (gone when the site restarts), so it can be tried without any account. Fill it by calling `/api/center/heartbeat` and `/api/center/send` while signed in. E-mail stays off without the `SMTP_*` settings.
 - On this Windows PC, `vercel env add` never finishes when it is run from Git Bash (the setting is saved, the command just hangs). Run it from PowerShell with `--value`, for example `vercel env add SMTP_PORT production --value 587 --no-sensitive`.
 - All tablets and the website share one staff login, so anyone who has it can open the website's admin, including the Message Center. A separate owner login would have to be built if that matters.
-- Expo's free plan allows 30 builds per calendar month (Android and iPhone together), and the count starts again on the 1st at 00:00 UTC. `npx eas-cli account:usage pakogsend --non-interactive` shows how many are used and when the period ends. All 30 were used on 19 Nov 2026 (version 1.11.0), so 1.11.1 had to wait for 1 Dec. Don't start builds that aren't needed, and cancel a queued build that is replaced by a newer one (`npx eas-cli build:cancel <id>`).
+- Expo's free plan allows 30 builds per calendar month (Android and iPhone together), and the count starts again on the 1st at 00:00 UTC. `npx eas-cli account:usage pakogsend --non-interactive` shows how many are used and when the period ends. All 30 were used on 19 Nov 2026 (version 1.11.0). The free plan can't buy single extra builds; the only way past the limit at Expo is the Starter plan ($19 a month). That is why the app is built on GitHub since version 1.11.1 (26 Nov 2026), which uses none of Expo's builds. The limit only matters for builds started on Expo's servers: don't start ones that aren't needed, and cancel a queued build that is replaced by a newer one (`npx eas-cli build:cancel <id>`). A second Expo account doesn't help: its builds get another signing key.
 - A fix on the server (`src/`) reaches every tablet as soon as Vercel has deployed it, also tablets with an old app version. Put a fix there first when it can be made there.
 - When a shop says the app refused something: `vercel logs --environment production --status-code 400 --since 7d --json` lists the refused requests, and each one's log line names the field, the location and the app version (see rule 10 in `CLAUDE.md`). Before 26 Nov 2026 the server answered "Please check the shipment details." for every such case and logged nothing, which is why the step-5 problem of November 2026 took log timing to trace: 8 incidents in 6 days, all parcels inside Denmark, each with 4 to 10 refused tries in a row.
 - City from postal code: since 5 Oct 2026 each tablet sends its own Danadresse key (Admin → Settings), and a postal code list bundled with the server is the backup. The server doesn't use a `DANADRESSE_API_KEY` any more, although rule 2 in `CLAUDE.md` still mentions it.
