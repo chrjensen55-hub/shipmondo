@@ -122,11 +122,6 @@ const da = {
   reviewHint: 'Tjek, at alle oplysninger er korrekte, før forsendelsen oprettes.',
   cardDelivery: 'Leveringsmetode',
   cityFoundShort: 'By fundet',
-  parcelTypeParcel: 'Pakke',
-  parcelTypeParcelHint: 'Almindelig pakke med vægtklasser',
-  parcelTypeLetter: 'Rekommanderet brev',
-  parcelTypeLetterHint: 'Dokumenter, maks. 2 kg, 295 kr. Kun til udlandet.',
-  letterDenmarkError: 'Du har valgt Rekommanderet brev. PostNord sender ikke rekommanderede breve inden for Danmark. Vælg et andet land.',
 
   kioskActivate: 'Aktivér kioskfunktion',
   kioskDisable: 'Deaktivér kioskfunktion',
@@ -167,6 +162,19 @@ const da = {
   addressHeading: 'Navn og adresse',
   routeLabel: 'Rute',
   priceLabel: 'Pris',
+  // Reasons shown when Continue is greyed out or the server could not go on.
+  fieldMissing: 'mangler.',
+  fieldTooShort: 'er for kort.',
+  fieldInvalid: 'er ikke gyldig.',
+  emailInvalidHint: 'E-mailen er ikke en gyldig e-mailadresse (f.eks. navn@mail.dk).',
+  problemParcel: 'vægt eller størrelse mangler. Gå tilbage til pakke-trinnet.',
+  problemCustomsNeeded: 'Dette land kræver toldoplysninger. Udfyld told-trinnet.',
+  problemPriceList: 'Prislisten for denne lokation har en tom eller forkert pris. Ret den under Admin → Settings → Location.',
+  problemCarrier: 'Der er ikke valgt et fragtfirma. Gå tilbage til første trin.',
+  problemOther: 'En oplysning kunne ikke bruges',
+  refreshAdvice: 'Tryk på Opdater i menuen, og start forfra.',
+  connectionError: 'Ingen forbindelse til serveren. Tjek internettet, og prøv igen.',
+  serverFaultError: 'Der opstod en fejl på serveren, ikke i det du har indtastet. Prøv igen om lidt.',
 }
 
 const en: Record<keyof typeof da, string> = {
@@ -283,11 +291,6 @@ const en: Record<keyof typeof da, string> = {
   reviewHint: 'Check that all details are correct before creating the shipment.',
   cardDelivery: 'Delivery method',
   cityFoundShort: 'City found',
-  parcelTypeParcel: 'Parcel',
-  parcelTypeParcelHint: 'Regular parcel by weight class',
-  parcelTypeLetter: 'Registered letter',
-  parcelTypeLetterHint: 'Documents, max 2 kg, 295 kr. Outside Denmark only.',
-  letterDenmarkError: 'You have chosen Registered Letter. PostNord does not send registered letters within Denmark. Please choose another country.',
 
   kioskActivate: 'Activate Kiosk Mode',
   kioskDisable: 'Disable Kiosk Mode',
@@ -328,6 +331,18 @@ const en: Record<keyof typeof da, string> = {
   addressHeading: 'Name and address',
   routeLabel: 'Route',
   priceLabel: 'Price',
+  fieldMissing: 'is missing.',
+  fieldTooShort: 'is too short.',
+  fieldInvalid: 'is not valid.',
+  emailInvalidHint: 'The e-mail is not a valid e-mail address (example: name@mail.dk).',
+  problemParcel: 'the weight or size is missing. Go back to the parcel step.',
+  problemCustomsNeeded: 'This country needs customs details. Fill in the customs step.',
+  problemPriceList: "This location's price list has an empty or wrong price. Correct it in Admin → Settings → Location.",
+  problemCarrier: 'No carrier is chosen. Go back to the first step.',
+  problemOther: 'A detail could not be used',
+  refreshAdvice: 'Tap Refresh in the menu and start again.',
+  connectionError: 'No connection to the server. Check the internet and try again.',
+  serverFaultError: 'Something went wrong on the server, not with what you typed. Please try again in a moment.',
 }
 
 export const translations: Record<Lang, typeof da> = { da, en }

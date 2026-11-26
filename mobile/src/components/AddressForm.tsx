@@ -21,7 +21,6 @@ export function AddressForm({
   onToggleNoEmail,
   noPhone,
   onToggleNoPhone,
-  countryError,
   countryLabel,
   companyRequired = false,
 }: {
@@ -36,7 +35,6 @@ export function AddressForm({
   onToggleNoEmail?: (checked: boolean) => void
   noPhone?: boolean
   onToggleNoPhone?: (checked: boolean) => void
-  countryError?: string
   // Wording of the country question, e.g. "Which country is the parcel going to?".
   countryLabel?: string
   // Business (erhverv) parcels go to a company, so the recipient's company name is required.
@@ -106,7 +104,7 @@ export function AddressForm({
   return (
     <View className="gap-3">
       {/* Country first: it decides the postal code format, the city lookup and the phone code. */}
-      <CountryField label={countryLabel ?? tr.country} value={value.country} onChange={changeCountry} error={countryError} />
+      <CountryField label={countryLabel ?? tr.country} value={value.country} onChange={changeCountry} />
 
       <View className="gap-3 sm:flex-row">
         <View className="sm:flex-1">

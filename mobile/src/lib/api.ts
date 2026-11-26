@@ -21,11 +21,18 @@ export async function clearToken(): Promise<void> {
   await SecureStore.deleteItemAsync(TOKEN_KEY)
 }
 
+// One thing the server could not accept: which field, and what is wrong with it.
+export type FieldProblem = { path: string; problem: 'missing' | 'too_short' | 'invalid' }
+
 export class ApiError extends Error {
   status: number
-  constructor(message: string, status: number) {
+  code?: string
+  fields?: FieldProblem[]
+  constructor(message: string, status: number, code?: string, fields?: FieldProblem[]) {
     super(message)
     this.status = status
+    this.code = code
+    this.fields = fields
   }
 }
 
@@ -44,7 +51,7 @@ export function setRequestLocation(id: string, name: string) {
   requestLocation = { id, name }
 }
 
-type ApiResult<T> = { data: T } | { error: { code?: string; message: string } }
+type ApiResult<T> = { data: T } | { error: { code?: string; message: string; fields?: FieldProblem[] } }
 
 export async function api<T>(path: string, init?: RequestInit): Promise<T> {
   const [token, shipmondoConfig, danadresseKey] = await Promise.all([getToken(), getShipmondoConfig(), getDanadresseKey()])
@@ -68,12 +75,12 @@ export async function api<T>(path: string, init?: RequestInit): Promise<T> {
   const body = (await res.json().catch(() => null)) as ApiResult<T> | null
 
   if (!res.ok || !body || 'error' in body) {
-    const message = body && 'error' in body ? body.error.message : `Request failed (${res.status})`
+    const failure = body && 'error' in body ? body.error : null
     if (res.status === 401) {
       await clearToken()
       onUnauthorized?.()
     }
-    throw new ApiError(message, res.status)
+    throw new ApiError(failure?.message ?? `Request failed (${res.status})`, res.status, failure?.code, failure?.fields)
   }
   return body.data
 }

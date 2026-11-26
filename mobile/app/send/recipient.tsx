@@ -2,10 +2,12 @@ import { useState } from 'react'
 import { useRouter } from 'expo-router'
 import { WizardScreen } from '@/components/WizardScreen'
 import { AddressForm } from '@/components/AddressForm'
-import { useWizard, required } from '@/lib/wizard-context'
-import { hasPhoneDigits } from '@/lib/dialCodes'
+import { useWizard } from '@/lib/wizard-context'
+import { addressProblems } from '@/lib/addressRules'
+import { addressHint, explainError } from '@/lib/problems'
+import { quotePayload } from '@/lib/payload'
 import { requiresCustoms } from '@/lib/countries'
-import { api, ApiError } from '@/lib/api'
+import { api } from '@/lib/api'
 import { useLang } from '@/lib/i18n'
 import type { Address, ShippingQuote } from '@/lib/types'
 
@@ -42,26 +44,15 @@ export default function RecipientStep() {
     setDraft((d) => ({ ...d, recipient: { ...d.recipient, phone: checked ? d.sender.phone : '' } }))
   }
 
-  const a = draft.recipient
-  const letterInDenmark = !!draft.registeredLetter && a.country === 'DK'
-  const business = draft.deliveryLocation === 'business'
-  const valid = [a.fullName, a.address1, a.postalCode, a.city, a.email, ...(business ? [a.company ?? ''] : [])].every(required) && hasPhoneDigits(a.phone) && !letterInDenmark
-  // Names the fields that are still empty, so a greyed-out Continue is never a puzzle.
-  const missing = [
-    !required(a.fullName) && tr.fullName,
-    business && !required(a.company ?? '') && tr.company,
-    !required(a.address1) && tr.addressLine1,
-    !required(a.postalCode) && tr.postalCode,
-    !required(a.city) && tr.city,
-    !required(a.email) && tr.email,
-    !hasPhoneDigits(a.phone) && tr.mobilePhone,
-  ].filter(Boolean)
+  // The same checks the server makes, so a detail it would refuse is caught before the price is asked.
+  const problems = addressProblems(draft.recipient, { companyRequired: draft.deliveryLocation === 'business' })
+  const valid = problems.length === 0
 
   async function getQuote() {
     setLoading(true)
     setError('')
     try {
-      const quotes = await api<ShippingQuote[]>('/api/quotes', { method: 'POST', body: JSON.stringify(draft) })
+      const quotes = await api<ShippingQuote[]>('/api/quotes', { method: 'POST', body: JSON.stringify(quotePayload(draft)) })
       if (!quotes.length) {
         setError(`${draft.carrierName} ${tr.doesNotDeliverSuffix}`)
         return
@@ -72,7 +63,8 @@ export default function RecipientStep() {
       setNeedsCustoms(customsRequired)
       router.push(customsRequired ? '/send/customs' : '/send/review')
     } catch (err) {
-      setError(err instanceof ApiError ? err.message : tr.quoteFetchError)
+      // Always says why: which field the server could not accept, or that there is no connection.
+      setError(explainError(err, tr, tr.quoteFetchError))
     } finally {
       setLoading(false)
     }
@@ -88,7 +80,7 @@ export default function RecipientStep() {
       continueLabel={loading ? tr.checkingRate : tr.continueAction}
       continueDisabled={!valid || loading}
       continueLoading={loading}
-      continueHint={missing.length ? `${tr.missingPrefix} ${missing.join(', ')}` : undefined}
+      continueHint={addressHint(problems, tr)}
       error={error}
     >
       <AddressForm
@@ -98,9 +90,8 @@ export default function RecipientStep() {
         onToggleNoEmail={toggleNoEmail}
         noPhone={noPhone}
         onToggleNoPhone={toggleNoPhone}
-        countryError={letterInDenmark ? tr.letterDenmarkError : undefined}
         countryLabel={tr.recipientCountryLabel}
-        companyRequired={business}
+        companyRequired={draft.deliveryLocation === 'business'}
       />
     </WizardScreen>
   )

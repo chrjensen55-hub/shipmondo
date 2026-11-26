@@ -29,7 +29,6 @@ export default function CarrierStep() {
       setDraft((d) => ({
         ...d,
         carrierName: name,
-        ...(name === 'PostNord' ? {} : { registeredLetter: false }),
         ...(deliveryOptionsFor(name).includes(d.deliveryLocation) ? {} : { deliveryLocation: 'home' as const }),
       }))
       router.push('/send/delivery')

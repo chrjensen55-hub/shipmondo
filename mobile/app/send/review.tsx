@@ -7,7 +7,9 @@ import { WizardScreen } from '@/components/WizardScreen'
 import { CarrierLogo } from '@/components/CarrierLogo'
 import { useWizard, HS_CODE_RE, SERVICE_POINT_LABEL } from '@/lib/wizard-context'
 import { localCountryName } from '@/lib/countryNames'
-import { api, ApiError } from '@/lib/api'
+import { api } from '@/lib/api'
+import { bookingPayload } from '@/lib/payload'
+import { explainError } from '@/lib/problems'
 import { useLang, useLangCode } from '@/lib/i18n'
 
 export default function ReviewStep() {
@@ -29,11 +31,11 @@ export default function ReviewStep() {
     try {
       const result = await api<{ reference: string; tracking: string; shipmentId?: number }>('/api/shipments', {
         method: 'POST',
-        body: JSON.stringify({ ...draft, confirmation: true, idempotencyKey: Crypto.randomUUID() }),
+        body: JSON.stringify(bookingPayload(draft, needsCustoms, Crypto.randomUUID())),
       })
       router.replace({ pathname: '/send/confirmation', params: { reference: result.reference, tracking: result.tracking, shipmentId: String(result.shipmentId ?? ''), customerPrice: String(quote.customerPrice) } })
     } catch (err) {
-      setError(err instanceof ApiError ? err.message : tr.bookingError)
+      setError(explainError(err, tr, tr.bookingError))
     } finally {
       setBooking(false)
     }

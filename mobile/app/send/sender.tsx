@@ -1,8 +1,9 @@
 import { useRouter } from 'expo-router'
 import { WizardScreen } from '@/components/WizardScreen'
 import { AddressForm } from '@/components/AddressForm'
-import { useWizard, required } from '@/lib/wizard-context'
-import { hasPhoneDigits } from '@/lib/dialCodes'
+import { useWizard } from '@/lib/wizard-context'
+import { addressProblems } from '@/lib/addressRules'
+import { addressHint } from '@/lib/problems'
 import { useLang } from '@/lib/i18n'
 import type { Address } from '@/lib/types'
 
@@ -24,17 +25,8 @@ export default function SenderStep() {
     })
   }
 
-  const a = draft.sender
-  const valid = [a.fullName, a.address1, a.postalCode, a.city, a.email].every(required) && hasPhoneDigits(a.phone)
-  // Names the fields that are still empty, so a greyed-out Continue is never a puzzle.
-  const missing = [
-    !required(a.fullName) && tr.fullName,
-    !required(a.address1) && tr.addressLine1,
-    !required(a.postalCode) && tr.postalCode,
-    !required(a.city) && tr.city,
-    !required(a.email) && tr.email,
-    !hasPhoneDigits(a.phone) && tr.mobilePhone,
-  ].filter(Boolean)
+  // The same checks the server makes, so a detail it would refuse is caught on this step.
+  const problems = addressProblems(draft.sender)
 
   return (
     <WizardScreen
@@ -43,8 +35,8 @@ export default function SenderStep() {
       step={4}
       icon={senderImage}
       onContinue={() => router.push('/send/recipient')}
-      continueDisabled={!valid}
-      continueHint={missing.length ? `${tr.missingPrefix} ${missing.join(', ')}` : undefined}
+      continueDisabled={problems.length > 0}
+      continueHint={addressHint(problems, tr)}
     >
       <AddressForm value={draft.sender} onChange={onChange} minimal countryLabel={tr.senderCountryLabel} />
     </WizardScreen>
